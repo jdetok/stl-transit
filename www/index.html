@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Justin DeKock MRP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <script src="https://js.arcgis.com/4.34/"></script>
+    <script>window.ARCGIS_API_KEY = "{{ .ArcGISKey }}";</script>
+    <script>
+        require(["esri/config"], function(esriConfig) {
+            esriConfig.apiKey = window.ARCGIS_API_KEY;
+        });
+    </script>
+
+    <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+    <script type="module" src="https://js.arcgis.com/4.34/map-components/"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/light/main.css" />
+    <link rel="stylesheet" href="/style.css" />
+    
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <arcgis-map basemap="arcgis/dark-gray" center="-90.310, 38.588" zoom="13"></arcgis-map>
+</body>
+</html>
