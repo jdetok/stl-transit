@@ -13,6 +13,13 @@ const MLB_STOP_COLOR = 'blue';
 const MLR_STOP_COLOR = 'red';
 const MLC_STOP_COLOR = 'purple';
 
+const STOP_SCALE_STEP = 0.25;
+const STOP_SCALE_MIN = 0.25;
+const STOP_SCALE_MAX = 10;
+
+const busStopGraphics: Graphic[] = [];
+const mlGraphics: Graphic[] = [];
+
 const BASEMAP = 'dark-gray';
 const MAP_CONTAINER = 'map';
 const STLWKID = 4326;
@@ -26,9 +33,15 @@ const STLCOORDS = {
 type Coordinates = { latitude: number, longitude: number, name: string, typ: RouteType };
 type RouteType = 'bus' | 'mlr' | 'mlb' | 'mlc';
 
-esriConfig.apiKey = (window as any).ARCGIS_API_KEY;
-
 window.addEventListener("DOMContentLoaded", () => {
+    esriConfig.apiKey = (window as any).ARCGIS_API_KEY;
+
+    let busStopScale = 1;
+    busStopSizeButtons(busStopScale);
+
+    let metroStopScale = 1;
+    metroStopSizeButtons(metroStopScale);
+
     const map = new Map({
         basemap: BASEMAP
     });
@@ -52,7 +65,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 async function placeStopsOnMap(view: MapView) {
     const stops = await getStops();
-    stops.forEach((c) => placeMarkerAtCoords(view, c));
+    stops.forEach((c) => placeMarkerAtCoords(view, c, busStopGraphics, mlGraphics));
 }
 
 async function getStops(): Promise<Coordinates[]> {
@@ -65,23 +78,68 @@ async function getStops(): Promise<Coordinates[]> {
     return data;
 }
 
-function placeMarkerAtCoords(view: MapView, coords: Coordinates) {
+function createMarkerSymbol(color: string, size: number) {
+    return new SimpleMarkerSymbol({
+        style: 'circle',
+        color: color,
+        size: size
+    });
+}
+
+function placeMarkerAtCoords(view: MapView, coords: Coordinates, busGraphics: Graphic[], mlGraphics: Graphic[]) {
     const color = (
         (coords.typ == 'bus') ? BUS_STOP_COLOR :
         (coords.typ == 'mlc') ? MLC_STOP_COLOR :
         (coords.typ == 'mlb') ? MLB_STOP_COLOR : MLR_STOP_COLOR
     );
 
-    const markerSymbol = new SimpleMarkerSymbol({
-        style: 'circle',
-        color: color,
-        size: (coords.typ == 'bus') ? BUS_STOP_SIZE : ML_STOP_SIZE
-    });
-
     const pointGraphic = new Graphic({
         geometry: new Point({ latitude: coords.latitude, longitude: coords.longitude }),
-        symbol: markerSymbol
+        symbol: createMarkerSymbol(color, (coords.typ == 'bus') ? BUS_STOP_SIZE : ML_STOP_SIZE)
     });
 
+    coords.typ == 'bus' ? busGraphics.push(pointGraphic) : mlGraphics.push(pointGraphic);
     view.graphics.add(pointGraphic);
+}
+
+function updateBusStopSymbols(scale: number) {
+    for (const g of busStopGraphics) {
+        g.symbol = createMarkerSymbol(BUS_STOP_COLOR, currentBusStopSize(scale));
+    }
+}
+
+function busStopSizeButtons(scale: number) {
+    document.getElementById("buspls")?.addEventListener("click", () => {
+        scale = Math.min(STOP_SCALE_MAX, scale + STOP_SCALE_STEP);
+        updateBusStopSymbols(scale);
+    });
+    document.getElementById("busmin")?.addEventListener("click", () => {
+        scale = Math.max(STOP_SCALE_MIN, scale - STOP_SCALE_STEP);
+        updateBusStopSymbols(scale);
+    });
+}
+
+function currentBusStopSize(scale: number): number {
+    return BUS_STOP_SIZE * scale;
+}
+
+function currentMetroStopSize(scale: number): number {
+    return ML_STOP_SIZE * scale;
+}
+
+function updateMetroStopSymbols(scale: number) {
+    for (const g of mlGraphics) {
+        g.symbol = createMarkerSymbol(MLC_STOP_COLOR, currentMetroStopSize(scale));
+    }
+}
+
+function metroStopSizeButtons(scale: number) {
+    document.getElementById("mlpls")?.addEventListener("click", () => {
+        scale = Math.min(STOP_SCALE_MAX, scale + STOP_SCALE_STEP);
+        updateMetroStopSymbols(scale);
+    });
+    document.getElementById("mlmin")?.addEventListener("click", () => {
+        scale = Math.max(STOP_SCALE_MIN, scale - STOP_SCALE_STEP);
+        updateMetroStopSymbols(scale);
+    });
 }
