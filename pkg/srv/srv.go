@@ -11,6 +11,7 @@ import (
 	"text/template"
 
 	"github.com/jamespfennell/gtfs"
+	"github.com/jdetok/stlmetromap/pkg/metro"
 )
 
 type lalo struct {
@@ -20,7 +21,7 @@ type lalo struct {
 	Typ string `json:"typ"`
 }
 
-func SetupServer(ctx context.Context, static *gtfs.Static) error {
+func SetupServer(ctx context.Context, static *gtfs.Static, stops *metro.StopMarkers) error {
 	tmpl := template.Must(template.ParseFiles("www/index.html"))
 	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("www/js"))))
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("www/css"))))
@@ -28,6 +29,7 @@ func SetupServer(ctx context.Context, static *gtfs.Static) error {
 	http.HandleFunc("/mlrstops", func(w http.ResponseWriter, r *http.Request) {HandleMLRStops(w, r, static)})
 	http.HandleFunc("/mlbstops", func(w http.ResponseWriter, r *http.Request) {HandleMLBStops(w, r, static)})
 	http.HandleFunc("/stops", func(w http.ResponseWriter, r *http.Request) {HandleAllStops(w, r, static)})
+	http.HandleFunc("/metrostops", func(w http.ResponseWriter, r *http.Request) {HandleMetroStops(w, r, stops)})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			ArcGISKey string
@@ -42,6 +44,15 @@ func SetupServer(ctx context.Context, static *gtfs.Static) error {
 	}
 	fmt.Println("listening...")
 	return http.ListenAndServe(":3333", nil)
+}
+
+func HandleMetroStops(w http.ResponseWriter, r *http.Request, stops *metro.StopMarkers) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+    if err := json.NewEncoder(w).Encode(stops); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 }
 
 func HandleStops(w http.ResponseWriter, r *http.Request, static *gtfs.Static) {
@@ -140,7 +151,6 @@ func HandleAllStops(w http.ResponseWriter, r *http.Request, static *gtfs.Static)
 	}
 
     for _, s := range static.Stops {
-		// if i >= 500 { break }
         if s.Latitude == nil || s.Longitude == nil {
             continue
         }

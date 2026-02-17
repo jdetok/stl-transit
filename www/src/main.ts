@@ -24,6 +24,21 @@ const STLCOORDS = {
     ymax: 38.75,
 };
 
+type StopMarkers = {stops: StopMarker[]}
+
+type StopMarker = {
+    id: string | number,
+    name: string,
+    typ: RouteType,
+    routes: Route[],
+    coords: Coordinates,
+}
+
+type Route = {
+    id: string | number,
+    name: string,
+}
+
 type Coordinates = { latitude: number, longitude: number, name: string, typ: RouteType };
 
 type RouteType = 'bus' | 'mlr' | 'mlb' | 'mlc';
@@ -37,7 +52,6 @@ const RouteTypes: Record<RouteType, string> = {
 
 window.addEventListener("DOMContentLoaded", () => {
     esriConfig.apiKey = (window as any).ARCGIS_API_KEY;
-
     const map = new Map({
         basemap: BASEMAP
     });
@@ -60,6 +74,8 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     view.when(
         async () => {
+            // TODO ASAP: CONVERT LAYER TO USE NEW METRO STOPS ENDPOINT
+            console.log(await getMetroStops());
             await buildStopLayers(map);
          },
         (e: Error) => console.error("failed to build or display map:", e)
@@ -124,6 +140,17 @@ async function getStops(): Promise<Coordinates[]> {
     console.trace(`response: ${data.length}`);
     return data;
 }
+
+async function getMetroStops(): Promise<StopMarkers> {
+    const res = await fetch("/metrostops");
+    if (!res.ok) {
+        throw new Error(`failed to fetch`)
+    }
+    const data = await res.json();
+    console.trace(`response: ${data.length}`);
+    return data;
+}
+
 
 function createMarkerSymbol(color: string, size: number) {
     return new SimpleMarkerSymbol({
