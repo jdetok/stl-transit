@@ -25,7 +25,15 @@ const STLCOORDS = {
 };
 
 type Coordinates = { latitude: number, longitude: number, name: string, typ: RouteType };
+
 type RouteType = 'bus' | 'mlr' | 'mlb' | 'mlc';
+
+const RouteTypes: Record<RouteType, string> = {
+    bus: 'MetroBus',
+    mlr: 'MetroLink Red Line',
+    mlb: 'MetroLink Blue Line',
+    mlc: 'MetroLink Red/Blue Line'
+}
 
 window.addEventListener("DOMContentLoaded", () => {
     esriConfig.apiKey = (window as any).ARCGIS_API_KEY;
@@ -43,6 +51,11 @@ window.addEventListener("DOMContentLoaded", () => {
             xmax: STLCOORDS.xmax,
             ymax: STLCOORDS.ymax,
             spatialReference: { wkid: STLWKID }
+        },
+        popupEnabled: true,
+        popup: {
+            dockEnabled: false,
+            dockOptions: {buttonEnabled: false}
         }
     });
     view.when(
@@ -89,6 +102,16 @@ function makeStopGraphic(c: Coordinates): Graphic {
     return new Graphic({
         geometry: new Point({ latitude: c.latitude, longitude: c.longitude }),
         symbol: createMarkerSymbol(color, (c.typ == 'bus') ? BUS_STOP_SIZE : ML_STOP_SIZE),
+        attributes: {
+            "name": c.name,
+            "type": RouteTypes[c.typ],
+        },
+        popupTemplate: {
+            title: "{name}",
+            content: [
+                { type: "fields", fieldInfos: [{ fieldName: "type", label: "Route Type" }] }
+            ]
+        },
     });
 }
 

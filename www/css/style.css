@@ -1,8 +1,22 @@
 html, body {
     height: 100vh; 
     width: 100vw; 
-    background-color: black;
+    background-color: rgba(218, 210, 208, 0.991);
 }
 #map {
+    position: relative;
+    overflow: hidden;
+    width: 98vw;
     height: 98vh;
+}
+
+.esri-popup {
+    padding: .5rem;
+    background-color: rgba(240, 248, 255, 0.758);
+    border: 2px solid black;
+    border-radius: 1rem;
+    height: fit-content;
+    position: absolute !important;
+    z-index: 9999 !important;
+    width: 25%;
 }

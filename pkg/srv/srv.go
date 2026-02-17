@@ -147,7 +147,7 @@ func HandleAllStops(w http.ResponseWriter, r *http.Request, static *gtfs.Static)
 
 		c := lalo{La: *s.Latitude, Lo: *s.Longitude, Name: s.Name}
 
-		if !strings.Contains(s.Name, "METROLINK") {
+		if !strings.Contains(s.Name, "METROLINK STATION") {
 			c.Typ = "bus"
 		} else {
 			if slices.Contains(finalRLStops, s.Id) {
