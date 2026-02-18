@@ -1,5 +1,5 @@
 :root {
-    --popup-bg: rgba(171, 179, 185, 0.703);
+    --popup-bg: rgba(171, 179, 185, 0.85);
     --popup-bdr: 2px solid black;
     --popup-bdrrad: .5rem;
 }
@@ -20,6 +20,7 @@ html, body {
 /* fix issue where couldn't press other buttons on same x axis when popup is open */
 #map .esri-component * {
     pointer-events: auto;
+    text-align: left;
 }
 
 .esri-widget--button {

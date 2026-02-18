@@ -1,5 +1,4 @@
 import esriConfig from "@arcgis/core/config"
-
 import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import Graphic from "@arcgis/core/Graphic";
@@ -12,29 +11,32 @@ import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
+import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import "@arcgis/core/assets/esri/themes/light/main.css";
 
-const STL_COUNTIES_MO = [
-    "'St. Louis County'",
-    "'St. Louis city'",
-    "'St. Charles County'",
-    "'Jefferson County'",
-    "'Franklin County'",
-    // "'Crawford County'", // only sullivan - todo
-    "'Warren County'",
-].join(", ");
-
-const STL_COUNTIES_IL = [
-    "'St. Clair County'",
-    "'Madison County'",
-    "'Monroe County'",
-    "'Jersey County'",
-    "'Calhoun County'",
-    "'Macoupin County'",
-    "'Clinton County'",
-    "'Bond County'"
-].join(", ");
-
+const MO_COUNTIES: Record<string, string> = {
+    "St. Louis County": "189",
+    "St. Louis city": "510",
+    "St. Charles County": "183",
+    "Jefferson County": "099",
+    "Franklin County": "071",
+    "Warren County": "219",
+}
+const IL_COUNTIES: Record<string, string> = {
+    "St. Clair County": "163",
+    "Madison County": "119",
+    "Monroe County": "133",
+    "Jersey County": "083",
+    "Calhoun County": "013",
+    "Macoupin County": "117",
+    "Clinton County": "027",
+    "Bond County": "005",
+}
+const MO_COUNTY_NAMES = Object.keys(MO_COUNTIES).join("','");
+const MO_COUNTY_FIPS = Object.values(MO_COUNTIES).join("','");
+const IL_COUNTY_NAMES = Object.keys(IL_COUNTIES).join("','");
+const IL_COUNTY_FIPS = Object.values(IL_COUNTIES).join("','");
+const POPLMAP_ALPHA = 0.1;
 const BUS_STOP_SIZE = 3.5;
 const ML_STOP_SIZE = 8;
 const BUS_STOP_COLOR = 'mediumseagreen';
@@ -50,30 +52,8 @@ const STLCOORDS = {
     xmax: -90.15,
     ymax: 38.75,
 };
-
-type StopMarkers = {stops: StopMarker[]}
-
-type StopMarker = {
-    id: string | number,
-    name: string,
-    typ: RouteType,
-    routes: Route[],
-    yx: Coordinates,
-}
-
-type Route = {
-    id: string | number,
-    name: string,
-    nameLong: string,
-}
-
-type Coordinates = { latitude: number, longitude: number, name: string, typ: RouteType };
-
-type RouteType = 'bus' | 'mlr' | 'mlb' | 'mlc';
-
-const BUS = 'MetroBus';
-const ML = 'MetroLink (Light Rail)';
-
+const BUS = 'Bus';
+const ML = 'Light Rail';
 const RouteTypes: Record<RouteType, string> = {
     bus: BUS,
     mlr: ML,
@@ -81,6 +61,23 @@ const RouteTypes: Record<RouteType, string> = {
     mlc: ML
 };
 
+type StopMarkers = {stops: StopMarker[]}
+type StopMarker = {
+    id: string | number,
+    name: string,
+    typ: RouteType,
+    routes: Route[],
+    yx: Coordinates,
+}
+type Route = {
+    id: string | number,
+    name: string,
+    nameLong: string,
+}
+type Coordinates = { latitude: number, longitude: number, name: string, typ: RouteType };
+type RouteType = 'bus' | 'mlr' | 'mlb' | 'mlc';
+
+// ENTRY POINT
 window.addEventListener("DOMContentLoaded", () => {
     esriConfig.apiKey = (window as any).ARCGIS_API_KEY;
     const map = new Map({
@@ -102,24 +99,37 @@ window.addEventListener("DOMContentLoaded", () => {
             dockOptions: {buttonEnabled: false}
         }
     });
-    view.when( async () => { // map entrypoint
-        await buildCountyLayer(map);
-        await buildStopLayers(map);
-        await buildLegend(map, view);
+    view.when(async () => { // map entrypoint
+        await Promise.all([
+            buildPopulationLayer(map),
+            buildCountyLayer(map),
+            buildStopLayers(map),
+        ]);
+        buildLegend(view);
     }, (e: Error) => console.error("failed to build or display map:", e))
 });
 
+// get metro stops from backend
+async function getStops(): Promise<StopMarkers> {
+    const res = await fetch("/stops");
+    if (!res.ok) {
+        throw new Error(`failed to fetch`)
+    }
+    return await res.json();
+}
+
 // wait for layers to exist then add expandable legend to map
 // as long as the layers have a title and renderer function they will add to the legend automatically
-async function buildLegend(map: Map, view: MapView) {
-    await Promise.all(map.layers.toArray().map((l) => view.whenLayerView(l as any)));
-    view.ui.add(new Expand({
+function buildLegend(view: MapView) {
+    const expand = new Expand({
         view,
         content: new Legend({
             view: view,
         }),
         expanded: true,
-    }), "top-right");
+    });
+    view.ui.add(expand, "top-right");
+    // await Promise.all(map.layers.toArray().map((l) => view.whenLayerView(l as any)));
 }
 
 // create and add feature layers to map for each stop category
@@ -180,25 +190,16 @@ async function makeStopLayer(stops: StopMarker[],
             symbol: createMarkerSymbol(color, size),
         }),
         popupTemplate: {
-            title: "{name}",
+            title: "{type} Stop: {name}",
             content: [
                 {
                     type: "fields", fieldInfos: [
-                        { fieldName: "type", label: "Service Type:" },
                         { fieldName: "routes", label: "Routes Served:" },
                     ]
                 }
             ]
         },
     });
-}
-
-async function getStops(): Promise<StopMarkers> {
-    const res = await fetch("/stops");
-    if (!res.ok) {
-        throw new Error(`failed to fetch`)
-    }
-    return await res.json();
 }
 
 function createMarkerSymbol(color: string, size: number) {
@@ -218,9 +219,9 @@ function makeCountyLayer(): FeatureLayer {
         title: "St. Louis MSA Counties",
         url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Census_Counties/FeatureServer/0",
         definitionExpression: `
-            (STATE_NAME = 'Missouri' AND NAME IN (${STL_COUNTIES_MO}))
+            (STATE_NAME = 'Missouri' AND NAME IN (${MO_COUNTY_NAMES}))
             OR
-            (STATE_NAME = 'Illinois' AND NAME IN (${STL_COUNTIES_IL}))
+            (STATE_NAME = 'Illinois' AND NAME IN (${IL_COUNTY_NAMES}))
         `,
         renderer: new SimpleRenderer({
             symbol: new SimpleFillSymbol({
@@ -245,4 +246,38 @@ function makeCountyLayer(): FeatureLayer {
             ]
         }
     });
+}
+
+async function buildPopulationLayer(map: Map): Promise<void> {
+    return map.add(makePopulationLayer(), 1);
+}
+
+async function makePopulationLayer(): Promise<FeatureLayer> {
+    return await (async function(): Promise<FeatureLayer> {
+        return new FeatureLayer({
+            title: "Census Tract Population Density",
+            url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Census_Tracts/FeatureServer/0",
+            definitionExpression: `(STATE_FIPS = '29' AND COUNTY_FIPS IN ('${MO_COUNTY_FIPS}')) OR (STATE_FIPS = '17' AND COUNTY_FIPS IN ('${IL_COUNTY_FIPS}'))`,
+            renderer: new ClassBreaksRenderer({
+                field: "POPULATION",
+                classBreakInfos: [
+                    { minValue: 0,     maxValue: 1000,  symbol: new SimpleFillSymbol({ color: [253, 231, 37,  POPLMAP_ALPHA] }) },
+                    { minValue: 1000,  maxValue: 3000,  symbol: new SimpleFillSymbol({ color: [94,  201, 98,  POPLMAP_ALPHA] }) },
+                    { minValue: 3000,  maxValue: 6000,  symbol: new SimpleFillSymbol({ color: [33,  145, 140, POPLMAP_ALPHA] }) },
+                    { minValue: 6000,  maxValue: 10000, symbol: new SimpleFillSymbol({ color: [59,  82,  139, POPLMAP_ALPHA] }) },
+                    { minValue: 10000, maxValue: 99999, symbol: new SimpleFillSymbol({ color: [68,  1,   84,  POPLMAP_ALPHA] }) },
+                ],
+            }),
+            popupTemplate: {
+                title: "{STATE_ABBR}-{COUNTY_FIPS}",
+                content: [{
+                    type: "fields", fieldInfos: [
+                        { fieldName: "POPULATION", label: "Population: " },
+                        { fieldName: "POP_SQMI", label: "Population/Mi^2: " },
+                        { fieldName: "STATE_FIPS", label: "State FIPS: " },
+                    ]
+                }]
+            }
+        });
+    })();
 }
