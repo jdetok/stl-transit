@@ -101,8 +101,8 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     view.when(async () => { // map entrypoint
         await Promise.all([
-            buildPopulationLayer(map),
             buildCountyLayer(map),
+            buildPopulationLayer(map),
             buildStopLayers(map),
         ]);
         buildLegend(view);
@@ -219,9 +219,9 @@ function makeCountyLayer(): FeatureLayer {
         title: "St. Louis MSA Counties",
         url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Census_Counties/FeatureServer/0",
         definitionExpression: `
-            (STATE_NAME = 'Missouri' AND NAME IN (${MO_COUNTY_NAMES}))
+            (STATE_NAME = 'Missouri' AND NAME IN ('${MO_COUNTY_NAMES}'))
             OR
-            (STATE_NAME = 'Illinois' AND NAME IN (${IL_COUNTY_NAMES}))
+            (STATE_NAME = 'Illinois' AND NAME IN ('${IL_COUNTY_NAMES}'))
         `,
         renderer: new SimpleRenderer({
             symbol: new SimpleFillSymbol({
@@ -262,10 +262,11 @@ async function makePopulationLayer(): Promise<FeatureLayer> {
                 field: "POPULATION",
                 classBreakInfos: [
                     { minValue: 0,     maxValue: 1000,  symbol: new SimpleFillSymbol({ color: [253, 231, 37,  POPLMAP_ALPHA] }) },
-                    { minValue: 1000,  maxValue: 3000,  symbol: new SimpleFillSymbol({ color: [94,  201, 98,  POPLMAP_ALPHA] }) },
-                    { minValue: 3000,  maxValue: 6000,  symbol: new SimpleFillSymbol({ color: [33,  145, 140, POPLMAP_ALPHA] }) },
-                    { minValue: 6000,  maxValue: 10000, symbol: new SimpleFillSymbol({ color: [59,  82,  139, POPLMAP_ALPHA] }) },
-                    { minValue: 10000, maxValue: 99999, symbol: new SimpleFillSymbol({ color: [68,  1,   84,  POPLMAP_ALPHA] }) },
+                    { minValue: 1000, maxValue: 3000, symbol: new SimpleFillSymbol({ color: [94, 201, 98, POPLMAP_ALPHA] }) },
+                    { minValue: 3000,  maxValue: 6000,  symbol: new SimpleFillSymbol({ color: [20,  110, 105, POPLMAP_ALPHA] }) },
+                    { minValue: 6000,  maxValue: 8000,  symbol: new SimpleFillSymbol({ color: [33,  85,  110, POPLMAP_ALPHA] }) },
+                    { minValue: 8000,  maxValue: 10000, symbol: new SimpleFillSymbol({ color: [44,  60,  105, POPLMAP_ALPHA] }) },
+                    { minValue: 10000, maxValue: 99999, symbol: new SimpleFillSymbol({ color: [50,  1,   63,  POPLMAP_ALPHA] }) },
                 ],
             }),
             popupTemplate: {
