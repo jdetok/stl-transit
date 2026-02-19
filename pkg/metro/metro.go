@@ -1,16 +1,20 @@
 package metro
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"net/http"
 
 	"github.com/jamespfennell/gtfs"
+	"github.com/jdetok/stlmetromap/pkg/get"
 )
 
 const (
 	METRO_STATIC_URL = "https://www.metrostlouis.org/Transit/google_transit.zip"
 	METRO_REALTIME_URL = "https://www.metrostlouis.org/RealTimeData/StlRealcTimeVehicles.pb"
+	DOTIMEOUT = true
+	TIMEOUT = 1
+	ATTEMPTS = 3
 )
 
 // slice of cleaned/transformed stops, returned to client from /stops endpoint
@@ -39,20 +43,20 @@ type Coordiantes struct {
 
 type Routes map[*gtfs.Stop]map[*gtfs.Route]struct{}
 
-func GetStatic() (*gtfs.Static, error) {
-	resp, err := http.Get(METRO_STATIC_URL)
-	if err != nil { 
-		return nil, fmt.Errorf("get request failed: %w", err) 
+func GetStatic(ctx context.Context) (*gtfs.Static, error) {
+	resp, err := get.Get(get.NewGetRequest(ctx, METRO_STATIC_URL, DOTIMEOUT, TIMEOUT, ATTEMPTS))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get data: %w", err)
 	}
-	b, err := io.ReadAll(resp.Body) 
+	js, err := io.ReadAll(resp.Body) 
 	if err != nil { 
 		return nil, fmt.Errorf("failed to read response body: %w", err) 
 	}
-	return gtfs.ParseStatic(b, gtfs.ParseStaticOptions{})
+	return gtfs.ParseStatic(js, gtfs.ParseStaticOptions{})
 }
 
-func GetRealtime() (*gtfs.Realtime, error) {
-	resp, err := http.Get(METRO_REALTIME_URL)
+func GetRealtime(ctx context.Context) (*gtfs.Realtime, error) {
+	resp, err := get.Get(get.NewGetRequest(ctx, METRO_REALTIME_URL, DOTIMEOUT, TIMEOUT, ATTEMPTS))
 	if err != nil { 
 		return nil, fmt.Errorf("get request failed: %w", err) 
 	}

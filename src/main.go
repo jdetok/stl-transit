@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
-	"github.com/jamespfennell/gtfs"
 	"github.com/jdetok/stlmetromap/pkg/metro"
 	"github.com/jdetok/stlmetromap/pkg/srv"
 	"github.com/joho/godotenv"
@@ -13,22 +13,23 @@ import (
 )
 
 func main() {
+	g, ctx := errgroup.WithContext(context.Background())
+	
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("no .env file")
 	}
 
-	staticData := &gtfs.Static{}
-	st, err := metro.GetStatic()
+	getCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	staticData, err := metro.GetStatic(getCtx)
 	if err != nil {
 		fmt.Println("couldn't fetch static data:", err)
 	}
-	staticData = st
 
 	rts := metro.MapRoutesToStops(staticData)
 
 	cleanStops := rts.BuildStops()
-
-	g, ctx := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
 		return srv.SetupServer(ctx, staticData, cleanStops)
