@@ -15,31 +15,6 @@ import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import type Renderer from "@arcgis/core/renderers/Renderer";
 import "@arcgis/core/assets/esri/themes/light/main.css";
 
-const ARCGIS_PROXY_BASE = `${window.location.origin}/P3ePLMYs2RVChkJx/arcgis/rest/services`;
-const MO_COUNTIES: Record<string, string> = {
-    "St. Louis County": "189",
-    "St. Louis city": "510",
-    "St. Charles County": "183",
-    "Jefferson County": "099",
-    "Franklin County": "071",
-    "Warren County": "219",
-}
-const IL_COUNTIES: Record<string, string> = {
-    "St. Clair County": "163",
-    "Madison County": "119",
-    "Monroe County": "133",
-    "Jersey County": "083",
-    "Calhoun County": "013",
-    "Macoupin County": "117",
-    "Clinton County": "027",
-    "Bond County": "005",
-}
-const MO_COUNTY_NAMES = Object.keys(MO_COUNTIES).join("','");
-const IL_COUNTY_NAMES = Object.keys(IL_COUNTIES).join("','");
-const MO_COUNTY_FIPS = Object.values(MO_COUNTIES).join("','");
-const IL_COUNTY_FIPS = Object.values(IL_COUNTIES).join("','");
-const ARCGIS_CENSUS_TRACTS_EXP = `(STATE_FIPS = '29' AND COUNTY_FIPS IN ('${MO_COUNTY_FIPS}')) OR (STATE_FIPS = '17' AND COUNTY_FIPS IN ('${IL_COUNTY_FIPS}'))`;
-const ARCGIS_CENSUS_COUNTIES_EXP = `(STATE_ABBR = 'MO' AND NAME IN ('${MO_COUNTY_NAMES}')) OR (STATE_ABBR = 'IL' AND NAME IN ('${IL_COUNTY_NAMES}'))`;
 const POPLMAP_ALPHA = 0.15;
 const BUS_STOP_SIZE = 3.5;
 const ML_STOP_SIZE = 8;
@@ -81,22 +56,13 @@ type Route = {
 type Coordinates = { latitude: number, longitude: number, name: string, typ: RouteType };
 type RouteType = 'bus' | 'mlr' | 'mlb' | 'mlc';
 
-type FeatureLayerMetaOld = {
-    title: string,
-    url: string,
-    defEx: string,
-    renderer: Renderer,
-    popupTemplate?: __esri.PopupTemplateProperties,
-    popupEnabled?: boolean,
-    idx?: number,
-};
-
 type FeatureLayerMeta = {
     title: string,
-    dataUrl?: string,      // your backend endpoint
+    dataUrl?: string,
     renderer: Renderer,
     popupTemplate?: __esri.PopupTemplateProperties,
     fields?: __esri.FieldProperties[],
+    source?: any
 }
 
 const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
@@ -104,15 +70,13 @@ const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
     dataUrl: "/census/counties",
     fields: [
         { name: "NAME", alias: "Name", type: "string" },
-        { name: "STATE_ABBR", alias: "State", type: "string" },
-        { name: "POPULATION", alias: "Population", type: "integer" },
     ],
     renderer: new SimpleRenderer({
         symbol: new SimpleFillSymbol({
             color: [255, 255, 255, 0.05],
             outline: new SimpleLineSymbol({
-                color: [250, 250, 250, 0.8],
-                width: 2,
+                // color: [250, 250, 250, 0.5],
+                width: 1.5,
                 style: "solid"
             })
         })
@@ -122,8 +86,8 @@ const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
         content: [{
             type: "fields",
             fieldInfos: [
-                { fieldName: "STATE_ABBR", label: "State: " },
-                { fieldName: "POPULATION", label: "Population: " },
+                { fieldName: "STATE", label: "State: " },
+                { fieldName: "NAME", label: "County: " },
             ]
         }],
     },
@@ -133,15 +97,13 @@ const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     title: "Census Tract Population Density",
     dataUrl: "/census/tracts",
     fields: [
-        { name: "TRACT_FIPS", alias: "Tract FIPS", type: "string" },
-        { name: "STATE_ABBR", alias: "State", type: "string" },
-        { name: "STATE_FIPS", alias: "State FIPS", type: "string" },
-        { name: "COUNTY_FIPS", alias: "County FIPS", type: "string" },
-        { name: "POPULATION", alias: "Population", type: "integer" },
-        { name: "POP_SQMI", alias: "Population/Mi^2", type: "double" },
+        { name: "GEOID", alias: "GEOID", type: "string" },
+        { name: "TRACT", alias: "Tract", type: "string" },
+        { name: "POPL", alias: "Population", type: "double" },
+        { name: "POPLSQMI", alias: "Population/Mi^2", type: "double" },
     ],
     renderer: new ClassBreaksRenderer({
-        field: "POP_SQMI",
+        field: "POPLSQMI",
         classBreakInfos: [
             { minValue: 0, maxValue: 2500, symbol: new SimpleFillSymbol({ color: [94, 150, 98, POPLMAP_ALPHA] }) },
             { minValue: 2500, maxValue: 5000, symbol: new SimpleFillSymbol({ color: [17, 200, 152, POPLMAP_ALPHA] }) },
@@ -151,82 +113,19 @@ const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
         ],
     }),
     popupTemplate: {
-        title: "{STATE_ABBR} Census Tract {TRACT_FIPS}",
+        title: "Census Tract {TRACT}",
         content: [{
             type: "fields",
             fieldInfos: [
-                { fieldName: "STATE_ABBR", label: "State: " },
-                { fieldName: "STATE_FIPS", label: "State FIPS: " },
-                { fieldName: "COUNTY_FIPS", label: "County FIPS: " },
-                { fieldName: "POPULATION", label: "Population: " },
-                { fieldName: "POP_SQMI", label: "Population/Mi^2: " },
+                { fieldName: "POPL", label: "Population: " },
+                { fieldName: "POPLSQMI", label: "Population/Mi^2: " },
             ]
         }]
     },
-};
-
-const LAYER_CENSUS_COUNTIES_OLD: FeatureLayerMetaOld = {
-    title: "St. Louis MSA Counties",
-    // url: `https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Census_Counties/FeatureServer/0`,
-    url: "/census/counties",
-    defEx: ARCGIS_CENSUS_COUNTIES_EXP,
-    renderer: new SimpleRenderer({
-        symbol: new SimpleFillSymbol({
-            color: [255, 255, 255, 0.05],
-            outline: new SimpleLineSymbol({
-                color: [250, 250, 250, 0.8],
-                width: 2,
-                style: "solid"
-            })
-        })
-    }),
-    popupTemplate: {
-        title: "{NAME}",
-        content: [{
-            type: "fields",
-            fieldInfos: [
-                { fieldName: "STATE_ABBR", label: "State: " },
-                { fieldName: "POPULATION", label: "Population: " },
-            ]
-        }],
-    },
-};
-
-const LAYER_CENSUS_TRACTS_OLD: FeatureLayerMetaOld = {
-    title: "Census Tract Population Density",
-    // url: `${ARCGIS_PROXY_BASE}/USA_Census_Tracts/FeatureServer/0`,
-    url: "/census/tracts",
-    // url: "https://services.arcgis.com/P3ePLMYs2RVChkJx/",
-    defEx: ARCGIS_CENSUS_TRACTS_EXP,
-    renderer: new ClassBreaksRenderer({
-        field: "POP_SQMI",
-        classBreakInfos: [
-            { minValue: 0, maxValue: 2500, symbol: new SimpleFillSymbol({ color: [94, 150, 98, POPLMAP_ALPHA] }) },
-            { minValue: 2500, maxValue: 5000, symbol: new SimpleFillSymbol({ color: [17, 200, 152, POPLMAP_ALPHA] }) },
-            { minValue: 5000, maxValue: 7500, symbol: new SimpleFillSymbol({ color: [0, 210, 255, POPLMAP_ALPHA] }) },
-            { minValue: 7500, maxValue: 10000, symbol: new SimpleFillSymbol({ color: [44, 60, 255, POPLMAP_ALPHA] }) },
-            { minValue: 10000, maxValue: 99999, symbol: new SimpleFillSymbol({ color: [50, 1, 63, POPLMAP_ALPHA] }) },
-        ],
-    }),
-    popupTemplate: {
-        title: "{STATE_ABBR} Census Tract {TRACT_FIPS}",
-        content: [{
-            type: "fields",
-            fieldInfos: [
-                { fieldName: "STATE_ABBR", label: "State: " },
-                { fieldName: "STATE_FIPS", label: "State FIPS: " },
-                { fieldName: "COUNTY_FIPS", label: "County FIPS: " },
-                { fieldName: "POPULATION", label: "Population: " },
-                { fieldName: "POP_SQMI", label: "Population/Mi^2: " },
-            ]
-        }]
-    }
 };
 
 // ENTRY POINT
 window.addEventListener("DOMContentLoaded", () => {
-    // esriConfig.apiKey = (window as any).ARCGIS_API_KEY;
-    // esriConfig.request.proxyUrl = `${window.location.origin}/arcgis-proxy`;
     const map = new Map({
         basemap: BASEMAP
     });
@@ -263,44 +162,28 @@ async function buildFeatureLayer(map: Map, meta: FeatureLayerMeta, idx?: number)
 }
 
 async function makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
-    let source: any; 
     try {
         if (meta.dataUrl) {
             const res = await fetch(meta.dataUrl);
             const data = await res.json();
-            console.log("spatialRef:", data[0]?.geometry?.spatialReference);
-            console.log("first feature:", data[0]);
-            console.log(data);
-            source = data.map((f: any) => Graphic.fromJSON({
+            console.log("layer data:", data);
+            meta.source = data.Features.map((f: any) => Graphic.fromJSON({
                 geometry: f.geometry,
                 attributes: f.attributes,
             }));
+            console.log("first tract:", data.Features[0].attributes);
         }
     } catch(e) { throw new Error("no data source for layer: " + meta.title); }
     // fallback for url-based layers if you ever need one
     return new FeatureLayer({
         title: meta.title,
-        source,
+        source: meta.source,
         objectIdField: "ObjectID",  // add this
         geometryType: "polygon",
         spatialReference: { wkid: STLWKID },  // add this too
         renderer: meta.renderer,
         popupTemplate: meta.popupTemplate,
         fields: meta.fields,
-    });
-}
-
-// BUILD FEATURE LATER FROM AN EXISTING HOSTED FEATURE SERVICE
-async function buildFeatureLayerOld(map: Map, meta: FeatureLayerMetaOld, idx?: number): Promise<void> {
-    return map.add(await makeFeatureLayerOld(meta), idx);
-}
-async function makeFeatureLayerOld(meta: FeatureLayerMetaOld): Promise<FeatureLayer> {
-    return new FeatureLayer({
-        title: meta.title,
-        url: meta.url,
-        definitionExpression: meta.defEx,
-        renderer: meta.renderer,
-        popupTemplate: meta.popupTemplate,
     });
 }
 

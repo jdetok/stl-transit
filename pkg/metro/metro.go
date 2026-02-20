@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	METRO_STATIC_URL = "https://www.metrostlouis.org/Transit/google_transit.zip"
+	METRO_STATIC_URL   = "https://www.metrostlouis.org/Transit/google_transit.zip"
 	METRO_REALTIME_URL = "https://www.metrostlouis.org/RealTimeData/StlRealcTimeVehicles.pb"
-	DOTIMEOUT = true
-	TIMEOUT = 1
-	ATTEMPTS = 3
+	DOTIMEOUT          = true
+	TIMEOUT            = 1
+	ATTEMPTS           = 3
 )
 
 // slice of cleaned/transformed stops, returned to client from /stops endpoint
@@ -23,16 +23,16 @@ type StopMarkers struct {
 }
 
 type StopMarker struct {
-	ID string `json:"id"`
-	Name string `json:"name"`
-	StopType string `json:"typ"`
-	Routes []Route `json:"routes"`
-	Coords Coordiantes `json:"yx"`
+	ID       string      `json:"id"`
+	Name     string      `json:"name"`
+	StopType string      `json:"typ"`
+	Routes   []Route     `json:"routes"`
+	Coords   Coordiantes `json:"yx"`
 }
 
 type Route struct {
-	ID string 	`json:"id"`
-	Name string `json:"name"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
 	NameLong string `json:"nameLong"`
 }
 
@@ -48,21 +48,21 @@ func GetStatic(ctx context.Context) (*gtfs.Static, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get data: %w", err)
 	}
-	js, err := io.ReadAll(resp.Body) 
-	if err != nil { 
-		return nil, fmt.Errorf("failed to read response body: %w", err) 
+	js, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 	return gtfs.ParseStatic(js, gtfs.ParseStaticOptions{})
 }
 
 func GetRealtime(ctx context.Context) (*gtfs.Realtime, error) {
 	resp, err := get.Get(get.NewGetRequest(ctx, METRO_REALTIME_URL, DOTIMEOUT, TIMEOUT, ATTEMPTS))
-	if err != nil { 
-		return nil, fmt.Errorf("get request failed: %w", err) 
+	if err != nil {
+		return nil, fmt.Errorf("get request failed: %w", err)
 	}
 	b, err := io.ReadAll(resp.Body)
-	if err != nil { 
-		return nil, fmt.Errorf("failed to read response body: %w", err) 
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 	return gtfs.ParseRealtime(b, &gtfs.ParseRealtimeOptions{})
 }
@@ -84,7 +84,7 @@ func (r Routes) BuildStops() *StopMarkers {
 	stops := []StopMarker{}
 	for k, v := range r {
 		sm := StopMarker{
-			ID: k.Id,
+			ID:   k.Id,
 			Name: k.Name,
 			Coords: Coordiantes{
 				La: *k.Latitude,
@@ -96,16 +96,20 @@ func (r Routes) BuildStops() *StopMarkers {
 		isMLR := false
 		for rt := range v {
 			if rt.ShortName == "MLB" {
-				if isMLB { continue }
+				if isMLB {
+					continue
+				}
 				isMLB = true
 			}
 			if rt.ShortName == "MLR" {
-				if isMLR { continue }
+				if isMLR {
+					continue
+				}
 				isMLR = true
 			}
 			sm.Routes = append(sm.Routes, Route{
-				ID: rt.Id,
-				Name: rt.ShortName,
+				ID:       rt.Id,
+				Name:     rt.ShortName,
 				NameLong: rt.LongName,
 			})
 		}
@@ -116,7 +120,8 @@ func (r Routes) BuildStops() *StopMarkers {
 			sm.StopType = "mlb"
 		case (isMLR):
 			sm.StopType = "mlr"
-		default: sm.StopType = "bus"
+		default:
+			sm.StopType = "bus"
 		}
 		stops = append(stops, sm)
 	}

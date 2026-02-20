@@ -14,7 +14,7 @@ import (
 
 func main() {
 	g, ctx := errgroup.WithContext(context.Background())
-	
+
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("no .env file")
 	}
@@ -34,7 +34,7 @@ func main() {
 	g.Go(func() error {
 		return srv.SetupServer(ctx, staticData, cleanStops)
 	})
-	
+
 	if err := g.Wait(); err != nil {
 		log.Fatal(err)
 	}

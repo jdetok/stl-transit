@@ -8,11 +8,11 @@ import (
 )
 
 type GetRequest struct {
-	ctx context.Context
-	url string
-	timeout bool
+	ctx        context.Context
+	url        string
+	timeout    bool
 	timeoutSec int
-	attempts int
+	attempts   int
 }
 
 func NewGetRequest(ctx context.Context, url string, timeout bool, timeoutSec, attempts int) *GetRequest {
@@ -28,7 +28,7 @@ func Get(r *GetRequest) (*http.Response, error) {
 		if httpErr != nil {
 			fail = true
 			fmt.Printf("http get attempt %d of %d to %s failed: %v\n", i+1, r.attempts, r.url, httpErr)
-			if i != r.attempts - 1 {
+			if i != r.attempts-1 {
 				time.Sleep(time.Duration(r.timeoutSec) * time.Second)
 			}
 		}
