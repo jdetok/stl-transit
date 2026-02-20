@@ -16,6 +16,10 @@ import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import type Renderer from "@arcgis/core/renderers/Renderer";
 import "@arcgis/core/assets/esri/themes/light/main.css";
 
+// local imports
+import * as gbl from "./global.js"
+import { declareCustomElements } from "./cmp/cmp.js"
+
 const POPLMAP_ALPHA = 0.15;
 const BUS_STOP_SIZE = 3.5;
 const ML_STOP_SIZE = 8;
@@ -23,15 +27,6 @@ const BUS_STOP_COLOR = 'mediumseagreen';
 const MLB_STOP_COLOR = 'blue';
 const MLR_STOP_COLOR = 'red';
 const MLC_STOP_COLOR = 'purple';
-const BASEMAP = 'dark-gray';
-const MAP_CONTAINER = 'map';
-const STLWKID = 4326;
-const STLCOORDS = {
-    xmin: -90.32,
-    ymin: 38.53,
-    xmax: -90.15,
-    ymax: 38.75,
-};
 const BUS = 'Bus';
 const ML = 'Light Rail';
 const RouteTypes: Record<RouteType, string> = {
@@ -128,32 +123,21 @@ const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     },
 };
 
-// const LAYER_RAILROADS: FeatureLayerMeta = {
-//     title: "Railroads",
-//     dataUrl: "/railroads",
-//     geometryType: "polyline",  // need to add this to your type
-//     renderer: new SimpleRenderer({
-//         symbol: new SimpleLineSymbol({
-//             color: [255, 165, 0, 0.8],
-//             width: 1.5,
-//             style: "solid"
-//         })
-//     }),
-// }
 // ENTRY POINT
 window.addEventListener("DOMContentLoaded", () => {
+    declareCustomElements();
     const map = new Map({
-        basemap: BASEMAP
+        basemap: gbl.BASEMAP
     });
     const view = new MapView({
-        container: MAP_CONTAINER,
+        container: gbl.MAP_CONTAINER,
         map: map,
         extent: {
-            xmin: STLCOORDS.xmin,
-            ymin: STLCOORDS.ymin,
-            xmax: STLCOORDS.xmax,
-            ymax: STLCOORDS.ymax,
-            spatialReference: { wkid: STLWKID }
+            xmin: gbl.STLCOORDS.xmin,
+            ymin: gbl.STLCOORDS.ymin,
+            xmax: gbl.STLCOORDS.xmax,
+            ymax: gbl.STLCOORDS.ymax,
+            spatialReference: { wkid: gbl.STLWKID }
         },
         popupEnabled: true,
         popup: {
@@ -186,7 +170,7 @@ async function makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
             meta.source = data.features.map((f: any) => new Graphic({
                 geometry: new Polygon({
                     rings: f.geometry.rings,
-                    spatialReference: { wkid: STLWKID }
+                    spatialReference: { wkid: gbl.STLWKID }
                 }),
                 attributes: f.attributes,
             }));
@@ -203,7 +187,7 @@ async function makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
         source: meta.source,
         objectIdField: "ObjectID",  // add this
         geometryType: "polygon",
-        spatialReference: { wkid: STLWKID },  // add this too
+        spatialReference: { wkid: gbl.STLWKID },  // add this too
         renderer: meta.renderer,
         popupTemplate: meta.popupTemplate,
         fields: meta.fields,
@@ -273,7 +257,7 @@ async function makeStopLayer(stops: StopMarker[],
     return new FeatureLayer({
         title,
         source,
-        spatialReference: { wkid: STLWKID },
+        spatialReference: { wkid: gbl.STLWKID },
         objectIdField: "ObjectID",
         geometryType: "point",
         fields: [

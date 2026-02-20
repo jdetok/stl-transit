@@ -1,20 +1,15 @@
-// export class BtnPair extends HTMLElement {
-//     constructor() {
-//         super();
-//         this.attachShadow({ mode: 'open' });
-//         this.shadowRoot?.append(this.build_content());
-//     }
-//     build_content() {
-//         const div = document.createElement('div');
-//         const labels = ['decrease', 'increase'];
-//         for (let i = 0; i < labels.length;  i++) {
-//             const b = document.createElement('button');
-//             b.textContent = labels[i];
-//             b.addEventListener('click', () => {
-//                 if (i == 0) {
+import { MapWindow, TAG } from "./map-window.js";
 
-//                 }
-//             })
-//         }
-//     }
-// }
+const COMPONENTS = [
+    {
+        tag: TAG,
+        cls: MapWindow
+    }
+]
+
+export function declareCustomElements() {
+    for (const c of COMPONENTS) {
+        console.trace(`defining element with tag ${c.tag}`);
+        customElements.define(c.tag, c.cls);
+    }
+}
