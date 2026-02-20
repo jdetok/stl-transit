@@ -1,4 +1,4 @@
-package metro
+package gis
 
 import (
 	"context"
@@ -43,7 +43,7 @@ type Coordiantes struct {
 
 type Routes map[*gtfs.Stop]map[*gtfs.Route]struct{}
 
-func GetStatic(ctx context.Context) (*gtfs.Static, error) {
+func GetMetroStaticGTFS(ctx context.Context) (*gtfs.Static, error) {
 	resp, err := get.Get(get.NewGetRequest(ctx, METRO_STATIC_URL, DOTIMEOUT, TIMEOUT, ATTEMPTS))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get data: %w", err)
@@ -55,7 +55,7 @@ func GetStatic(ctx context.Context) (*gtfs.Static, error) {
 	return gtfs.ParseStatic(js, gtfs.ParseStaticOptions{})
 }
 
-func GetRealtime(ctx context.Context) (*gtfs.Realtime, error) {
+func GetMetroRealtimeGTFS(ctx context.Context) (*gtfs.Realtime, error) {
 	resp, err := get.Get(get.NewGetRequest(ctx, METRO_REALTIME_URL, DOTIMEOUT, TIMEOUT, ATTEMPTS))
 	if err != nil {
 		return nil, fmt.Errorf("get request failed: %w", err)

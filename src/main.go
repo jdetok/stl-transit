@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/jdetok/stlmetromap/pkg/metro"
+	"github.com/jdetok/stlmetromap/pkg/gis"
 	"github.com/jdetok/stlmetromap/pkg/srv"
 	"github.com/joho/godotenv"
 	"golang.org/x/sync/errgroup"
@@ -22,12 +22,12 @@ func main() {
 	getCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
-	staticData, err := metro.GetStatic(getCtx)
+	staticData, err := gis.GetMetroStaticGTFS(getCtx)
 	if err != nil {
 		fmt.Println("couldn't fetch static data:", err)
 	}
 
-	rts := metro.MapRoutesToStops(staticData)
+	rts := gis.MapRoutesToStops(staticData)
 
 	cleanStops := rts.BuildStops()
 
@@ -38,5 +38,4 @@ func main() {
 	if err := g.Wait(); err != nil {
 		log.Fatal(err)
 	}
-
 }
