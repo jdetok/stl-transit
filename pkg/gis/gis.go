@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,6 +14,13 @@ import (
 	"github.com/jdetok/stlmetromap/pkg/get"
 	"golang.org/x/sync/errgroup"
 )
+
+type Layers struct {
+	Counties *GeoData
+	Tracts *GeoData
+	PoplDens GeoIDPopl
+	TractsPoplDens *GeoTractFeatures
+}
 
 type GeoPoplTract struct {
 	GeoID string `json:"geoid"`
@@ -38,9 +46,19 @@ func getPoplDensity(area string, popl float64) float64 {
 	return math.Round((popl / sqMi)*100) / 100
 }
 
+type GeoIDPopl map[string]float64
+type GeoPoplFeature struct {
+    Geometry   Geo                    `json:"geometry"`
+    Attributes map[string]any `json:"attributes"`
+}
+
+type GeoTractFeatures struct {
+    Features []GeoPoplFeature `json:"features"`
+}
+
 // build GIS structs to build feature layers
 type GeoData struct {
-	Features []GeoFeature
+	Features []GeoFeature `json:"features"`
 }
 
 type GeoFeature struct {
@@ -50,6 +68,7 @@ type GeoFeature struct {
 
 type Geo struct {
 	Rings [][][]float64 `json:"rings"`
+	Paths [][][]float64 `json:"paths"`
 }
 
 type Attr struct {
@@ -72,18 +91,8 @@ type Attr struct {
     POP_SQMI   string
 }
 
-type GeoIDPopl map[string]float64
-type GeoPoplFeature struct {
-    Geometry   Geo                    `json:"geometry"`
-    Attributes map[string]any `json:"attributes"`
-}
-
-type GeoPoplFeatures struct {
-    Features []GeoPoplFeature `json:"Features"`
-}
-
-func JoinPopulation(geo *GeoData, pop GeoIDPopl) *GeoPoplFeatures {
-    feats := &GeoPoplFeatures{}
+func JoinPopulation(geo *GeoData, pop GeoIDPopl) *GeoTractFeatures {
+    feats := &GeoTractFeatures{}
     for i := range geo.Features {
         f := geo.Features[i]
         popl := pop[f.Attributes.GEOID]
@@ -109,6 +118,7 @@ func FetchACSPopulation(ctx context.Context, state string, counties []string) (G
 	for _, county := range counties {
 		g.Go(func() error {
 			params := url.Values{}
+			params.Set("key", os.Getenv("CENSUS_API_KEY"))
 			params.Set("get", "B01003_001E,GEO_ID")
 			params.Set("for", "tract:*")
 			params.Set("in", fmt.Sprintf("state:%s county:%s", state, county))
@@ -124,6 +134,10 @@ func FetchACSPopulation(ctx context.Context, state string, counties []string) (G
 
 			var rows [][]string
 			json.NewDecoder(resp.Body).Decode(&rows)
+			if len(rows) == 0 {
+				fmt.Println("warning: empty response from Census API for", state, county, resp.Status, "|", u)
+				return nil
+			}
 			for _, row := range rows[1:] {
 				geoid := strings.TrimPrefix(row[1], "1400000US")
 				pop, _ := strconv.ParseFloat(row[0], 64)

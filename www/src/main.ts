@@ -1,4 +1,4 @@
-import esriConfig from "@arcgis/core/config"
+// import esriConfig from "@arcgis/core/config"
 import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import Graphic from "@arcgis/core/Graphic";
@@ -7,6 +7,7 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import Field from "@arcgis/core/layers/support/Field";
 import Legend from "@arcgis/core/widgets/Legend";
 import Expand from "@arcgis/core/widgets/Expand";
+import Polygon from "@arcgis/core/geometry/Polygon";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
 import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
@@ -62,12 +63,14 @@ type FeatureLayerMeta = {
     renderer: Renderer,
     popupTemplate?: __esri.PopupTemplateProperties,
     fields?: __esri.FieldProperties[],
-    source?: any
+    source?: any,
+    geometryType?: any
 }
 
 const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
     title: "St. Louis MSA Counties",
-    dataUrl: "/census/counties",
+    dataUrl: "/counties",
+    geometryType: "polygon",
     fields: [
         { name: "NAME", alias: "Name", type: "string" },
     ],
@@ -95,7 +98,8 @@ const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
 
 const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     title: "Census Tract Population Density",
-    dataUrl: "/census/tracts",
+    dataUrl: "/tracts",
+    geometryType: "polygon",
     fields: [
         { name: "GEOID", alias: "GEOID", type: "string" },
         { name: "TRACT", alias: "Tract", type: "string" },
@@ -124,6 +128,18 @@ const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     },
 };
 
+// const LAYER_RAILROADS: FeatureLayerMeta = {
+//     title: "Railroads",
+//     dataUrl: "/railroads",
+//     geometryType: "polyline",  // need to add this to your type
+//     renderer: new SimpleRenderer({
+//         symbol: new SimpleLineSymbol({
+//             color: [255, 165, 0, 0.8],
+//             width: 1.5,
+//             style: "solid"
+//         })
+//     }),
+// }
 // ENTRY POINT
 window.addEventListener("DOMContentLoaded", () => {
     const map = new Map({
@@ -167,11 +183,18 @@ async function makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
             const res = await fetch(meta.dataUrl);
             const data = await res.json();
             console.log("layer data:", data);
-            meta.source = data.Features.map((f: any) => Graphic.fromJSON({
-                geometry: f.geometry,
+            meta.source = data.features.map((f: any) => new Graphic({
+                geometry: new Polygon({
+                    rings: f.geometry.rings,
+                    spatialReference: { wkid: STLWKID }
+                }),
                 attributes: f.attributes,
             }));
-            console.log("first tract:", data.Features[0].attributes);
+            // meta.source = data.features.map((f: any) => Graphic.fromJSON({
+            //     geometry: f.geometry,
+            //     attributes: f.attributes,
+            // }));
+            console.log("first tract:", data.features[0].attributes);
         }
     } catch(e) { throw new Error("no data source for layer: " + meta.title); }
     // fallback for url-based layers if you ever need one
