@@ -1,5 +1,5 @@
 :root {
-    --popup-bg: rgba(171, 179, 185, 0.85);
+    --popup-bg: rgba(192, 201, 209, 0.85);
     --popup-bdr: 2px solid black;
     --popup-bdrrad: .5rem;
 }
@@ -13,9 +13,12 @@ html, body {
 
 #map {
     margin: 0 auto;
-    width: 94%e;
+    width: 94%;
     border: 8px solid black;
-    border-radius: 1rem;
-    height: 100%;
+    border-radius: 2rem;
+    height: 93%;
     max-height: 99vh;
+}
+#map > * {
+    border-radius: 1.5rem;
 }
