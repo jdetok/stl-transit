@@ -17,7 +17,7 @@ export function buildLegend(view: MapView) {
         }),
         expanded: true,
         mode: 'floating',
-    }), "bottom-right");
+    }), "bottom-left");
 }
 
 export async function buildFeatureLayer(map: Map, meta: FeatureLayerMeta, idx?: number): Promise<void> {
@@ -41,13 +41,12 @@ async function makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
             }));
         }
     } catch(e) { throw new Error("no data source for layer: " + meta.title); }
-    // fallback for url-based layers if you ever need one
     return new FeatureLayer({
         title: meta.title,
         source: meta.source,
-        objectIdField: "ObjectID",  // add this
+        objectIdField: "ObjectID",
         geometryType: "polygon",
-        spatialReference: { wkid: STLWKID },  // add this too
+        spatialReference: { wkid: STLWKID },
         renderer: meta.renderer,
         popupTemplate: meta.popupTemplate,
         fields: meta.fields,

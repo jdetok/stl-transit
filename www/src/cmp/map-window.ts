@@ -60,6 +60,9 @@ export class MapWindow extends HTMLElement {
                 buildFeatureLayer(this.map, LAYER_CENSUS_TRACTS, 1),
             ]);
             buildLegend(this.view);
+            if (this.view.ui) {
+                this.view.ui.move('zoom', 'bottom-right');
+            }
         }, (e: Error) => console.error("failed to build or display map:", e))
         
         root.append(this.addStyling(), this.div);
