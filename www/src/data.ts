@@ -25,6 +25,7 @@ export const STLCOORDS = {
     xmax: -90.15,
     ymax: 38.75,
 };
+
 const STOP_FIELDS: __esri.FieldProperties[] = [
     { name: "ObjectID", alias: "ObjectID", type: "oid" },
     { name: "id", alias: "ID", type: "string" },
