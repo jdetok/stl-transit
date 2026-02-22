@@ -1,5 +1,6 @@
 import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
+import Zoom from "@arcgis/core/widgets/Zoom"
 import { buildFeatureLayer, buildLegend } from "../gis/layers.js";
 import { buildStopLayers } from "../gis/metro.js";
 import { STLCOORDS, STLWKID, BASEMAP, LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS } from "../global.js";
@@ -36,8 +37,6 @@ export class MapWindow extends HTMLElement {
         this.div = document.createElement("div");
         this.div.style.minHeight = "100%"; // important, won't be visible otherwise
 
-        // const style = document.createElement("style");
-        // style.textContent = STYLE;
         this.map = new Map({
             basemap: BASEMAP
         });
@@ -54,6 +53,7 @@ export class MapWindow extends HTMLElement {
         });
 
         this.view.when(async () => { // ADD LAYERS TO MAP VIEW
+            this.view.ui.move('zoom', 'bottom-left');
             await Promise.all([
                 buildStopLayers(this.map),
                 buildFeatureLayer(this.map, LAYER_CENSUS_COUNTIES, 0),
@@ -64,7 +64,7 @@ export class MapWindow extends HTMLElement {
                 this.view.ui.move('zoom', 'bottom-right');
             }
         }, (e: Error) => console.error("failed to build or display map:", e))
-        
+
         root.append(this.addStyling(), this.div);
     }
     addStyling(): HTMLStyleElement {
