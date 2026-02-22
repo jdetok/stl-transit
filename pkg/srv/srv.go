@@ -48,7 +48,13 @@ func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarker
 		json.NewEncoder(w).Encode(layers.TractsPoplDens)
 	})
 	http.HandleFunc("/stops", func(w http.ResponseWriter, r *http.Request) {
-		HandleMetroStops(w, r, stops)
+		HandleMetroStops(w, r, &gis.StopMarkers{Stops: stops.Stops})
+	})
+	http.HandleFunc("/stops/bus", func(w http.ResponseWriter, r *http.Request) {
+		HandleMetroStops(w, r, &gis.StopMarkers{Stops: stops.BusStops})
+	})
+	http.HandleFunc("/stops/ml", func(w http.ResponseWriter, r *http.Request) {
+		HandleMetroStops(w, r, &gis.StopMarkers{Stops: stops.MlStops})
 	})
 	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("www/js"))))
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("www/css"))))

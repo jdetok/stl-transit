@@ -6,9 +6,11 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import LayerList from "@arcgis/core/widgets/LayerList";
 import Expand from "@arcgis/core/widgets/Expand";
 import Legend from "@arcgis/core/widgets/Legend";
-import { buildFeatureLayer } from "../gis/layers.js";
-import { buildStopLayers } from "../gis/metro.js";
-import { FeatureLayerMeta, STLCOORDS, STLWKID, BASEMAP, LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS } from "../global.js";
+import "@arcgis/core/assets/esri/themes/light/main.css";
+import {
+    FeatureLayerMeta, STLCOORDS, STLWKID, BASEMAP,
+    LAYER_BUS_STOPS, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS
+} from "../global.js";
 
 export const TAG = 'map-window';
 
@@ -27,10 +29,10 @@ export function newMapCoords(
 }
 
 export class MapWindow extends HTMLElement {
-    private coords: mapCoords;
     private div!: HTMLDivElement;
     private view: __esri.MapView;
     private map: __esri.Map;
+    private coords: mapCoords;
     public constructor() {
         super();
 
@@ -55,12 +57,10 @@ export class MapWindow extends HTMLElement {
         });
 
         this.view.when(async () => { // ADD LAYERS TO MAP VIEW
-            await buildStopLayers(this.map);
-            // await buildFeatureLayer(this.map, LAYER_CENSUS_COUNTIES, 0);
-            // await buildFeatureLayer(this.map, LAYER_CENSUS_TRACTS, 1);
-
             this.map.add(await this.makeFeatureLayer(LAYER_CENSUS_COUNTIES), 0);
             this.map.add(await this.makeFeatureLayer(LAYER_CENSUS_TRACTS), 1);
+            this.map.add(await this.makeFeatureLayer(LAYER_BUS_STOPS), 2);
+            this.map.add(await this.makeFeatureLayer(LAYER_ML_STOPS), 3);
 
             // add UI buttons/popups
             this.view.ui.add(this.addLayerList(), 'bottom-left');
@@ -94,21 +94,29 @@ export class MapWindow extends HTMLElement {
             if (meta.dataUrl) {
                 const res = await fetch(meta.dataUrl);
                 const data = await res.json();
-                console.log("layer data:", data);
-                meta.source = data.features.map((f: any) => new Graphic({
-                    geometry: new Polygon({
-                        rings: f.geometry.rings,
-                        spatialReference: { wkid: STLWKID }
-                    }),
-                    attributes: f.attributes,
-                }));
+
+                // build graphics layer if specified
+                if (meta.toGraphics) {
+                    meta.source = meta.toGraphics(data);
+                } else {
+                    if (!data?.features?.length) {
+                        throw new Error(`layer "${meta.title}" expected data.features[]`);
+                    }
+                    meta.source = data.features.map((f: any) => new Graphic({
+                        geometry: new Polygon({
+                            rings: f.geometry.rings,
+                            spatialReference: { wkid: STLWKID }
+                        }),
+                        attributes: f.attributes,
+                    }));
+                }
             }
         } catch (e) { throw new Error("no data source for layer: " + meta.title); }
         return new FeatureLayer({
             title: meta.title,
             source: meta.source,
             objectIdField: "ObjectID",
-            geometryType: "polygon",
+            geometryType: meta.geometryType,
             spatialReference: { wkid: STLWKID },
             renderer: meta.renderer,
             popupTemplate: meta.popupTemplate,

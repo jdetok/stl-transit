@@ -22,6 +22,7 @@ func main() {
 	getCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
+	
 	staticData, err := gis.GetMetroStaticGTFS(getCtx)
 	if err != nil {
 		fmt.Println("couldn't fetch static data:", err)

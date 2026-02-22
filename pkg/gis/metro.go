@@ -20,6 +20,16 @@ const (
 // slice of cleaned/transformed stops, returned to client from /stops endpoint
 type StopMarkers struct {
 	Stops []StopMarker `json:"stops"`
+	BusStops []StopMarker `json:"busStops"`
+	MlStops []StopMarker `json:"mlStops"`
+}
+
+type BusStopMarkers struct {
+	BusStops []StopMarker `json:"stops"`
+}
+
+type MlStopMarkers struct {
+	MlStops []StopMarker `json:"stops"`
 }
 
 type StopMarker struct {
@@ -82,6 +92,8 @@ func MapRoutesToStops(s *gtfs.Static) Routes {
 
 func (r Routes) BuildStops() *StopMarkers {
 	stops := []StopMarker{}
+	busStops := []StopMarker{}
+	mlStops := []StopMarker{}
 	for k, v := range r {
 		sm := StopMarker{
 			ID:   k.Id,
@@ -113,6 +125,7 @@ func (r Routes) BuildStops() *StopMarkers {
 				NameLong: rt.LongName,
 			})
 		}
+		// assign stop type
 		switch {
 		case (isMLB && isMLR):
 			sm.StopType = "mlc"
@@ -123,7 +136,17 @@ func (r Routes) BuildStops() *StopMarkers {
 		default:
 			sm.StopType = "bus"
 		}
+
 		stops = append(stops, sm)
+		if isMLB || isMLR {
+			mlStops = append(mlStops, sm)
+		} else {
+			busStops = append(busStops, sm)
+		}
 	}
-	return &StopMarkers{Stops: stops}
+	return &StopMarkers{
+		Stops: stops,
+		BusStops: busStops,
+		MlStops: mlStops,
+	}
 }
