@@ -1,6 +1,7 @@
 import "@arcgis/core/assets/esri/themes/light/main.css";
 import * as mw from "./cmp/map-window.js";
 import * as tb from "./cmp/top-btm.js";
+import * as st from "./cmp/site-ttl.js"
 
 const COMPONENTS = [
     {
@@ -10,6 +11,10 @@ const COMPONENTS = [
     {
         tag: tb.TAG,
         cls: tb.TopBtm,
+    },
+    {
+        tag: st.TAG,
+        cls: st.SiteTTL,
     }
 ];
 

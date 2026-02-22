@@ -8,7 +8,8 @@ import Expand from "@arcgis/core/widgets/Expand";
 import Legend from "@arcgis/core/widgets/Legend";
 import { FeatureLayerMeta } from "../types.js";
 import {
-    STLCOORDS, STLWKID, BASEMAP, LAYER_BUS_STOPS, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS
+    STLCOORDS, STLWKID, BASEMAP, LAYER_BUS_STOPS, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS,
+    LAYER_CYCLING
 } from "../data.js";
 
 export const TAG = 'map-window';
@@ -32,6 +33,7 @@ export class MapWindow extends HTMLElement {
     private view: __esri.MapView;
     private map: __esri.Map;
     private coords: mapCoords;
+    private layers: FeatureLayerMeta[];
     public constructor() {
         super();
 
@@ -55,11 +57,19 @@ export class MapWindow extends HTMLElement {
             }
         });
 
+        // order matters
+        this.layers = [
+            LAYER_CENSUS_COUNTIES,
+            LAYER_CENSUS_TRACTS,
+            LAYER_CYCLING,
+            LAYER_BUS_STOPS,
+            LAYER_ML_STOPS,
+        ];
+
         this.view.when(async () => { // ADD LAYERS TO MAP VIEW
-            this.map.add(await this.makeFeatureLayer(LAYER_CENSUS_COUNTIES), 0);
-            this.map.add(await this.makeFeatureLayer(LAYER_CENSUS_TRACTS), 1);
-            this.map.add(await this.makeFeatureLayer(LAYER_BUS_STOPS), 2);
-            this.map.add(await this.makeFeatureLayer(LAYER_ML_STOPS), 3);
+            for (let i = 0; i < this.layers.length; i++) {
+                this.map.add(await this.makeFeatureLayer(this.layers[i]), i);
+            }
 
             // add UI buttons/popups
             this.view.ui.add(this.addLayerList(), 'bottom-left');

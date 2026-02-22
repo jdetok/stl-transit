@@ -4,6 +4,7 @@ import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
 import Point from "@arcgis/core/geometry/Point";
+import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import { FeatureLayerMeta, StopMarkers, StopMarker, RouteType } from './types.js'
@@ -188,4 +189,49 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
             ]
         }]
     },
+};
+
+export const cyclingToGraphics = (data: any) => {
+    return data.features.map((f: any, i: number) => new Graphic({
+        geometry: new Polyline({
+            paths: [f.geometry.coordinates], // wrap once
+            spatialReference: { wkid: STLWKID },
+        }),
+        attributes: {
+            ObjectID: i + 1,
+            name: f.properties.name ?? "",
+            highway: f.properties.highway ?? "",
+            surface: f.properties.surface ?? "",
+        },
+    }));
+};
+
+export const LAYER_CYCLING: FeatureLayerMeta = {
+    title: "Cycling Paths (OSM)",
+    dataUrl: "/bikes",
+    geometryType: "polyline",
+    fields: [
+        { name: "ObjectID", alias: "ObjectID", type: "oid" },
+        { name: "name", alias: "Name", type: "string" },
+        { name: "highway", alias: "Highway", type: "string" },
+        { name: "surface", alias: "Surface", type: "string" },
+    ],
+    renderer: new SimpleRenderer({
+        symbol: new SimpleLineSymbol({
+            width: 2.5,
+            style: "solid",
+            color: [143, 128, 54, 0.9],
+        }),
+    }),
+    popupTemplate: {
+        title: "{name}",
+        content: [{
+            type: "fields",
+            fieldInfos: [
+                { fieldName: "highway", label: "Type" },
+                { fieldName: "surface", label: "Surface" },
+            ],
+        }],
+    },
+    toGraphics: cyclingToGraphics,
 };
