@@ -19,6 +19,11 @@ body {
     margin-top: .1rem;
 }
 
+body > * {
+    min-width: 0;
+    max-width: 98%; /* allows to resize smaller */
+}
+
 #map {
     margin: 0 auto;
     margin-left: var(--map-margin);

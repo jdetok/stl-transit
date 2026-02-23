@@ -67,6 +67,18 @@ export class MapWindow extends HTMLElement {
         ];
 
         this.view.when(async () => { // ADD LAYERS TO MAP VIEW
+            this.view.when(() => {
+                console.log("initial zoom:", this.view.zoom);
+                console.log("initial scale:", this.view.scale);
+
+                this.view.watch("zoom", (z) => {
+                    console.log("zoom:", z);
+                });
+
+                this.view.watch("scale", (s) => {
+                    console.log("scale:", s);
+                });
+            });
             for (let i = 0; i < this.layers.length; i++) {
                 this.map.add(await this.makeFeatureLayer(this.layers[i]), i);
             }
@@ -137,7 +149,8 @@ const STYLE = `
 :host {
     --popup-bdr: 2px solid black;
     --popup-bdrrad: .5rem;
-    --popup-bg: rgba(192, 201, 209, 0.85);
+    --popup-bg: rgba(125, 140, 151, 0.61);
+    /*--popup-bg: rgba(192, 201, 209, 0.85);*/
     position: relative;
     overflow: hidden;
     display: block;
@@ -157,15 +170,15 @@ const STYLE = `
 .esri-widget--button {
     background-color: var(--popup-bg);
 }
+
+/* endless scroll and no expands without these */
 .esri-ui-corner {
     position: absolute;
 }
-
 .esri-ui-top-left     { top: 15px;    left: 15px;   }
 .esri-ui-top-right    { top: 15px;    right: 15px;  }
 .esri-ui-bottom-left  { bottom: 15px; left: 15px;   }
 .esri-ui-bottom-right { bottom: 15px; right: 15px;  }
-
 
 .esri-popup {
     background-color: var(--popup-bg);

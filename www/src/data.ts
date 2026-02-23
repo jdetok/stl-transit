@@ -7,25 +7,33 @@ import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
-import { FeatureLayerMeta, StopMarkers, StopMarker, RouteType } from './types.js'
-
+import { FeatureLayerMeta, StopMarkers, StopMarker, RouteType, cplethEls } from './types.js'
 export const STLWKID = 4326;
-export const BASEMAP = 'dark-gray';
-export const BUS = 'Bus';
-export const ML = 'Light Rail';
-export const POPLMAP_ALPHA = 0.15;
-export const BUS_STOP_SIZE = 3.5;
-export const ML_STOP_SIZE = 10;
-export const BUS_STOP_COLOR = 'mediumseagreen';
-export const MLB_STOP_COLOR = 'blue';
-export const MLR_STOP_COLOR = 'red';
-export const MLC_STOP_COLOR = 'purple';
 export const STLCOORDS = {
     xmin: -90.32,
     ymin: 38.53,
     xmax: -90.15,
     ymax: 38.75,
 };
+
+export const BASEMAP = 'dark-gray';
+const BUS = 'Bus';
+const ML = 'Light Rail';
+const BUS_STOP_SIZE = 4;
+const ML_STOP_SIZE = 10;
+const CYCLE_COLOR = [208, 148, 75, 0.9];
+const COUNTIES_OUTLINE = [250, 250, 250, 0.5];
+const BUS_STOP_COLOR = 'mediumseagreen';
+const MLB_STOP_COLOR = 'blue';
+const MLR_STOP_COLOR = 'red';
+const MLC_STOP_COLOR = 'purple';
+const POPLDENS_ALPHA = 0.15;
+// tuples of min, max, 3 digit rgb. builder func addss the POPLDENS_APLHA value for rgba to each
+const POPLDENS_CHOROPLETH_LEVELS: cplethEls[] = [
+    [0, 2500, [94, 150, 98]], [2500, 5000, [17, 200, 152]], [5000, 7500, [0, 210, 255]], [7500, 10000, [44, 60, 255]], [10000, 99999, [50, 1, 63]],
+];
+// const TRACTS_OUTLINE = 
+
 
 const STOP_FIELDS: __esri.FieldProperties[] = [
     { name: "ObjectID", alias: "ObjectID", type: "oid" },
@@ -42,6 +50,16 @@ const routeTypes: Record<RouteType, string> = {
     mlb: ML,
     mlc: ML
 };
+const newChoroplethLevel = (c: cplethEls) => {
+        return { minValue: c[0], maxValue: c[1], symbol: new SimpleFillSymbol({ color: [...c[2], POPLDENS_ALPHA] })};
+}
+const makeChoroplethLevels = (levels: cplethEls[]): __esri.ClassBreakInfoProperties[] => {
+    let lvls: __esri.ClassBreakInfoProperties[] = [];
+    for (const l of levels) {
+        lvls.push(newChoroplethLevel(l))
+    }
+    return lvls;
+}
 
 const stopsToGraphics = (data: StopMarkers) => {
     return data.stops.map((s: StopMarker, i: number) => new Graphic({
@@ -68,6 +86,16 @@ export const LAYER_BUS_STOPS: FeatureLayerMeta = {
     fields: STOP_FIELDS,
     renderer: new SimpleRenderer({
         symbol: new SimpleMarkerSymbol({ style: 'circle', color: BUS_STOP_COLOR, size: BUS_STOP_SIZE }),
+        // visualVariables: [{
+        //     type: "size",
+        //     stops: [
+        //         { value: 288895, size: 2.5 },
+        //         { value: 100000,  size: 3.5 },
+        //         { value: 50000,  size: 5.0 },
+        //         { value: 20000,  size: 15.0 }, 
+        //     ],
+
+        // } as any]
     }),
     popupTemplate: {
         title: "{type} Stop: {name}",
@@ -141,7 +169,7 @@ export const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
         symbol: new SimpleFillSymbol({
             color: [255, 255, 255, 0],
             outline: new SimpleLineSymbol({
-                color: [250, 250, 250, 0.5],
+                color: COUNTIES_OUTLINE,
                 width: 1.5,
                 style: "solid"
             })
@@ -171,13 +199,7 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     ],
     renderer: new ClassBreaksRenderer({
         field: "POPLSQMI",
-        classBreakInfos: [
-            { minValue: 0, maxValue: 2500, symbol: new SimpleFillSymbol({ color: [94, 150, 98, POPLMAP_ALPHA] }) },
-            { minValue: 2500, maxValue: 5000, symbol: new SimpleFillSymbol({ color: [17, 200, 152, POPLMAP_ALPHA] }) },
-            { minValue: 5000, maxValue: 7500, symbol: new SimpleFillSymbol({ color: [0, 210, 255, POPLMAP_ALPHA] }) },
-            { minValue: 7500, maxValue: 10000, symbol: new SimpleFillSymbol({ color: [44, 60, 255, POPLMAP_ALPHA] }) },
-            { minValue: 10000, maxValue: 99999, symbol: new SimpleFillSymbol({ color: [50, 1, 63, POPLMAP_ALPHA] }) },
-        ],
+        classBreakInfos: makeChoroplethLevels(POPLDENS_CHOROPLETH_LEVELS),
     }),
     popupTemplate: {
         title: "Census Tract {TRACT}",
@@ -207,7 +229,7 @@ export const cyclingToGraphics = (data: any) => {
 };
 
 export const LAYER_CYCLING: FeatureLayerMeta = {
-    title: "Cycling Paths (OSM)",
+    title: "Cycling Paths",
     dataUrl: "/bikes",
     geometryType: "polyline",
     fields: [
@@ -218,9 +240,9 @@ export const LAYER_CYCLING: FeatureLayerMeta = {
     ],
     renderer: new SimpleRenderer({
         symbol: new SimpleLineSymbol({
-            width: 2.5,
+            width: .8,
             style: "solid",
-            color: [143, 128, 54, 0.9],
+            color: CYCLE_COLOR,
         }),
     }),
     popupTemplate: {

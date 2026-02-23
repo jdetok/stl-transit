@@ -30,3 +30,5 @@ type Route = {
 
 type Coordinates = { latitude: number, longitude: number, name: string, typ: RouteType };
 
+// choropleth levels, pass min val, max val, rgb val
+export type cplethEls = [number, number, number[]];
