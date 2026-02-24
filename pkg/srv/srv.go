@@ -12,10 +12,10 @@ import (
 	"github.com/jdetok/stlmetromap/pkg/util"
 )
 
-const ( 
-	GET_DATA = false
-	SAVE_DATA = false
-	DATA_FILE = "./data/persist.json"
+const (
+	GET_DATA   = false
+	SAVE_DATA  = false
+	DATA_FILE  = "./data/persist.json"
 	CYCLE_FILE = "data/cycle_osm.geojson"
 )
 
@@ -67,6 +67,13 @@ func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarker
 	http.HandleFunc("/bikes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(layers.Bikes)
+	})
+	http.HandleFunc("/rails", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(layers.Railroad)
+	})
+	http.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "www/about.html")
 	})
 	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("www/js"))))
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("www/css"))))

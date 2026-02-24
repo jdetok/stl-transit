@@ -59,6 +59,11 @@ const CYCLE_LAYER_URL = "/bikes";
 const CYCLE_LAYER_COLOR = [208, 148, 75, 0.7];
 const CYCLE_LAYER_SIZE = .8;
 
+// const LAYER_RAILS_TTL = "Railroads";
+// const LAYER_RAILS_URL = "/rails";
+// const LAYER_RAIL_COLOR = "pink";
+// const LAYER_RAIL_SIZE = 2;
+
 // Labels used in bus/metro stop popups
 const BUS = 'Bus';
 const ML = 'Light Rail';
@@ -155,7 +160,7 @@ export const LAYER_ML_STOPS: FeatureLayerMeta = {
                 }),
             }, {
                 value: "mlc",
-                label: "Blue/Red",
+                label: "Blue/Red Lines",
                 symbol: new SimpleMarkerSymbol({
                     style: "circle",
                     color: MLC_STOP_COLOR,
@@ -213,7 +218,7 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
         { name: "GEOID", alias: "GEOID", type: "string" },
         { name: "TRACT", alias: "Tract", type: "string" },
         { name: "POPL", alias: "Population", type: "double" },
-        { name: "POPLSQMI", alias: "Population/Mi^2", type: "double" },
+        { name: "POPLSQMI", alias: "Persons/Square Mile", type: "double" },
     ],
     renderer: new ClassBreaksRenderer({
         field: "POPLSQMI",
@@ -231,7 +236,8 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     },
 };
 
-export const cyclingToGraphics = (data: any) => {
+const cyclingToGraphics = (data: any): Graphic[] => {
+    // return data.features.filter((f: any) => f?.properties?.name).map((f: any, i: number) => new Graphic({
     return data.features.map((f: any, i: number) => new Graphic({
         geometry: new Polyline({
             paths: [f.geometry.coordinates], // wrap once
@@ -239,13 +245,12 @@ export const cyclingToGraphics = (data: any) => {
         }),
         attributes: {
             ObjectID: i + 1,
-            name: f.properties.name ?? "",
-            highway: f.properties.highway ?? "",
-            surface: f.properties.surface ?? "",
+            name: f.properties.name ?? '',
+            surface: f.properties.surface ?? '',
         },
     }));
 };
-
+1
 export const LAYER_CYCLING: FeatureLayerMeta = {
     title: CYCLE_LAYER_TTL,
     dataUrl: CYCLE_LAYER_URL,
@@ -274,3 +279,52 @@ export const LAYER_CYCLING: FeatureLayerMeta = {
     },
     toGraphics: cyclingToGraphics,
 };
+
+// const railsToGraphics = (data: any): Graphic[] => {
+//     if (!data?.features?.length) {
+//         return [];
+//     }
+
+//     return data.features.map((f: any, i: number) => new Graphic({
+//         geometry: new Polyline({
+//             paths: f.geometry?.paths ?? [],
+//             spatialReference: { wkid: STLWKID },
+//         }),
+//         attributes: {
+//             ObjectID: i + 1,
+//             NAME: f.attributes?.NAME ?? "",
+//             BASENAME: f.attributes?.BASENAME ?? "",
+//         },
+//     }));
+// };
+
+// export const LAYER_RAILS: FeatureLayerMeta = {
+//     title: LAYER_RAILS_TTL,
+//     dataUrl: LAYER_RAILS_URL,
+//     geometryType: "polyline",
+//     fields: [
+//         { name: "ObjectID", alias: "ObjectID", type: "oid" },
+//         { name: "NAME", alias: "Name", type: "string" },
+//         { name: "BASENAME", alias: "Railroad", type: "string" },
+//         { name: "MTFCC", alias: "MTFCC", type: "string" },
+//     ],
+//     popupTemplate: {
+//         title: "{NAME}",
+//         content: [{
+//             type: "fields",
+//             fieldInfos: [
+//                 { fieldName: "BASENAME", label: "Railroad" },
+//                 { fieldName: "MTFCC", label: "Code" },
+//             ],
+//         }],
+//     },
+//     renderer: new SimpleRenderer({
+//         symbol: new SimpleLineSymbol({
+//             width: LAYER_RAIL_SIZE,
+//             style: "solid",
+//             color: LAYER_RAIL_COLOR,
+//         }),
+//     }),
+    
+//     toGraphics: railsToGraphics,
+// };

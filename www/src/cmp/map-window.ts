@@ -9,7 +9,8 @@ import Legend from "@arcgis/core/widgets/Legend";
 import { FeatureLayerMeta } from "../types.js";
 import {
     STLCOORDS, STLWKID, BASEMAP, LAYER_BUS_STOPS, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS,
-    LAYER_CYCLING
+    LAYER_CYCLING,
+    // LAYER_RAILS
 } from "../data.js";
 
 export const TAG = 'map-window';
@@ -61,24 +62,13 @@ export class MapWindow extends HTMLElement {
         this.layers = [
             LAYER_CENSUS_COUNTIES,
             LAYER_CENSUS_TRACTS,
+            // LAYER_RAILS,
             LAYER_CYCLING,
             LAYER_BUS_STOPS,
             LAYER_ML_STOPS,
         ];
 
         this.view.when(async () => { // ADD LAYERS TO MAP VIEW
-            this.view.when(() => {
-                console.log("initial zoom:", this.view.zoom);
-                console.log("initial scale:", this.view.scale);
-
-                this.view.watch("zoom", (z) => {
-                    console.log("zoom:", z);
-                });
-
-                this.view.watch("scale", (s) => {
-                    console.log("scale:", s);
-                });
-            });
             for (let i = 0; i < this.layers.length; i++) {
                 this.map.add(await this.makeFeatureLayer(this.layers[i]), i);
             }
@@ -132,7 +122,7 @@ export class MapWindow extends HTMLElement {
                     }));
                 }
             }
-        } catch (e) { throw new Error("no data source for layer: " + meta.title); }
+        } catch (e) { throw new Error(`no data source for ${meta.title} layer: ${e}`); }
         return new FeatureLayer({
             title: meta.title,
             source: meta.source,

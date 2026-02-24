@@ -33,7 +33,7 @@ export class TopBtm extends HTMLElement {
         this.hdrItems = [
             newHdrEl("Developed by Justin DeKock", "About me"),
             newHdrEl("About me"),
-            newHdrEl("About the project", "About"),
+            newHdrEl("About the project", "About", "/about"),
             newHdrEl("Sources/references", "Sources"),
             newHdrEl("Source code", "Source code", "https://github.com/jdetok/stlmetromap"),
         ];
