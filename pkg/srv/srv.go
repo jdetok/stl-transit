@@ -13,18 +13,18 @@ import (
 )
 
 const (
-	GET_DATA   = false
-	SAVE_DATA  = false
-	DATA_FILE  = "./data/persist.json"
+	GET_DATA   = true
+	SAVE_DATA  = true
+	DATA_FILE  = "data/persist.json"
 	CYCLE_FILE = "data/cycle_osm.geojson"
 )
 
 func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarkers) error {
 	var err error
-	layers := &gis.Layers{}
+	layers := &gis.DataLayers{Outfile: DATA_FILE}
 
 	if GET_DATA || (!GET_DATA && !util.FileExists(DATA_FILE)) {
-		layers, err = gis.BuildLayers(ctx)
+		layers, err = gis.GetDataLayers(ctx, DATA_FILE)
 		if err != nil {
 			return err
 		}
@@ -32,13 +32,15 @@ func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarker
 		if !util.FileExists(DATA_FILE) {
 			return err
 		}
-		if err := layers.StructFromJSONFile(DATA_FILE); err != nil {
+		if err := layers.DataFromJSONFile(); err != nil {
 			return err
 		}
 	}
 
 	if SAVE_DATA {
-		layers.StructToJSONFile(DATA_FILE)
+		if err := layers.DataToJSONFile(); err != nil {
+			return err
+		}
 	}
 
 	http.HandleFunc("/counties", func(w http.ResponseWriter, r *http.Request) {

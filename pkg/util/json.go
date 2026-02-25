@@ -6,31 +6,45 @@ import (
 	"os"
 )
 
-// Add to any struct to write to json file
-type ToJSON interface {
-	StructToJSONFile(fname string) error
+type PeristJSON interface {
+	DataToJSONFile() error
+	DataFromJSONFile() error
 }
 
-// Add to any struct to fill from json file
-type FromJSON interface {
-	StructFromJSONFile(fname string) error
+type AppData interface {
+	Get() error
+}
+
+type DataSource struct {
+	URL     string
+	Fname   string
+	Outfile string
+	Data    AppData
+}
+
+func NewDataSourceFromURL(url string, data AppData) *DataSource {
+	return &DataSource{URL: url, Data: data}
+}
+
+func NewDataSourceFromFile(fname string, data AppData) *DataSource {
+	return &DataSource{Fname: fname, Data: data}
 }
 
 // Marhsal a generic struct to a JSON file. Assumes already checked that file exists.
-func WriteStructToJSONFile[T ToJSON](data T, fname string) error {
+func WriteStructToJSONFile[T any](data T, fname string) error {
 	js, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal error: %v", err)
 	}
 
 	if err := os.WriteFile(fname, js, 0644); err != nil {
-		return err
+		return fmt.Errorf("write file error: %v", err)
 	}
 	fmt.Println("saved data struct to", fname)
 	return nil
 }
 
-// Fill a generic struct from a JSON file. The function assumes the file exists. 
+// Fill a generic struct from a JSON file. The function assumes the file exists.
 func FillStructFromJSONFile[T any](data *T, fname string) error {
 	js, err := os.ReadFile(fname)
 	if err != nil {

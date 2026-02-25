@@ -249,12 +249,12 @@ const cyclingToGraphics = (data: any): Graphic[] => {
         }),
         attributes: {
             ObjectID: i + 1,
-            name: f.properties.name ?? '',
+            name: f.properties.name ?? 'Non-named Cycling Path',
             surface: f.properties.surface ?? '',
         },
     }));
 };
-1
+
 export const LAYER_CYCLING: FeatureLayerMeta = {
     title: CYCLE_LAYER_TTL,
     dataUrl: CYCLE_LAYER_URL,

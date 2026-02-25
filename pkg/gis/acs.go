@@ -14,6 +14,7 @@ const (
 	ACS_HEADER_FIELDS = "GEO_ID,NAME,B01003_001E,B01001_002E,B01001_026E,B02001_002E,B02001_003E,B02001_004E,B02001_005E,B02001_006E,B02001_007E,B02001_008E,B02001_009E,B02001_010E,B06011_001E,B01002_001E"
 	ACS_IN_MO         = "state:29+county:510,189,183,099,071,219"
 	ACS_IN_IL         = "state:17+county:163,119,133,083,013,117,027,005"
+	ACS_KEY           = "CENSUS_API_KEY"
 )
 
 type ACSHeaders map[string]string
@@ -42,23 +43,32 @@ type ACSQueries struct {
 	Il string
 }
 
+// builds full URL strings for MO and IL queries
 func buildACSUrls() *ACSQueries {
-	return &ACSQueries{Mo: buildACSUrl(ACS_IN_MO), Il: buildACSUrl(ACS_IN_IL)}
+	return &ACSQueries{
+		Mo: buildACSUrl(ACS_IN_MO),
+		Il: buildACSUrl(ACS_IN_IL),
+	}
 }
-
 func buildACSUrl(stateIn string) string {
-	return fmt.Sprintf("%s?for=tract:*&get=%s&in=%s&key=%s", ACS_BASE_URL, ACS_HEADER_FIELDS, stateIn, os.Getenv(ACS_KEY))
+	return fmt.Sprintf("%s?for=tract:*&get=%s&in=%s&key=%s",
+		ACS_BASE_URL,
+		ACS_HEADER_FIELDS,
+		stateIn,
+		os.Getenv(ACS_KEY),
+	)
 }
 
-// responses from ACS data come as an array of headers then a raw array for each object
+// map GEOID to a map containing header:val (map[1400000US123...]["B01003_001E"]"1234")
 type ACSObj map[string]map[string]string
 
+// responses from ACS data come as an array of headers then a raw array for each object
 type ACSData struct {
 	Labels ACSHeaders
 	Data   ACSObj
 }
 
-// map unique GeoId string to a map of each header to the datapoint
+// send get request for both URLs, fill map
 func GetACSData(ctx context.Context) (*ACSData, error) {
 	data := ACSObj{}
 	urls := buildACSUrls()
