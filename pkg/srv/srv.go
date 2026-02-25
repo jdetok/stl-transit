@@ -14,7 +14,7 @@ import (
 
 const (
 	GET_DATA   = false
-	SAVE_DATA  = false
+	SAVE_DATA  = true
 	DATA_FILE  = "./data/persist.json"
 	CYCLE_FILE = "data/cycle_osm.geojson"
 )
@@ -36,9 +36,6 @@ func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarker
 			return err
 		}
 	}
-	if SAVE_DATA {
-		layers.StructToJSONFile(DATA_FILE)
-	}
 
 	bikes := &gis.GeoBikeData{}
 	bikes, err = gis.LoadBikePathFile(CYCLE_FILE)
@@ -46,6 +43,16 @@ func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarker
 		return fmt.Errorf("failed to fetch bikes: %w", err)
 	}
 	layers.Bikes = bikes
+
+	acs, err := gis.GetACSData(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get new acs data: %w", err)
+	}
+	layers.ACS = acs
+
+	if SAVE_DATA {
+		layers.StructToJSONFile(DATA_FILE)
+	}
 
 	http.HandleFunc("/counties", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

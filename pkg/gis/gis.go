@@ -17,8 +17,9 @@ type Layers struct {
 	Tracts         *GeoData
 	PoplDens       GeoIDPopl
 	TractsPoplDens *GeoTractFeatures
-	Bikes *GeoBikeData
-	Railroad *GeoData
+	Bikes          *GeoBikeData
+	Railroad       *GeoData
+	ACS            *ACSData
 }
 
 func (l *Layers) StructToJSONFile(fname string) error {
@@ -89,8 +90,8 @@ func BuildLayers(ctx context.Context) (*Layers, error) {
 		Tracts:         tracts,
 		PoplDens:       poplDens,
 		TractsPoplDens: JoinPopulation(tracts, poplDens),
-		Bikes: bikes,
-		Railroad: rails,
+		Bikes:          bikes,
+		Railroad:       rails,
 	}, nil
 }
 
@@ -113,12 +114,15 @@ func NewGeoPoplTract(gId, tract, area string, popl float64) *GeoPoplTract {
 }
 
 func getPoplDensity(area string, popl float64) float64 {
+	metersToMiles := 2589988
 	sqMeters, _ := strconv.ParseFloat(area, 64)
-	sqMi := sqMeters / 2589988
+	sqMi := sqMeters / float64(metersToMiles)
 	return math.Round((popl/sqMi)*100) / 100
 }
 
+// original acs just popl
 type GeoIDPopl map[string]float64
+
 type GeoAttrs map[string]any
 
 type GeoPoplFeature struct {
@@ -165,6 +169,7 @@ type Attr struct {
 	POP_SQMI   string
 }
 
+// join tracts with TIGER landarea data and ACS population data ot make population density
 func JoinPopulation(geo *GeoData, pop GeoIDPopl) *GeoTractFeatures {
 	feats := &GeoTractFeatures{}
 	for i := range geo.Features {
