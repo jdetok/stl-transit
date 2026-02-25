@@ -69,6 +69,36 @@ type ACSData struct {
 }
 
 // send get request for both URLs, fill map
+func (d *ACSData) Get(ctx context.Context, src string, isURL bool) error {
+	data := ACSObj{}
+	urls := buildACSUrls()
+	for _, url := range []string{urls.Mo, urls.Il} {
+		fmt.Println(url)
+		resp, err := get.Get(get.NewGetRequest(ctx, url, true, 1, 3))
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		var rows [][]string
+		if err := json.NewDecoder(resp.Body).Decode(&rows); err != nil {
+			return err
+		}
+
+		for _, row := range rows[1:] {
+			gid := row[0]
+			data[gid] = map[string]string{}
+			for i, d := range row {
+				data[gid][rows[0][i]] = d
+			}
+		}
+	}
+	d.Labels = buildACSHeaders()
+	d.Data = data
+	return nil
+}
+
+// send get request for both URLs, fill map
 func GetACSData(ctx context.Context) (*ACSData, error) {
 	data := ACSObj{}
 	urls := buildACSUrls()

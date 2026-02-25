@@ -69,7 +69,7 @@ func (t *TGRData) Get(ctx context.Context, src string, isURL bool) error {
 	return json.Unmarshal(byts, t)
 }
 
-func NewTigerCounties(serverNum int, useWhere bool) *util.DataSource {
+func NewTigerGeoData(serverNum int, useWhere bool) *util.DataSource {
 	var where string
 	if useWhere {
 		where = TIGER_WHERE

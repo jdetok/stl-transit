@@ -11,9 +11,8 @@ import (
 type DataLayers struct {
 	Outfile        string
 	Counties       *util.DataSource
-	Tracts         *TGRData
-	Railroad       *TGRData
-	ACS            *ACSData
+	Tracts         *util.DataSource
+	ACS            *util.DataSource
 	Bikes          *GeoBikeData
 	TractsPoplDens *GeoTractFeatures
 }
@@ -29,10 +28,9 @@ func (l *DataLayers) DataFromJSONFile() error {
 func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
 	g, ctx := errgroup.WithContext(ctx)
 
-	counties := NewTigerCounties(82, true)
-	tracts := &TGRData{}
-	rails := &TGRData{}
-	acs := &ACSData{}
+	counties := NewTigerGeoData(82, true)
+	tracts := NewTigerGeoData(8, true)
+	acs := util.NewDataSourceFromURL("acs", &ACSData{})
 	bikes := &GeoBikeData{}
 
 	g.Go(func() error {
@@ -43,27 +41,14 @@ func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
 	})
 
 	g.Go(func() error {
-		var err error
-		tracts, err = FetchTigerData(ctx, 8)
-		if err != nil {
+		if err := tracts.Data.Get(ctx, tracts.URL, true); err != nil {
 			return fmt.Errorf("failed to fetch tracts: %w", err)
 		}
 		return nil
 	})
 
 	g.Go(func() error {
-		var err error
-		rails, err = FetchTigerRR(ctx, 9)
-		if err != nil {
-			return fmt.Errorf("failed to fetch railroad: %w", err)
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		var err error
-		acs, err = GetACSData(ctx)
-		if err != nil {
+		if err := acs.Data.Get(ctx, acs.URL, true); err != nil {
 			return fmt.Errorf("failed to get new acs data: %w", err)
 		}
 		return nil
@@ -86,8 +71,7 @@ func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
 		Counties:       counties,
 		Tracts:         tracts,
 		Bikes:          bikes,
-		Railroad:       rails,
 		ACS:            acs,
-		TractsPoplDens: DemographicsForTracts(tracts, acs),
+		TractsPoplDens: DemographicsForTracts(tracts.Data.(*TGRData), acs.Data.(*ACSData)),
 	}, nil
 }
