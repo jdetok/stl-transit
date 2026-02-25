@@ -21,7 +21,7 @@ type AppData interface {
 type DataSource struct {
 	URL   string
 	Fname string
-	Data  AppData
+	Data  AppData `json:"data"`
 }
 
 func NewDataSourceFromURL(url string, data AppData) *DataSource {

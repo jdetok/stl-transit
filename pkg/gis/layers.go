@@ -10,13 +10,12 @@ import (
 
 type DataLayers struct {
 	Outfile        string
-	Counties       *TGRData
+	Counties       *util.DataSource
 	Tracts         *TGRData
 	Railroad       *TGRData
 	ACS            *ACSData
 	Bikes          *GeoBikeData
 	TractsPoplDens *GeoTractFeatures
-	CountiesNew    *util.DataSource
 }
 
 func (l *DataLayers) DataToJSONFile() error {
@@ -30,25 +29,14 @@ func (l *DataLayers) DataFromJSONFile() error {
 func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
 	g, ctx := errgroup.WithContext(ctx)
 
-	countiesNew := NewTigerCounties(82, true)
-
-	counties := &TGRData{}
+	counties := NewTigerCounties(82, true)
 	tracts := &TGRData{}
 	rails := &TGRData{}
 	acs := &ACSData{}
 	bikes := &GeoBikeData{}
 
 	g.Go(func() error {
-		var err error
-		counties, err = FetchTigerData(ctx, 82)
-		if err != nil {
-			return fmt.Errorf("failed to fetch counties: %w", err)
-		}
-		return nil
-	})
-
-	g.Go(func() error {
-		if err := countiesNew.Data.Get(ctx, countiesNew.URL, true); err != nil {
+		if err := counties.Data.Get(ctx, counties.URL, true); err != nil {
 			return fmt.Errorf("failed to fetch counties: %w", err)
 		}
 		return nil
@@ -101,6 +89,5 @@ func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
 		Railroad:       rails,
 		ACS:            acs,
 		TractsPoplDens: DemographicsForTracts(tracts, acs),
-		CountiesNew:    countiesNew,
 	}, nil
 }
