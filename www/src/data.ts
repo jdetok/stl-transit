@@ -229,8 +229,14 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
         { name: "TRACT", alias: "Tract", type: "string" },
         { name: "POPL", alias: "Population", type: "double" },
         { name: "POPLSQMI", alias: "Persons/Square Mile", type: "double" },
-        { name: "INCOME", alias: "Median Income", type: "string" },
-        { name: "AGE", alias: "Median Age", type: "string" },
+        { name: "INCOME", alias: "Median Income", type: "double" },
+        { name: "AGE", alias: "Median Age", type: "double" },
+        { name: "HAS_COMP", alias: "Persons with access to a computer:", type: "double" },
+        { name: "PCT_HAS_COMP", alias: "% with access to a computer:", type: "double" },
+        { name: "MGRENT", alias: "Median Gross Rent", type: "double" },
+        { name: "INC_BELOW_POV", alias: "Persons Below Poverty", type: "double" },
+        { name: "PCT_INC_BELOW_POV", alias: "% Persons Below Poverty", type: "string" },
+        
     ],
     renderer: new ClassBreaksRenderer({
         field: "POPLSQMI",
@@ -241,10 +247,15 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
         content: [{
             type: "fields",
             fieldInfos: [
-                { fieldName: "POPL", label: "Population: " },
-                { fieldName: "POPLSQMI", label: "Persons/Square Mile: " },
-                { fieldName: "INCOME", label: "Median Income Last 12 Months: " },
-                { fieldName: "AGE", label: "Median Age: " },
+                { fieldName: "POPL", label: "Population:" },
+                { fieldName: "POPLSQMI", label: "Persons/Square Mile:" },
+                { fieldName: "AGE", label: "Median Age:" },
+                { fieldName: "INCOME", label: "Median Income Last 12 Months:" },
+                { fieldName: "MGRENT", label: "Median Gross Rent:" },
+                { fieldName: "INC_BELOW_POV", label: "Persons Below Poverty Level:" },
+                { fieldName: "PCT_INC_BELOW_POV", label: "% Persons Below Poverty:" },
+                { fieldName: "HAS_COMP", label: "Persons with access to a computer:" },
+                { fieldName: "PCT_HAS_COMP", label: "% with access to a computer:" },
             ]
         }]
     },
@@ -279,51 +290,3 @@ export const LAYER_CYCLING: FeatureLayerMeta = {
     toGraphics: cyclingToGraphics,
 };
 
-// const railsToGraphics = (data: any): Graphic[] => {
-//     if (!data?.features?.length) {
-//         return [];
-//     }
-
-//     return data.features.map((f: any, i: number) => new Graphic({
-//         geometry: new Polyline({
-//             paths: f.geometry?.paths ?? [],
-//             spatialReference: { wkid: STLWKID },
-//         }),
-//         attributes: {
-//             ObjectID: i + 1,
-//             NAME: f.attributes?.NAME ?? "",
-//             BASENAME: f.attributes?.BASENAME ?? "",
-//         },
-//     }));
-// };
-
-// export const LAYER_RAILS: FeatureLayerMeta = {
-//     title: LAYER_RAILS_TTL,
-//     dataUrl: LAYER_RAILS_URL,
-//     geometryType: "polyline",
-//     fields: [
-//         { name: "ObjectID", alias: "ObjectID", type: "oid" },
-//         { name: "NAME", alias: "Name", type: "string" },
-//         { name: "BASENAME", alias: "Railroad", type: "string" },
-//         { name: "MTFCC", alias: "MTFCC", type: "string" },
-//     ],
-//     popupTemplate: {
-//         title: "{NAME}",
-//         content: [{
-//             type: "fields",
-//             fieldInfos: [
-//                 { fieldName: "BASENAME", label: "Railroad" },
-//                 { fieldName: "MTFCC", label: "Code" },
-//             ],
-//         }],
-//     },
-//     renderer: new SimpleRenderer({
-//         symbol: new SimpleLineSymbol({
-//             width: LAYER_RAIL_SIZE,
-//             style: "solid",
-//             color: LAYER_RAIL_COLOR,
-//         }),
-//     }),
-    
-//     toGraphics: railsToGraphics,
-// };

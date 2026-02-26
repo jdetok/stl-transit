@@ -29,13 +29,18 @@ func DemographicsForTracts(geo *TGRData, acs *ACSData) *GeoTractFeatures {
 		feats.Features = append(feats.Features, GeoPoplFeature{
 			Geometry: f.Geometry,
 			Attributes: map[string]any{
-				"GEOID":    f.Attributes.GEOID,
-				"TRACT":    f.Attributes.TRACT,
-				"AREALAND": area,
-				"POPL":     popl,
-				"POPLSQMI": getPoplDensity(area, popl),
-				"INCOME":   acsObj["B06011_001E"],
-				"AGE":      acsObj["B01002_001E"],
+				"GEOID":             f.Attributes.GEOID,
+				"TRACT":             f.Attributes.TRACT,
+				"AREALAND":          area,
+				"POPL":              popl,
+				"POPLSQMI":          getPoplDensity(area, popl),
+				"INCOME":            acsObj["B06011_001E"],
+				"AGE":               acsObj["B01002_001E"],
+				"MGRENT":            acsObj["B25064_001E"],
+				"INC_BELOW_POV":     acsObj["B17001_002E"],
+				"HAS_COMP":          acsObj["B28008_002E"],
+				"PCT_HAS_COMP":      divideStringInts(acsObj["B28008_002E"], acsObj["B01003_001E"]),
+				"PCT_INC_BELOW_POV": divideStringInts(acsObj["B17001_002E"], acsObj["B01003_001E"]),
 			},
 		})
 	}
@@ -48,6 +53,15 @@ func getPoplDensity(area string, popl float64) float64 {
 	sqMeters, _ := strconv.ParseFloat(area, 64)
 	sqMi := sqMeters / float64(metersToMiles)
 	return math.Round((popl/sqMi)*100) / 100
+}
+
+func divideStringInts(s1, s2 string) float64 {
+	f1, _ := strconv.ParseFloat(s1, 64)
+	f2, _ := strconv.ParseFloat(s2, 64)
+	if f2 == 0 {
+		return 0
+	}
+	return math.Round((f1/f2)*10000) / 100
 }
 
 type GeoAttrs map[string]any

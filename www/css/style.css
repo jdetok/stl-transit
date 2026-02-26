@@ -13,24 +13,30 @@ html, body {
 }
 
 body {
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    gap: .5rem;
-    margin-top: .1rem;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+
 }
 
 body > * {
     min-width: 0;
     max-width: 98%; /* allows to resize smaller */
+    min-height: 0;
 }
 
 #map {
     margin: 0 auto;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
     margin-left: var(--map-margin);
     margin-right: var(--map-margin);
     border: 8px solid black;
     border-radius: 2rem;
 }
 #map > * {
+    height: 100%;
+    width: 100%;
     border-radius: 1.5rem;
 }

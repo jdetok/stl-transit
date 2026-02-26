@@ -138,12 +138,13 @@ const STYLE = `
 :host {
     --popup-bdr: 2px solid black;
     --popup-bdrrad: .5rem;
-    --popup-bg: rgba(125, 140, 151, 0.61);
+    --popup-bg: rgba(125, 140, 151, 0.82);
     /*--popup-bg: rgba(192, 201, 209, 0.85);*/
     position: relative;
     overflow: hidden;
     display: block;
     width: 100%;
+    min-height: 0;
     height: 100%;
     --calcite-color-brand: var(--popup-bg);
     --calcite-popover-background-color: var(--popup-bg);
@@ -153,7 +154,7 @@ const STYLE = `
 
 .esri-component * {
     pointer-events: auto;
-    text-align: left;
+    /*text-align: left;*/
 }
 
 .esri-widget--button {
@@ -170,12 +171,17 @@ const STYLE = `
 .esri-ui-bottom-right { bottom: 15px; right: 15px;  }
 
 .esri-popup {
+    text-align: right;
     background-color: var(--popup-bg);
     margin: 0 auto;
     width: fit-content;
     max-width: 400px;
     padding: .5rem;
     border-radius: var(--popup-bdrrad);
+}
+
+.esri-feature-fields__field-data {
+    text-align: left;
 }
 
 /* force legend padding */
