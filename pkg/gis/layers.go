@@ -14,6 +14,7 @@ type DataLayers struct {
 	Tracts         *util.DataSource
 	ACS            *util.DataSource
 	Bikes          *util.DataSource
+	Metro          *util.DataSource
 	TractsPoplDens *GeoTractFeatures
 }
 
@@ -26,13 +27,21 @@ func (l *DataLayers) DataFromJSONFile() error {
 
 // Builds, aggregates, and joins all data to be served as data layers
 func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
+
 	g, ctx := errgroup.WithContext(ctx)
 
 	counties := NewTigerGeoData(82, true)
 	tracts := NewTigerGeoData(8, true)
-	acs := util.NewDataSourceFromURL("acs", &ACSData{})
-	bikes := util.NewDataSourceFromFile(CYCLE_FILE, &GeoBikeData{})
-	// bikes := &GeoBikeData{}
+	acs := util.NewDataSourceFromURL("acs", "acs", &ACSData{})
+	bikes := util.NewDataSourceFromFile(CYCLE_FILE, "bikes", &GeoBikeData{})
+	stops := util.NewDataSourceFromURL("stops", "stops", &StopMarkers{})
+
+	g.Go(func() error {
+		if err := stops.Data.Get(ctx, stops.URL, true); err != nil {
+			return fmt.Errorf("failed to fetch metro stops: %w", err)
+		}
+		return nil
+	})
 
 	g.Go(func() error {
 		if err := counties.Data.Get(ctx, counties.URL, true); err != nil {
@@ -55,8 +64,6 @@ func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
 		return nil
 	})
 	g.Go(func() error {
-		// var err error
-		// bikes, err = LoadBikePathFile(CYCLE_FILE)
 		if err := bikes.Data.Get(ctx, bikes.Fname, false); err != nil {
 			return fmt.Errorf("failed to fetch bikes: %w", err)
 		}
@@ -73,6 +80,7 @@ func GetDataLayers(ctx context.Context, fname string) (*DataLayers, error) {
 		Tracts:         tracts,
 		Bikes:          bikes,
 		ACS:            acs,
+		Metro:          stops,
 		TractsPoplDens: DemographicsForTracts(tracts.Data.(*TGRData), acs.Data.(*ACSData)),
 	}, nil
 }

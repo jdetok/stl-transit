@@ -7,19 +7,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/jamespfennell/gtfs"
 	"github.com/jdetok/stlmetromap/pkg/gis"
 	"github.com/jdetok/stlmetromap/pkg/util"
 )
 
 const (
-	GET_DATA   = true
-	SAVE_DATA  = true
+	GET_DATA   = false
+	SAVE_DATA  = false
 	DATA_FILE  = "data/persist.json"
 	CYCLE_FILE = "data/cycle_osm.geojson"
 )
 
-func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarkers) error {
+func SetupServer(ctx context.Context) error {
 	var err error
 	layers := &gis.DataLayers{Outfile: DATA_FILE}
 
@@ -51,23 +50,20 @@ func SetupServer(ctx context.Context, static *gtfs.Static, stops *gis.StopMarker
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(layers.TractsPoplDens)
 	})
+
 	http.HandleFunc("/stops", func(w http.ResponseWriter, r *http.Request) {
-		HandleMetroStops(w, r, &gis.StopMarkers{Stops: stops.Stops})
+		HandleMetroStops(w, r, &gis.StopMarkers{Stops: layers.Metro.Data.(*gis.StopMarkers).Stops})
 	})
 	http.HandleFunc("/stops/bus", func(w http.ResponseWriter, r *http.Request) {
-		HandleMetroStops(w, r, &gis.StopMarkers{Stops: stops.BusStops})
+		HandleMetroStops(w, r, &gis.StopMarkers{Stops: layers.Metro.Data.(*gis.StopMarkers).BusStops})
 	})
 	http.HandleFunc("/stops/ml", func(w http.ResponseWriter, r *http.Request) {
-		HandleMetroStops(w, r, &gis.StopMarkers{Stops: stops.MlStops})
+		HandleMetroStops(w, r, &gis.StopMarkers{Stops: layers.Metro.Data.(*gis.StopMarkers).MlStops})
 	})
 	http.HandleFunc("/bikes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(layers.Bikes.Data)
 	})
-	// http.HandleFunc("/rails", func(w http.ResponseWriter, r *http.Request) {
-	// 	w.Header().Set("Content-Type", "application/json")
-	// 	json.NewEncoder(w).Encode(layers.Railroad)
-	// })
 	http.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "www/about.html")
 	})

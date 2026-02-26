@@ -76,7 +76,7 @@ func NewTigerGeoData(serverNum int, useWhere bool) *util.DataSource {
 		where = "1=1"
 	}
 
-	return util.NewDataSourceFromURL(buildTigerURL(TIGER, where, serverNum), &TGRData{})
+	return util.NewDataSourceFromURL(buildTigerURL(TIGER, where, serverNum), "tgr", &TGRData{})
 }
 
 func buildTigerURL(base, where string, serverNum int) string {

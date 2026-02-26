@@ -10,21 +10,22 @@ import (
 )
 
 type AppData interface {
-	Get(ctx context.Context, src string, isFile bool) error
+	Get(ctx context.Context, src string, isURL bool) error
 }
 
 type DataSource struct {
-	URL   string
-	Fname string
-	Data  AppData `json:"data"`
+	Kind  string  `json:"kind"`
+	URL   string  `json:"url,omitempty"`
+	Fname string  `json:"fname,omitempty"`
+	Data  AppData `json:"-"`
 }
 
-func NewDataSourceFromURL(url string, data AppData) *DataSource {
-	return &DataSource{URL: url, Data: data}
+func NewDataSourceFromURL(url, kind string, data AppData) *DataSource {
+	return &DataSource{URL: url, Kind: kind, Data: data}
 }
 
-func NewDataSourceFromFile(fname string, data AppData) *DataSource {
-	return &DataSource{Fname: fname, Data: data}
+func NewDataSourceFromFile(fname, kind string, data AppData) *DataSource {
+	return &DataSource{Fname: fname, Kind: kind, Data: data}
 }
 
 func (d *DataSource) GetDataSource(ctx context.Context) error {
@@ -49,4 +50,65 @@ func (d *DataSource) ReadDataSource(ctx context.Context) error {
 		return fmt.Errorf("failed to unmarshal data from %s: %v", d.Fname, err)
 	}
 	return nil
+}
+
+var appDataRegistry = map[string]func() AppData{}
+
+func RegisterAppData(kind string, ctor func() AppData) {
+	appDataRegistry[kind] = ctor
+}
+
+func (d *DataSource) MarshalJSON() ([]byte, error) {
+	type Alias DataSource
+	var raw json.RawMessage
+	if d.Data != nil {
+		b, err := json.Marshal(d.Data)
+		if err != nil {
+			return nil, err
+		}
+		raw = b
+	}
+	return json.Marshal(&struct {
+		*Alias
+		DataLwr json.RawMessage `json:"data"`
+		Data    json.RawMessage `json:"Data"`
+	}{
+		Alias: (*Alias)(d),
+		Data:  raw,
+	})
+}
+func (d *DataSource) UnmarshalJSON(b []byte) error {
+	type Alias DataSource
+
+	aux := &struct {
+		*Alias
+		DataLwr json.RawMessage `json:"data"`
+		Data    json.RawMessage `json:"Data"`
+	}{
+		Alias: (*Alias)(d),
+	}
+	if err := json.Unmarshal(b, aux); err != nil {
+		return err
+	}
+
+	raw := aux.Data
+	if len(raw) == 0 {
+		raw = aux.DataLwr
+	}
+
+	if d.Kind == "" {
+		return fmt.Errorf("unknown datasource kind")
+	}
+
+	ctor, ok := appDataRegistry[d.Kind]
+	if !ok {
+		return fmt.Errorf("unknown datasource kind: %q", d.Kind)
+	}
+
+	d.Data = ctor()
+
+	if len(raw) == 0 {
+		return nil
+	}
+	return json.Unmarshal(raw, d.Data)
 }

@@ -3,9 +3,18 @@ package gis
 import (
 	"math"
 	"strconv"
+
+	"github.com/jdetok/stlmetromap/pkg/util"
 )
 
 const CYCLE_FILE = "data/cycle_osm.geojson"
+
+func init() {
+	util.RegisterAppData("acs", func() util.AppData { return &ACSData{} })
+	util.RegisterAppData("tgr", func() util.AppData { return &TGRData{} })
+	util.RegisterAppData("stops", func() util.AppData { return &StopMarkers{} })
+	util.RegisterAppData("bikes", func() util.AppData { return &GeoBikeData{} })
+}
 
 // Combine geographic data from TIGER with census data from ACS
 func DemographicsForTracts(geo *TGRData, acs *ACSData) *GeoTractFeatures {
@@ -13,7 +22,7 @@ func DemographicsForTracts(geo *TGRData, acs *ACSData) *GeoTractFeatures {
 	for i := range geo.Features {
 		f := geo.Features[i]
 
-		// ACS appends the US code for the GEOID, TIGER does not
+		// ACS appends the US code= for the GEOID, TIGER does not
 		acsObj := acs.Data["1400000US"+f.Attributes.GEOID]
 		popl, _ := strconv.ParseFloat(acsObj["B01003_001E"], 64)
 		area := f.Attributes.AREALAND

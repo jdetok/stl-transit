@@ -19,9 +19,9 @@ const (
 
 // slice of cleaned/transformed stops, returned to client from /stops endpoint
 type StopMarkers struct {
-	Stops []StopMarker `json:"stops"`
+	Stops    []StopMarker `json:"stops"`
 	BusStops []StopMarker `json:"busStops"`
-	MlStops []StopMarker `json:"mlStops"`
+	MlStops  []StopMarker `json:"mlStops"`
 }
 
 type BusStopMarkers struct {
@@ -52,6 +52,17 @@ type Coordiantes struct {
 }
 
 type Routes map[*gtfs.Stop]map[*gtfs.Route]struct{}
+
+func (d *StopMarkers) Get(ctx context.Context, src string, isURL bool) error {
+	st, err := GetMetroStaticGTFS(ctx)
+	if err != nil {
+		return err
+	}
+	rts := MapRoutesToStops(st)
+	stops := rts.BuildStops()
+	*d = *stops
+	return nil
+}
 
 func GetMetroStaticGTFS(ctx context.Context) (*gtfs.Static, error) {
 	resp, err := get.Get(get.NewGetRequest(ctx, METRO_STATIC_URL, DOTIMEOUT, TIMEOUT, ATTEMPTS))
@@ -145,8 +156,8 @@ func (r Routes) BuildStops() *StopMarkers {
 		}
 	}
 	return &StopMarkers{
-		Stops: stops,
+		Stops:    stops,
 		BusStops: busStops,
-		MlStops: mlStops,
+		MlStops:  mlStops,
 	}
 }
