@@ -31,6 +31,7 @@ func DemographicsForTracts(geo *TGRData, acs *ACSData) *GeoTractFeatures {
 			Attributes: map[string]any{
 				"GEOID":             f.Attributes.GEOID,
 				"TRACT":             f.Attributes.TRACT,
+				"COUNTY":            f.Attributes.COUNTY,
 				"AREALAND":          area,
 				"POPL":              popl,
 				"POPLSQMI":          getPoplDensity(area, popl),
@@ -49,9 +50,9 @@ func DemographicsForTracts(geo *TGRData, acs *ACSData) *GeoTractFeatures {
 
 // Pass an area and population, get persons/square mile
 func getPoplDensity(area string, popl float64) float64 {
-	metersToMiles := 2589988
+	var metersToMiles float64 = 2589988
 	sqMeters, _ := strconv.ParseFloat(area, 64)
-	sqMi := sqMeters / float64(metersToMiles)
+	sqMi := sqMeters / metersToMiles
 	return math.Round((popl/sqMi)*100) / 100
 }
 
@@ -61,7 +62,7 @@ func divideStringInts(s1, s2 string) float64 {
 	if f2 == 0 {
 		return 0
 	}
-	return math.Round((f1/f2)*10000) / 100
+	return math.Round(f1/f2*10000) / 100
 }
 
 type GeoAttrs map[string]any

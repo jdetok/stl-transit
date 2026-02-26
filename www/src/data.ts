@@ -225,6 +225,7 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     dataUrl: TRACTS_LAYER_URL,
     geometryType: "polygon",
     fields: [
+        { name: "COUNTY", alias: "County", type: "string" },
         { name: "GEOID", alias: "GEOID", type: "string" },
         { name: "TRACT", alias: "Tract", type: "string" },
         { name: "POPL", alias: "Population", type: "double" },
@@ -247,6 +248,7 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
         content: [{
             type: "fields",
             fieldInfos: [
+                { fieldName: "COUNTY", label: "County:" },
                 { fieldName: "POPL", label: "Population:" },
                 { fieldName: "POPLSQMI", label: "Persons/Square Mile:" },
                 { fieldName: "AGE", label: "Median Age:" },
