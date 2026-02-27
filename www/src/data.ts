@@ -1,13 +1,4 @@
-import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
-import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
-import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
-import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
-import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
-import Point from "@arcgis/core/geometry/Point";
-import Polyline from "@arcgis/core/geometry/Polyline";
-import Graphic from "@arcgis/core/Graphic";
-import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
-import { FeatureLayerMeta, StopMarkers, StopMarker, RouteType, cplethEls } from './types.js'
+import { RouteType, cplethEls } from './types.js'
 
 export const BASEMAP = 'dark-gray';
 export const STLWKID = 4326;
@@ -19,57 +10,50 @@ export const STLCOORDS = {
 };
 
 // TRACTCS LAYER
-const TRACTS_LAYER_TTL = "Census Tract Population Density";
-const TRACTS_LAYER_URL = "/tracts";
-// CENSUS TRACTS/POPULATION DENSITY LAYER
-// tuples of min, max, 3 digit rgb. builder func addss the POPLDENS_APLHA value for rgba to each
-const POPLDENS_ALPHA = 0.15;
-const POPLDENS_CHOROPLETH_LEVELS: cplethEls[] = [
+export const TRACTS_LAYER_TTL = "Census Tract Population Density";
+export const TRACTS_LAYER_URL = "/tracts";
+export const POPLDENS_ALPHA = 0.15;
+export const POPLDENS_CHOROPLETH_LEVELS: cplethEls[] = [
     [0, 2500, [94, 150, 98]],
     [2500, 5000, [17, 200, 152]],
     [5000, 7500, [0, 210, 255]],
     [7500, 10000, [44, 60, 255]],
     [10000, 99999, [50, 1, 63]],
 ];
-
-// COUNTIES LAYER
-const COUNTIES_LAYER_TTL = "St. Louis MSA Counties";
-const COUNTIES_LAYER_URL = "/counties";
-const COUNTIES_OUTLINE_COLOR = [250, 250, 250, 0.5];
-const COUNTIES_OUTLINE_SIZE = 1.5;
-const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
-
-// BUS STOPS LAYER
-const BUS_LAYER_TTL = "MetroBus Stops";
-const BUS_LAYER_URL = "/stops/bus";
-const BUS_STOP_A_COLOR = 'mediumseagreen';
-const BUS_STOP_NA_COLOR = [180, 110, 200, 0.7];
-const BUS_STOP_SIZE = 4;
-
-// METRO STOP LAYER
-const ML_LAYER_TTL = "MetroLink Stops";
-const ML_LAYER_URL = "/stops/ml";
-const ML_STOP_SIZE = 10;
-const MLB_STOP_COLOR = 'blue';
-const MLR_STOP_COLOR = 'red';
-const MLC_STOP_COLOR = 'purple';
-
-// CYCLE LAYER
-const CYCLE_LAYER_TTL = "Cycling Paths";
-const CYCLE_LAYER_URL = "/bikes";
-const CYCLE_LAYER_COLOR = [208, 148, 75, 0.7];
-const CYCLE_LAYER_SIZE = .8;
-
-// Labels used in bus/metro stop popups
-const BUS = 'Bus';
-const ML = 'Light Rail';
-const routeTypes: Record<RouteType, string> = {
+export const COUNTIES_LAYER_TTL = "St. Louis MSA Counties";
+export const COUNTIES_LAYER_URL = "/counties";
+export const COUNTIES_OUTLINE_COLOR = [250, 250, 250, 0.5];
+export const COUNTIES_OUTLINE_SIZE = 1.5;
+export const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
+export const BUS_LAYER_TTL = "MetroBus Stops";
+export const BUS_LAYER_URL = "/stops/bus";
+export const BUS_STOP_A_COLOR = 'mediumseagreen';
+export const BUS_STOP_NA_COLOR = [180, 110, 200, 0.7];
+export const BUS_STOP_SIZE = 4;
+export const ML_LAYER_TTL = "MetroLink Stops";
+export const ML_LAYER_URL = "/stops/ml";
+export const ML_STOP_SIZE = 10;
+export const MLB_STOP_COLOR = 'blue';
+export const MLR_STOP_COLOR = 'red';
+export const MLC_STOP_COLOR = 'purple';
+export const CYCLE_LAYER_TTL = "Bicycle/Walking Paths";
+export const CYCLE_LAYER_URL = "/bikes";
+export const CYCLE_LAYER_GRAVEL_COLOR = [82, 41, 56, 0.7];
+export const CYCLE_LAYER_PAVED_COLOR = [208, 75, 75, 0.7];
+export const CYCLE_LAYER_ASPHALT_COLOR = [208, 148, 75, 0.7];
+export const CYCLE_LAYER_CONCRETE_COLOR = [204, 198, 234, 0.7];
+export const CYCLE_LAYER_OTHER_COLOR = [75, 108, 208, 0.7];
+export const CYCLE_LAYER_UNPAVED_COLOR = [158, 145, 125, 0.7];
+export const CYCLE_LAYER_SIZE = .8;
+export const BUS = 'Bus';
+export const ML = 'Light Rail';
+export const routeTypes: Record<RouteType, string> = {
     bus: BUS,
     mlr: ML,
     mlb: ML,
     mlc: ML
 };
-const STOP_FIELDS: __esri.FieldProperties[] = [
+export const STOP_FIELDS: __esri.FieldProperties[] = [
     { name: "ObjectID", alias: "ObjectID", type: "oid" },
     { name: "id", alias: "ID", type: "string" },
     { name: "name", alias: "Name", type: "string" },
@@ -80,146 +64,7 @@ const STOP_FIELDS: __esri.FieldProperties[] = [
     { name: "whlChr", alias: "Wheelchair Accessible", type: "string" },
 ];
 
-// create choropleth levels for the array of min/max/color
-const newChoroplethLevel = (c: cplethEls) => {
-        return { minValue: c[0], maxValue: c[1], symbol: new SimpleFillSymbol({ color: [...c[2], POPLDENS_ALPHA] })};
-}
-const makeChoroplethLevels = (levels: cplethEls[]): __esri.ClassBreakInfoProperties[] => {
-    let lvls: __esri.ClassBreakInfoProperties[] = [];
-    for (const l of levels) {
-        lvls.push(newChoroplethLevel(l))
-    }
-    return lvls;
-}
-
-// create and return an array of graphics from passed bus/metro stop locations
-const stopsToGraphics = (data: StopMarkers): Graphic[] => {
-    return data.stops.map((s: StopMarker, i: number) => new Graphic({
-        geometry: new Point({
-            latitude: s.yx.latitude,
-            longitude: s.yx.longitude,
-            spatialReference: { wkid: STLWKID },
-        }),
-        attributes: {
-            ObjectID: i + 1,
-            id: s.id,
-            name: s.name,
-            type: routeTypes[s.typ],
-            typ: s.typ,
-            routes: s.routes.map(r => `${r.name}-${r.nameLong}`).join(", "),
-            tractGeoid: s.tractGeoid,
-            whlChr: s.whlChr,
-        }
-    }));
-};
-// build cycling lines graphics lines
-const cyclingToGraphics = (data: any): Graphic[] => {
-    // return data.features.filter((f: any) => f?.properties?.name).map((f: any, i: number) => new Graphic({
-    return data.features.map((f: any, i: number) => new Graphic({
-        geometry: new Polyline({
-            paths: [f.geometry.coordinates], // wrap once
-            spatialReference: { wkid: STLWKID },
-        }),
-        attributes: {
-            ObjectID: i + 1,
-            name: f.properties.name ?? 'Non-named Cycling Path',
-            surface: f.properties.surface ?? '',
-        },
-    }));
-};
-
-// LAYERS DEFINED HERE: TO ADD NEW LAYER, CREATE A CONFIG HERE AND ADD IT TO THE ARRAY IN map-window.ts
-export const LAYER_BUS_STOPS: FeatureLayerMeta = {
-    title: BUS_LAYER_TTL,
-    dataUrl: BUS_LAYER_URL,
-    geometryType: "point",
-    fields: STOP_FIELDS,
-    renderer: new UniqueValueRenderer({
-        field: "whlChr",
-        uniqueValueInfos: [{
-            value: "POSSIBLE",
-            symbol: new SimpleMarkerSymbol({
-                style: 'circle',
-                color: BUS_STOP_A_COLOR,
-                size: BUS_STOP_SIZE
-            }),
-            label: "Wheelchair Accessible",
-        }, {
-            value: "NOT_POSSIBLE",
-            symbol: new SimpleMarkerSymbol({
-                style: 'circle',
-                color: BUS_STOP_NA_COLOR,
-                size: BUS_STOP_SIZE
-            }),
-            label: "Not Wheelchair Accessible",
-        }],
-    }),
-    popupTemplate: {
-        title: "{type} Stop: {name}",
-        content: [
-            {
-                type: "fields",
-                fieldInfos: [
-                    { fieldName: "routes", label: "Routes Served:" },
-                    { fieldName: "tractGeoid", label: "Tract GeoID:" },
-                ],
-            }
-        ]
-    },
-    toGraphics: stopsToGraphics,
-}
-
-export const LAYER_ML_STOPS: FeatureLayerMeta = {
-    title: ML_LAYER_TTL,
-    dataUrl: ML_LAYER_URL,
-    geometryType: "point",
-    fields: STOP_FIELDS,
-    renderer: new UniqueValueRenderer({
-        field: "typ",
-        uniqueValueInfos: [
-            {
-                value: "mlr",
-                label: "Red Line",
-                symbol: new SimpleMarkerSymbol({
-                    style: "circle",
-                    color: MLR_STOP_COLOR,
-                    size: ML_STOP_SIZE,
-                }),
-            }, {
-                value: "mlb",
-                label: "Blue Line",
-                symbol: new SimpleMarkerSymbol({
-                    style: "circle",
-                    color: MLB_STOP_COLOR,
-                    size: ML_STOP_SIZE,
-                }),
-            }, {
-                value: "mlc",
-                label: "Blue/Red Lines",
-                symbol: new SimpleMarkerSymbol({
-                    style: "circle",
-                    color: MLC_STOP_COLOR,
-                    size: ML_STOP_SIZE,
-                }),
-            },
-        ],
-    }),
-    popupTemplate: {
-        title: "{type} Stop: {name}",
-        content: [
-            {
-                type: "fields",
-                fieldInfos: [
-                    { fieldName: "routes", label: "Routes Served:" },
-                    { fieldName: "tractGeoid", label: "Tract GeoID:" },
-                ]
-            }
-        ]
-    },
-    toGraphics: stopsToGraphics,
-}
-
-const TRACTS_FIELDS = [
+export const TRACTS_FIELDS = [
     { name: "GEOID", alias: "GEOID", type: "string" },
     { name: "TRACT", alias: "Tract", type: "string" },
     { name: "POPL", alias: "Population", type: "double" },
@@ -235,7 +80,7 @@ const TRACTS_FIELDS = [
     { name: "BUS_STOPS_IN_TRACT", alias: "Bus Stops in Area", type: "double" },
     { name: "ML_STOPS_IN_TRACT", alias: "Light Rail Stops in Area", type: "double" },
 ];
-const TRACTS_FIELDINFOS = [
+export const TRACTS_FIELDINFOS = [
     { fieldName: "POPL", label: "Population:" },
     { fieldName: "POPLSQMI", label: "Persons/Square Mile:" },
     { fieldName: "AGE", label: "Median Age:" },
@@ -250,89 +95,23 @@ const TRACTS_FIELDINFOS = [
     { fieldName: "ML_STOPS_IN_TRACT", label: "Light Rail Stops in Tract" },
 ];
 
-const COUNTIES_FIELDS = [
+export const COUNTIES_FIELDS = [
     { name: "NAME", alias: "Name", type: "string" },
     { name: "COUNTY", alias: "County", type: "string" },
     { name: "STOPS_IN_TRACT", alias: "Transit Stops in Area", type: "double" },
     { name: "BUS_STOPS_IN_TRACT", alias: "Bus Stops in Area", type: "double" },
     { name: "ML_STOPS_IN_TRACT", alias: "Light Rail Stops in Area", type: "double" },
 ];
-const COUNTIES_FIELDINFOS = [
+export const COUNTIES_FIELDINFOS = [
     { fieldName: "COUNTY", label: "County:" },
     { fieldName: "STOPS_IN_TRACT", label: "Transit Stops in County" },
     { fieldName: "BUS_STOPS_IN_TRACT", label: "Bus Stops in County" },
     { fieldName: "ML_STOPS_IN_TRACT", label: "Light Rail Stops in County" },
 ];
 
-export const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
-    title: COUNTIES_LAYER_TTL,
-    dataUrl: COUNTIES_LAYER_URL, 
-    geometryType: "polygon",
-    fields: COUNTIES_FIELDS as __esri.FieldProperties[],
-    renderer: new SimpleRenderer({
-        symbol: new SimpleFillSymbol({
-            color: COUNTIES_INNER_COLOR,
-            outline: new SimpleLineSymbol({
-                color: COUNTIES_OUTLINE_COLOR,
-                width: COUNTIES_OUTLINE_SIZE,
-                style: "solid"
-            })
-        })
-    }),
-    popupTemplate: {
-        title: "{NAME}",
-        content: [{
-            type: "fields",
-            fieldInfos: COUNTIES_FIELDINFOS,
-        }],
-    },
-};
-
-
-export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
-    title: TRACTS_LAYER_TTL,
-    dataUrl: TRACTS_LAYER_URL,
-    geometryType: "polygon",
-    fields: TRACTS_FIELDS as __esri.FieldProperties[],
-    renderer: new ClassBreaksRenderer({
-        field: "POPLSQMI",
-        classBreakInfos: makeChoroplethLevels(POPLDENS_CHOROPLETH_LEVELS),
-    }),
-    popupTemplate: {
-        title: "Census Tract {TRACT}",
-        content: [{
-            type: "fields",
-            fieldInfos: TRACTS_FIELDINFOS,
-        }]
-    },
-};
-
-export const LAYER_CYCLING: FeatureLayerMeta = {
-    title: CYCLE_LAYER_TTL,
-    dataUrl: CYCLE_LAYER_URL,
-    geometryType: "polyline",
-    fields: [
-        { name: "ObjectID", alias: "ObjectID", type: "oid" },
-        { name: "name", alias: "Name", type: "string" },
-        { name: "highway", alias: "Highway", type: "string" },
-        { name: "surface", alias: "Surface", type: "string" },
-    ],
-    renderer: new SimpleRenderer({
-        symbol: new SimpleLineSymbol({
-            width: CYCLE_LAYER_SIZE,
-            style: "solid",
-            color: CYCLE_LAYER_COLOR,
-        }),
-    }),
-    popupTemplate: {
-        title: "{name}",
-        content: [{
-            type: "fields",
-            fieldInfos: [
-                { fieldName: "surface", label: "Surface: " },
-            ],
-        }],
-    },
-    toGraphics: cyclingToGraphics,
-};
-
+export const CYCLING_FIELDS = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "highway", alias: "Highway", type: "string" },
+    { name: "surface", alias: "Surface", type: "string" },
+];

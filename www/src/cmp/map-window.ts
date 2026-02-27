@@ -7,25 +7,32 @@ import LayerList from "@arcgis/core/widgets/LayerList";
 import Expand from "@arcgis/core/widgets/Expand";
 import Legend from "@arcgis/core/widgets/Legend";
 import { FeatureLayerMeta } from "../types.js";
+import { STLCOORDS, STLWKID, BASEMAP } from "../data.js";
 import {
-    STLCOORDS, STLWKID, BASEMAP, LAYER_BUS_STOPS, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS,
+    LAYER_BUS_STOPS,
+    LAYER_ML_STOPS,
+    LAYER_CENSUS_COUNTIES,
+    LAYER_CENSUS_TRACTS,
     LAYER_CYCLING,
-} from "../data.js";
-
-export const TAG = 'map-window';
+} from "../layers.js";
+export const TAG = "map-window";
 
 type mapCoords = {
+    xmin: number;
+    ymin: number;
+    xmax: number;
+    ymax: number;
+    spatialReference: { wkid: number };
+};
+
+export function newMapCoords(
     xmin: number,
     ymin: number,
     xmax: number,
     ymax: number,
-    spatialReference: { wkid: number }
-}
-
-export function newMapCoords(
-    xmin: number, ymin: number, xmax: number, ymax: number, wkid: number
+    wkid: number,
 ): mapCoords {
-    return { xmin, ymin, xmax, ymax, spatialReference: { wkid } }
+    return { xmin, ymin, xmax, ymax, spatialReference: { wkid } };
 }
 
 export class MapWindow extends HTMLElement {
@@ -42,12 +49,18 @@ export class MapWindow extends HTMLElement {
         const root = this.attachShadow({ mode: "open" });
         this.div = Object.assign(document.createElement("div"), { style: "min-height: 100%;" });
 
-        this.coords = newMapCoords(STLCOORDS.xmin, STLCOORDS.ymin, STLCOORDS.xmax, STLCOORDS.ymax, STLWKID);
+        this.coords = newMapCoords(
+            STLCOORDS.xmin,
+            STLCOORDS.ymin,
+            STLCOORDS.xmax,
+            STLCOORDS.ymax,
+            STLWKID,
+        );
 
         this.map = new Map({
-            basemap: BASEMAP
+            basemap: BASEMAP,
         });
-        
+
         this.view = new MapView({
             container: this.div,
             map: this.map,
@@ -55,8 +68,8 @@ export class MapWindow extends HTMLElement {
             popupEnabled: true,
             popup: {
                 dockEnabled: false,
-                dockOptions: { buttonEnabled: false }
-            }
+                dockOptions: { buttonEnabled: false },
+            },
         });
 
         // order matters
@@ -70,18 +83,21 @@ export class MapWindow extends HTMLElement {
 
         this.legend = this.addLegend();
 
-        this.view.when(async () => { // ADD LAYERS TO MAP VIEW
-            for (let i = 0; i < this.layers.length; i++) {
-                this.map.add(await this.makeFeatureLayer(this.layers[i]), i);
-            }
+        this.view.when(
+            async () => {
+                // ADD LAYERS TO MAP VIEW
+                for (let i = 0; i < this.layers.length; i++) {
+                    this.map.add(await this.makeFeatureLayer(this.layers[i]), i);
+                }
 
-            // add UI buttons/popups
-            this.view.ui.add(this.addLayerList(), 'bottom-left');
-            this.view.ui.add(this.legend, 'bottom-right')
+                // add UI buttons/popups
+                this.view.ui.add(this.addLayerList(), "bottom-left");
+                this.view.ui.add(this.legend, "bottom-right");
 
-            this.watchSizeForLegendCollapse();
-
-        }, (e: Error) => console.error("failed to build or display map:", e))
+                this.watchSizeForLegendCollapse();
+            },
+            (e: Error) => console.error("failed to build or display map:", e),
+        );
 
         root.append(this.addStyling(), this.div);
     }
@@ -96,7 +112,7 @@ export class MapWindow extends HTMLElement {
         }
     }
     private addStyling(): HTMLStyleElement {
-        return Object.assign(document.createElement('style'), { textContent: STYLE });
+        return Object.assign(document.createElement("style"), { textContent: STYLE });
     }
     private addLayerList(): Expand {
         return new Expand({
@@ -112,7 +128,7 @@ export class MapWindow extends HTMLElement {
                 view: this.view,
             }),
             expanded: true,
-            mode: 'floating',
+            mode: "floating",
         });
     }
     private watchSizeForLegendCollapse(): void {
@@ -141,16 +157,21 @@ export class MapWindow extends HTMLElement {
                     if (!data?.features?.length) {
                         throw new Error(`layer "${meta.title}" expected data.features[]`);
                     }
-                    meta.source = data.features.map((f: any) => new Graphic({
-                        geometry: new Polygon({
-                            rings: f.geometry.rings,
-                            spatialReference: { wkid: STLWKID }
-                        }),
-                        attributes: f.attributes,
-                    }));
+                    meta.source = data.features.map(
+                        (f: any) =>
+                            new Graphic({
+                                geometry: new Polygon({
+                                    rings: f.geometry.rings,
+                                    spatialReference: { wkid: STLWKID },
+                                }),
+                                attributes: f.attributes,
+                            }),
+                    );
                 }
             }
-        } catch (e) { throw new Error(`no data source for ${meta.title} layer: ${e}`); }
+        } catch (e) {
+            throw new Error(`no data source for ${meta.title} layer: ${e}`);
+        }
         return new FeatureLayer({
             title: meta.title,
             source: meta.source,
@@ -161,7 +182,7 @@ export class MapWindow extends HTMLElement {
             popupTemplate: meta.popupTemplate,
             fields: meta.fields,
         });
-    };
+    }
 }
 const STYLE = `
 :host {
@@ -234,4 +255,4 @@ const STYLE = `
     height: 16px;
     pointer-events: auto;
 }
-`
+`;
