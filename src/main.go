@@ -8,20 +8,19 @@ import (
 	"github.com/jdetok/stlmetromap/pkg/gis"
 	"github.com/jdetok/stlmetromap/pkg/srv"
 	"github.com/joho/godotenv"
-	"go.uber.org/zap"
 )
 
 func main() {
-	zapLog, err := zap.NewDevelopment()
-	defer zapLog.Sync()
+	zapLog, err := buildLogger()
 	if err != nil {
 		fmt.Printf("An error occured configuring the logger: %s\n", err.Error())
 		os.Exit(1)
 	}
+	defer zapLog.Sync()
 
 	a := &app{
 		addr: ":3333",
-		lg:   zapLog.Sugar(),
+		lg:   zapLog,
 	}
 
 	if err := godotenv.Load(); err != nil {
@@ -39,7 +38,7 @@ func main() {
 	}
 	a.layers = layers
 
-	a.lg.Infof("Data layers built: starting HTTP server at %s...", a.addr)
+	a.lg.Infof("finished buildling DataLayers, starting HTTP server at %s...", a.addr)
 
 	mux := srv.NewMux(a.layers)
 	if err := srv.Serve(a.addr, mux); err != nil {

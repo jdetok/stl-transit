@@ -74,15 +74,19 @@ func GetDataLayers(ctx context.Context, fname string, lg *zap.SugaredLogger) (*D
 	g.Go(func() error {
 		var err error
 		attempts := 3
+		var retryAfter time.Duration = 3
 		for i := range attempts {
 			lg.Infof("getting metro stops data: attempt %d/%d", i+1, attempts)
 			if err = stops.Data.Get(ctx, stops.URL, true); err == nil {
 				return nil
 			}
-			if i < attempts-1 {
-				time.Sleep(2 * time.Second)
-			}
 
+			if i < attempts-1 {
+				lg.Errorf("request for metro stops failed, retrying after %d seconds", retryAfter)
+				time.Sleep(retryAfter * time.Second)
+				continue
+			}
+			lg.Errorf("request for metro stops failed after %d attempts", attempts)
 		}
 		return fmt.Errorf("failed to fetch metro stops: %w", err)
 	})
@@ -149,10 +153,6 @@ func GetDataLayers(ctx context.Context, fname string, lg *zap.SugaredLogger) (*D
 		}
 	}
 	countiesPoplDens = DemographicsForTracts(tgrCounties, acsData, stopMarkers)
-
-	// if err := StopsInTracts(tractsPoplDens.Features, stopMarkers.Stops); err != nil {
-	// 	return nil, err
-	// }
 
 	return &DataLayers{
 		Outfile:          fname,
