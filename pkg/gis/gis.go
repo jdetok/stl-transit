@@ -61,16 +61,6 @@ func StopsInTracts(tracts []GeoFeature, stops []StopMarker) error {
 	return nil
 }
 
-func CountStopsInTract(geoId string, stops []StopMarker) int {
-	counter := 0
-	for _, s := range stops {
-		if s.TractGEOID == geoId {
-			counter++
-		}
-	}
-	return counter
-}
-
 func StopsPerTract(stops []StopMarker) map[string]int {
 	m := map[string]int{}
 	for _, s := range stops {

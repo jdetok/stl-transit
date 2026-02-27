@@ -1,13 +1,11 @@
 package srv
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/jdetok/stlmetromap/pkg/gis"
-	"github.com/jdetok/stlmetromap/pkg/util"
 )
 
 const (
@@ -16,32 +14,6 @@ const (
 	DATA_FILE  = "data/persist.json"
 	CYCLE_FILE = "data/cycle_osm.geojson"
 )
-
-func BuildLayers(ctx context.Context, dataFile string) (*gis.DataLayers, error) {
-	var err error
-	layers := &gis.DataLayers{Outfile: DATA_FILE}
-
-	if GET_DATA || (!GET_DATA && !util.FileExists(DATA_FILE)) {
-		layers, err = gis.GetDataLayers(ctx, DATA_FILE)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		if !util.FileExists(DATA_FILE) {
-			return nil, err
-		}
-		if err := layers.DataFromJSONFile(); err != nil {
-			return nil, err
-		}
-	}
-
-	if SAVE_DATA {
-		if err := layers.DataToJSONFile(); err != nil {
-			return nil, err
-		}
-	}
-	return layers, nil
-}
 
 func NewMux(layers *gis.DataLayers) *http.ServeMux {
 	mux := http.NewServeMux()
