@@ -1,7 +1,21 @@
 services:
+    postgis: 
+        container_name: transit-db
+        image: transit-postgis
+        build:
+            context: .
+            dockerfile: ./db/Dockerfile
+        env_file:
+            - .env
+        ports: 
+            - "4321:5432"
+        volumes: 
+            - ./db/postgis:/var/lib/postgresql
+            - ./db/sql:/docker-entrypoint-initdb.d:ro
+            - ./db/gjson:/data:ro
     api:
-        container_name: stlmetromap-api
-        image: stlmetromap-api
+        container_name: transit-api
+        image: transit-go-api
         build:
             context: .
             dockerfile: Dockerfile
@@ -13,8 +27,8 @@ services:
             - ./data/cycle_osm.geojson:/app/data/cycle_osm.geojson
     
     proxy:
-        container_name: stlmetromap-proxy
-        image: stlmetromap-proxy
+        container_name: transit-proxy
+        image: transit-nginx-proxy
         build: 
             context: .
             dockerfile: ./nginx/Dockerfile
