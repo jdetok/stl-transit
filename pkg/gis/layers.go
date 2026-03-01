@@ -122,7 +122,7 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 
 	g.Go(func() error {
 		lg.Infof("getting cycling path data")
-		if err := bikesOSM.QueryOSMCycling(ctx, db, pgis.CYCLING_PATHS); err != nil {
+		if err := bikesOSM.QueryOSM(ctx, db, pgis.CYCLING_PATHS, "geom", []any{}); err != nil {
 			return fmt.Errorf("failed to fetch bikes: %w", err)
 		}
 		return nil
