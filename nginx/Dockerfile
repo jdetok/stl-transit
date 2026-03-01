@@ -25,5 +25,5 @@ COPY --from=tsbuild /app/www/js /var/www/js
 RUN touch /var/log/nginx/nginx.log /var/log/nginx/err.log \
  && chown -R nginx:nginx /var/log/nginx /var/www
 
-HEALTHCHECK --interval=15s --timeout=5s --start-period=2s --retries=10 \
+HEALTHCHECK --interval=5s --timeout=3s --start-period=2s --retries=10 \
   CMD ["curl", "-f", "http://localhost/proxy-health"]

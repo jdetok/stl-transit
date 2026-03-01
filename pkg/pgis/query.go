@@ -14,10 +14,10 @@ and way && ST_Transform(ST_MakeEnvelope(-99.11,31.77,-75.54,45.87, 4326), 3857)
 	BUS_STOPS = `
 select osm_id, coalesce(name, '') as name, operator, public_transport, 
 	coalesce(tags->'network', '') as network,
-	coalesce(tags->'wheelchair') as wheelchair,
-	coalesce(tags->'bench') as bench,
-	coalesce(tags->'kerb') as kerb,
-	coalesce(tags->'shelter') as shelter,
+	coalesce(tags->'wheelchair', 'na') as wheelchair,
+	coalesce(tags->'bench', 'na') as bench,
+	coalesce(tags->'kerb', 'na') as kerb,
+	coalesce(tags->'shelter', 'na') as shelter,
 	ST_AsGeoJSON(ST_Transform(way, 4326)) as geom
 from public.planet_osm_point
 where public_transport is not null
@@ -26,7 +26,7 @@ and (
 	operator in ('Metro Transit', 'Madison County Transit', 'St. Charles Area Transit')
 	or tags->'network' like '%Greyhound%')
 and tags->'bus' = 'yes'
-and way && ST_Transform(ST_MakeEnvelope(-99, 31, -75.5, 46.2, 4326),3857);
+and way && ST_Transform(ST_MakeEnvelope(-99, 31, -75.5, 46.2, 4326),3857)
 	`
 	RAIL_STOPS = `
 select osm_id, name, operator, public_transport, railway, 

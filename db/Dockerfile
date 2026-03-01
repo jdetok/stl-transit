@@ -6,5 +6,5 @@ RUN apt-get update \
     osm2pgsql ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-HEALTHCHECK --interval=15s --timeout=5s --start-period=5s --retries=5 \
+HEALTHCHECK --interval=5s --timeout=5s --start-period=5s --retries=10 \
   CMD ["pg_isready", "-h", "localhost", "-U", "gis"]

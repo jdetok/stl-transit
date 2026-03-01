@@ -21,8 +21,8 @@ export const COUNTIES_LAYER_URL = "/counties";
 export const ML_LAYER_TTL = "MetroLink Stops";
 export const ML_LAYER_URL = "/stops/ml";
 
-export const BUS_LAYER_TTL = "MetrBus Stops";
-export const BUS_LAYER_URL = "/stops/bus";
+export const BUS_LAYER_TTL = "MetroBus Stops";
+export const BUS_LAYER_URL = "/osm/bus";
 
 export const CYCLE_LAYER_TTL = "Bicycle/Walking Paths";
 export const CYCLE_LAYER_URL = "/bikes";
@@ -35,6 +35,29 @@ export const routeTypes: Record<RouteType, string> = {
     mlb: ML,
     mlc: ML
 };
+
+export const BUS_STOP_FIELDS: __esri.FieldProperties[] = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "osm_id", alias: "ID", type: "string" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "operator", alias: "Operator", type: "string" },
+    { name: "wheelchair", alias: "Wheelchair Accessible", type: "string" },
+    { name: "shelter", alias: "Sheltered", type: "string" },
+    { name: "kerb", alias: "Curb", type: "string" },
+    { name: "network", alias: "Network", type: "string" },
+];
+
+export const BUS_STOP_FIELDINFOS = [
+    { fieldName: "ObjectID", label: "ObjectID" },
+    { fieldName: "osm_id", label: "ID" },
+    { fieldName: "name", label: "Name" },
+    { fieldName: "operator", label: "Operator" },
+    { fieldName: "wheelchair", label: "Wheelchair Accessible" },
+    { fieldName: "shelter", label: "Shelter Accessible" },
+    { fieldName: "kerb", label: "Curb" },
+    { fieldName: "network", label: "Network" },
+];
+
 export const STOP_FIELDS: __esri.FieldProperties[] = [
     { name: "ObjectID", alias: "ObjectID", type: "oid" },
     { name: "id", alias: "ID", type: "string" },

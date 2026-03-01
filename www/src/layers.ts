@@ -12,7 +12,8 @@ import {
     STLWKID, routeTypes, TRACTS_LAYER_URL, TRACTS_LAYER_TTL, TRACTS_FIELDS, TRACTS_FIELDINFOS,
     COUNTIES_LAYER_URL, COUNTIES_LAYER_TTL, COUNTIES_FIELDS, COUNTIES_FIELDINFOS,
     ML_LAYER_URL, ML_LAYER_TTL, STOP_FIELDS, BUS_LAYER_TTL, BUS_LAYER_URL,
-    CYCLE_LAYER_URL, CYCLE_LAYER_TTL, CYCLING_FIELDS
+    CYCLE_LAYER_URL, CYCLE_LAYER_TTL, CYCLING_FIELDS,
+    BUS_STOP_FIELDINFOS, BUS_STOP_FIELDS
 } from "./data.js";
 
 const POPLDENS_ALPHA = 0.15;
@@ -27,8 +28,9 @@ const COUNTIES_OUTLINE_COLOR = [250, 250, 250, 0.5];
 const COUNTIES_OUTLINE_SIZE = 1.5;
 const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
 
-const BUS_STOP_A_COLOR = 'mediumseagreen';
-const BUS_STOP_NA_COLOR = [180, 110, 200, 0.7];
+const BUS_STOP_Y_COLOR = 'mediumseagreen';
+const BUS_STOP_NO_COLOR = [180, 110, 200, 0.7];
+const BUS_STOP_NA_COLOR = [0, 165, 255, 0.5];
 const BUS_STOP_SIZE = 4;
 
 const ML_STOP_SIZE = 10;
@@ -87,43 +89,69 @@ export const LAYER_BUS_STOPS: FeatureLayerMeta = {
     title: BUS_LAYER_TTL,
     dataUrl: BUS_LAYER_URL,
     geometryType: "point",
-    fields: STOP_FIELDS,
+    fields: BUS_STOP_FIELDS,
     renderer: new UniqueValueRenderer({
-        field: "whlChr",
+        field: "wheelchair",
+        defaultLabel: "NA",
+        defaultSymbol: new SimpleMarkerSymbol({
+            style: "circle",
+            color: BUS_STOP_NA_COLOR,
+            size: BUS_STOP_SIZE,
+        }),
         uniqueValueInfos: [
             {
-                value: "POSSIBLE",
+                value: "yes",
                 symbol: new SimpleMarkerSymbol({
                     style: "circle",
-                    color: BUS_STOP_A_COLOR,
+                    color: BUS_STOP_Y_COLOR,
                     size: BUS_STOP_SIZE,
                 }),
                 label: "Wheelchair Accessible",
             },
             {
-                value: "NOT_POSSIBLE",
+                value: "no",
                 symbol: new SimpleMarkerSymbol({
                     style: "circle",
-                    color: BUS_STOP_NA_COLOR,
+                    color: BUS_STOP_NO_COLOR,
                     size: BUS_STOP_SIZE,
                 }),
                 label: "Not Wheelchair Accessible",
             },
         ],
     }),
+    
     popupTemplate: {
-        title: "{type} Stop: {name}",
+        title: "{operator} Bus Stop: {name}",
         content: [
             {
                 type: "fields",
-                fieldInfos: [
-                    { fieldName: "routes", label: "Routes Served:" },
-                    { fieldName: "tractGeoid", label: "Tract GeoID:" },
-                ],
+                fieldInfos: BUS_STOP_FIELDINFOS
             },
         ],
     },
-    toGraphics: stopsToGraphics,
+    toGraphics: (data: any): Graphic[] => {
+        return data.features.map((f: any, i: number) => {
+            return new Graphic({
+                geometry: new Point({
+                    longitude: f.geometry.coordinates[0],
+                    latitude: f.geometry.coordinates[1],
+                    spatialReference: { wkid: STLWKID },
+                }),
+                attributes: {
+                    ObjectID: i + 1,
+                    osm_id: f.properties.osm_id,
+                    name: f.properties.name ?? f.properties.operator ?? f.properties.network ?? '',
+                    operator: f.properties.operator ?? f.properties.network ?? '',
+                    shelter: f.properties.shelter,
+                    bench: f.properties.bench,
+                    kerb: f.properties.kerb,
+                    wheelchair: f.properties.wheelchair,
+                    network: f.properties.network,
+                }
+            })
+        })
+    }
+    // toGraphics: stopsToGraphics,
 };
 
 export const LAYER_ML_STOPS: FeatureLayerMeta = {
