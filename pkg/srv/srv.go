@@ -36,7 +36,7 @@ func NewMux(layers *gis.DataLayers) *http.ServeMux {
 	mux.HandleFunc("/stops/bus", func(w http.ResponseWriter, r *http.Request) {
 		HandleMetroStops(w, r, &gis.StopMarkers{Stops: layers.Metro.Data.(*gis.StopMarkers).BusStops})
 	})
-	mux.HandleFunc("/stops/osm/bus", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/osm/bus", func(w http.ResponseWriter, r *http.Request) {
 		layers.BusStopsOSM.WriteJSONResp(w, r)
 	})
 	mux.HandleFunc("/stops/ml", func(w http.ResponseWriter, r *http.Request) {
@@ -44,9 +44,6 @@ func NewMux(layers *gis.DataLayers) *http.ServeMux {
 	})
 	mux.HandleFunc("/bikes", func(w http.ResponseWriter, r *http.Request) {
 		layers.CyclePathsOSM.WriteJSONResp(w, r)
-		// w.Header().Set("Content-Type", "application/json")
-		// json.NewEncoder(w).Encode(layers.CyclePathsOSM)
-		// json.NewEncoder(w).Encode(layers.Bikes.Data)
 	})
 	mux.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "www/about.html")
