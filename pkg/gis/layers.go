@@ -20,6 +20,7 @@ type DataLayers struct {
 	ACS              *util.DataSource
 	Bikes            *util.DataSource
 	CyclePathsOSM    *osm.FeatureColl
+	BusStopsOSM      *osm.FeatureColl
 	Metro            *util.DataSource
 	TractsPoplDens   *GeoTractFeatures
 	CountiesPoplDens *GeoTractFeatures
@@ -75,6 +76,7 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 	acs := util.NewDataSourceFromURL("acs", "acs", &ACSData{})
 	stops := util.NewDataSourceFromURL("stops", "stops", &StopMarkers{})
 	bikesOSM := &osm.FeatureColl{}
+	busOSM := &osm.FeatureColl{}
 
 	g.Go(func() error {
 		var err error
@@ -121,9 +123,17 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 	})
 
 	g.Go(func() error {
-		lg.Infof("getting cycling path data")
+		lg.Infof("getting cycling path lines from OSM db")
 		if err := bikesOSM.QueryOSM(ctx, db, pgis.CYCLING_PATHS, "geom", []any{}); err != nil {
 			return fmt.Errorf("failed to fetch bikes: %w", err)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		lg.Infof("getting bus stops from OSM db")
+		if err := busOSM.QueryOSM(ctx, db, pgis.BUS_STOPS, "geom", []any{}); err != nil {
+			return fmt.Errorf("failed to fetch bus stops: %w", err)
 		}
 		return nil
 	})
@@ -169,5 +179,6 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 		TractsPoplDens:   tractsPoplDens,
 		CountiesPoplDens: countiesPoplDens,
 		CyclePathsOSM:    bikesOSM,
+		BusStopsOSM:      busOSM,
 	}, nil
 }

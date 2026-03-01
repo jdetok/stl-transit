@@ -4,13 +4,26 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type FeatureWriter interface {
+	WriteJSONResp(http.ResponseWriter, *http.Request)
+}
+
 type FeatureColl struct {
 	Type     string    `json:"type"`
 	Features []Feature `json:"features"`
+}
+
+func (f *FeatureColl) WriteJSONResp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/geo+json; charset=utf-8")
+	if err := json.NewEncoder(w).Encode(f); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 type Feature struct {

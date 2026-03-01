@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/jdetok/stlmetromap/pkg/gis"
+	"github.com/jdetok/stlmetromap/pkg/osm"
 )
 
 const (
@@ -35,12 +36,16 @@ func NewMux(layers *gis.DataLayers) *http.ServeMux {
 	mux.HandleFunc("/stops/bus", func(w http.ResponseWriter, r *http.Request) {
 		HandleMetroStops(w, r, &gis.StopMarkers{Stops: layers.Metro.Data.(*gis.StopMarkers).BusStops})
 	})
+	mux.HandleFunc("/stops/osm/bus", func(w http.ResponseWriter, r *http.Request) {
+		layers.BusStopsOSM.WriteJSONResp(w, r)
+	})
 	mux.HandleFunc("/stops/ml", func(w http.ResponseWriter, r *http.Request) {
 		HandleMetroStops(w, r, &gis.StopMarkers{Stops: layers.Metro.Data.(*gis.StopMarkers).MlStops})
 	})
 	mux.HandleFunc("/bikes", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(layers.CyclePathsOSM)
+		layers.CyclePathsOSM.WriteJSONResp(w, r)
+		// w.Header().Set("Content-Type", "application/json")
+		// json.NewEncoder(w).Encode(layers.CyclePathsOSM)
 		// json.NewEncoder(w).Encode(layers.Bikes.Data)
 	})
 	mux.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
@@ -60,6 +65,14 @@ func HandleMetroStops(w http.ResponseWriter, r *http.Request, stops *gis.StopMar
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if err := json.NewEncoder(w).Encode(stops); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func WriteJSONResp(w http.ResponseWriter, r *http.Request, features *osm.FeatureColl) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if err := json.NewEncoder(w).Encode(features); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
