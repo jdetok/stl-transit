@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jdetok/stlmetromap/pkg/osm"
+	"github.com/jdetok/stlmetromap/pkg/pgis"
 	"github.com/jdetok/stlmetromap/pkg/util"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
@@ -16,6 +19,7 @@ type DataLayers struct {
 	Tracts           *util.DataSource
 	ACS              *util.DataSource
 	Bikes            *util.DataSource
+	CyclePathsOSM    *osm.FeatureColl
 	Metro            *util.DataSource
 	TractsPoplDens   *GeoTractFeatures
 	CountiesPoplDens *GeoTractFeatures
@@ -34,12 +38,13 @@ type BuildMode struct {
 	PersistFile string
 }
 
-func BuildLayers(ctx context.Context, b BuildMode, lg *zap.SugaredLogger) (*DataLayers, error) {
+func BuildLayers(ctx context.Context, b BuildMode, db *pgxpool.Pool, lg *zap.SugaredLogger) (*DataLayers, error) {
+
 	var err error
 	layers := &DataLayers{Outfile: b.PersistFile}
 
 	if b.Get || (!b.Get && !util.FileExists(b.PersistFile)) {
-		layers, err = GetDataLayers(ctx, b.PersistFile, lg)
+		layers, err = GetDataLayers(ctx, b.PersistFile, db, lg)
 		if err != nil {
 			return nil, err
 		}
@@ -63,13 +68,13 @@ func BuildLayers(ctx context.Context, b BuildMode, lg *zap.SugaredLogger) (*Data
 }
 
 // Builds, aggregates, and joins all data to be served as data layers
-func GetDataLayers(ctx context.Context, fname string, lg *zap.SugaredLogger) (*DataLayers, error) {
+func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.SugaredLogger) (*DataLayers, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	counties := NewTigerGeoData(82, true)
 	tracts := NewTigerGeoData(8, true)
 	acs := util.NewDataSourceFromURL("acs", "acs", &ACSData{})
-	bikes := util.NewDataSourceFromFile(CYCLE_FILE, "bikes", &GeoBikeData{})
 	stops := util.NewDataSourceFromURL("stops", "stops", &StopMarkers{})
+	bikesOSM := &osm.FeatureColl{}
 
 	g.Go(func() error {
 		var err error
@@ -114,9 +119,10 @@ func GetDataLayers(ctx context.Context, fname string, lg *zap.SugaredLogger) (*D
 		}
 		return nil
 	})
+
 	g.Go(func() error {
 		lg.Infof("getting cycling path data")
-		if err := bikes.Data.Get(ctx, bikes.Fname, false); err != nil {
+		if err := bikesOSM.QueryOSMCycling(ctx, db, pgis.CYCLING_PATHS); err != nil {
 			return fmt.Errorf("failed to fetch bikes: %w", err)
 		}
 		return nil
@@ -158,10 +164,10 @@ func GetDataLayers(ctx context.Context, fname string, lg *zap.SugaredLogger) (*D
 		Outfile:          fname,
 		Counties:         counties,
 		Tracts:           tracts,
-		Bikes:            bikes,
 		ACS:              acs,
 		Metro:            stops,
 		TractsPoplDens:   tractsPoplDens,
 		CountiesPoplDens: countiesPoplDens,
+		CyclePathsOSM:    bikesOSM,
 	}, nil
 }

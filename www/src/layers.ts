@@ -272,7 +272,6 @@ export const LAYER_CYCLING: FeatureLayerMeta = {
             },
         ],
     },
-    // toGraphics: cyclingToGraphics,
     toGraphics: (data: any): Graphic[] => {
         return data.features.map((f: any, i: number): Graphic =>
             new Graphic({

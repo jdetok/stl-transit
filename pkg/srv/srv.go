@@ -40,7 +40,8 @@ func NewMux(layers *gis.DataLayers) *http.ServeMux {
 	})
 	mux.HandleFunc("/bikes", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(layers.Bikes.Data)
+		json.NewEncoder(w).Encode(layers.CyclePathsOSM)
+		// json.NewEncoder(w).Encode(layers.Bikes.Data)
 	})
 	mux.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "www/about.html")

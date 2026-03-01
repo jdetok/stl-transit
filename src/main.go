@@ -43,7 +43,7 @@ func main() {
 		Get:         true,
 		Save:        true,
 		PersistFile: "data/persist.json",
-	}, a.lg)
+	}, a.db, a.lg)
 	if err != nil {
 		a.lg.Fatal(err)
 	}
