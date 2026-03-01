@@ -13,11 +13,16 @@ and way && ST_Transform(ST_MakeEnvelope(-99.11,31.77,-75.54,45.87, 4326), 3857)
 	`
 	BUS_STOPS = `
 select osm_id, coalesce(name, '') as name, operator, public_transport, 
-	coalesce(tags->'network', '') as network,
-	coalesce(tags->'wheelchair', 'na') as wheelchair,
-	coalesce(tags->'bench', 'na') as bench,
-	coalesce(tags->'kerb', 'na') as kerb,
-	coalesce(tags->'shelter', 'na') as shelter,
+	case
+		when tags->'network' like '%Greyhound%' then 'Greyhound'
+		when tags->'network' like '%SCAT%' then operator
+		when tags->'network' is null and operator is not null then operator
+		else coalesce(tags->'network', '')
+	end as network,
+	coalesce(tags->'wheelchair', 'no') as wheelchair,
+	coalesce(tags->'bench', 'no') as bench,
+	coalesce(tags->'kerb', 'no') as kerb,
+	coalesce(tags->'shelter', 'no') as shelter,
 	ST_AsGeoJSON(ST_Transform(way, 4326)) as geom
 from public.planet_osm_point
 where public_transport is not null

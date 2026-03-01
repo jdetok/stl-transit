@@ -91,7 +91,7 @@ export const LAYER_BUS_STOPS: FeatureLayerMeta = {
     geometryType: "point",
     fields: BUS_STOP_FIELDS,
     renderer: new UniqueValueRenderer({
-        field: "wheelchair",
+        field: "network",
         defaultLabel: "NA",
         defaultSymbol: new SimpleMarkerSymbol({
             style: "circle",
@@ -100,22 +100,31 @@ export const LAYER_BUS_STOPS: FeatureLayerMeta = {
         }),
         uniqueValueInfos: [
             {
-                value: "yes",
+                value: "MetroBus",
                 symbol: new SimpleMarkerSymbol({
                     style: "circle",
                     color: BUS_STOP_Y_COLOR,
                     size: BUS_STOP_SIZE,
                 }),
-                label: "Wheelchair Accessible",
+                // label: "Wheelchair Accessible",
             },
             {
-                value: "no",
+                value: "Greyhound",
                 symbol: new SimpleMarkerSymbol({
                     style: "circle",
                     color: BUS_STOP_NO_COLOR,
-                    size: BUS_STOP_SIZE,
+                    size: BUS_STOP_SIZE + 2,
                 }),
-                label: "Not Wheelchair Accessible",
+                // label: "Not Wheelchair Accessible",
+            },
+            {
+                value: "Madison County Transit",
+                symbol: new SimpleMarkerSymbol({
+                    style: "circle",
+                    color: 'pink',
+                    size: BUS_STOP_SIZE + 2,
+                }),
+                // label: "Not Wheelchair Accessible",
             },
         ],
     }),
