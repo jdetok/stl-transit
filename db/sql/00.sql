@@ -9,7 +9,7 @@ create table if not exists test.point (
 -- generate test points
 with x as (
     select generate_series(1,10000),
-    st_setSRID(st_makepoint(
+    st_setsrid(st_makepoint(
         (-91 + random() * (-89.5- (-91)))::float,
         (38.4 + random() * (39.2 - 38.4))::float
     ), 4326) geom
@@ -26,63 +26,120 @@ create table if not exists gis.stops (
     geo geography(point, 4326)
 );
 
-create table if not exists gis.parks (
-    id bigserial primary key,
-    osm_id text,
-    name text,
-    leisure text,
-    description text,
-    city text,
-    state text,
-    postcode text,
-    housenumber text,
-    street text,
-    phone text,
-    website text,
-    opening_hours text,
-    geom geometry(Geometry, 4326)
-);
+CREATE OR REPLACE PROCEDURE gis.load_geojson_create_table(
+    p_file_path text,
+    p_schema text,
+    p_table text
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_raw jsonb;
+    v_sql text;
+    v_cols text;
+    v_vals text;
 
--- read the geojson file, insert into tmp tale as raw jsonb, parse into gis.parks 
-create or replace procedure gis.load_parks_from_gjson()
-language plpgsql
-as $$
-begin
-    truncate table raw.gjson;
-    insert into raw.gjson(raw) select pg_read_file('/data/parks.geojson')::jsonb;
+    v_key text;
+    v_base text;
+    v_col text;
+    v_i int;
+BEGIN
+    v_raw := pg_read_file(p_file_path)::jsonb;
 
-    insert into gis.parks (
-        osm_id, name, leisure, description,
-        city, state, postcode, housenumber, street,
-        phone, website, opening_hours,
-        geom
-    )
-    select
-        p->>'@id',
-        p->>'name',
-        p->>'leisure',
-        p->>'description',
-        p->>'addr:city',
-        p->>'addr:state',
-        p->>'addr:postcode',
-        p->>'addr:housenumber',
-        p->>'addr:street',
-        p->>'phone',
-        p->>'website',
-        p->>'opening_hours',
-        case
-            when f->'geometry' is null or f->'geometry' = 'null'::jsonb then null
-            else st_setsrid(
-                st_makevalid(st_geomfromgeojson(f->>'geometry')),
-                4326
-            )
-        end as geom
-    from raw.gjson t
-    cross join lateral jsonb_array_elements(t.raw->'features') as f
-    cross join lateral (select f->'properties' as p) pr;
-    
-    truncate table raw.gjson;
-end;
+    CREATE TEMP TABLE tmp_key_map (
+        orig_key text PRIMARY KEY,
+        col_name text UNIQUE
+    ) ON COMMIT DROP;
+
+    FOR v_key IN
+        SELECT DISTINCT k
+        FROM jsonb_array_elements(v_raw->'features') AS f
+        CROSS JOIN LATERAL jsonb_object_keys(COALESCE(f->'properties', '{}'::jsonb)) AS k
+        ORDER BY 1
+    LOOP
+        IF v_key = '@id' THEN
+            v_base := 'osm_id';
+        ELSE
+            v_base := lower(v_key);
+            v_base := regexp_replace(v_base, '[^a-z0-9]+', '_', 'g');
+            v_base := regexp_replace(v_base, '^_+|_+$', '', 'g');
+
+            IF v_base = '' THEN
+                v_base := 'prop';
+            END IF;
+
+            IF v_base = 'id' THEN
+                v_base := 'prop_id';
+            ELSIF v_base = 'geom' THEN
+                v_base := 'prop_geom';
+            END IF;
+        END IF;
+
+        v_col := v_base;
+        v_i := 2;
+
+        WHILE EXISTS (SELECT 1 FROM tmp_key_map WHERE col_name = v_col) LOOP
+            v_col := v_base || '_' || v_i::text;
+            v_i := v_i + 1;
+        END LOOP;
+
+        INSERT INTO tmp_key_map (orig_key, col_name)
+        VALUES (v_key, v_col);
+    END LOOP;
+
+    EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', p_schema);
+    EXECUTE format('DROP TABLE IF EXISTS %I.%I', p_schema, p_table);
+
+    v_sql := format(
+        'CREATE TABLE %I.%I (
+            id bigserial PRIMARY KEY,
+            %s,
+            geom geometry(Geometry, 4326)
+        )',
+        p_schema,
+        p_table,
+        (
+            SELECT string_agg(format('%I text', col_name), E',\n            ' ORDER BY col_name)
+            FROM tmp_key_map
+            WHERE col_name NOT IN ('id', 'geom')
+        )
+    );
+
+    EXECUTE v_sql;
+
+    SELECT string_agg(format('%I', col_name), ', ' ORDER BY col_name)
+    INTO v_cols
+    FROM tmp_key_map
+    WHERE col_name NOT IN ('id', 'geom');
+
+    SELECT string_agg(format('p->>%L', orig_key), ', ' ORDER BY col_name)
+    INTO v_vals
+    FROM tmp_key_map
+    WHERE col_name NOT IN ('id', 'geom');
+
+    v_sql := format($fmt$
+        INSERT INTO %I.%I (%s, geom)
+        SELECT
+            %s,
+            CASE
+                WHEN f->'geometry' IS NULL OR f->'geometry' = 'null'::jsonb THEN NULL
+                ELSE ST_SetSRID(
+                    ST_MakeValid(ST_GeomFromGeoJSON(f->>'geometry')),
+                    4326
+                )
+            END AS geom
+        FROM jsonb_array_elements($1->'features') AS f
+        CROSS JOIN LATERAL (SELECT COALESCE(f->'properties', '{}'::jsonb) AS p) pr
+    $fmt$,
+        p_schema,
+        p_table,
+        v_cols,
+        v_vals
+    );
+
+    EXECUTE v_sql USING v_raw;
+END;
 $$;
 
-call gis.load_parks_from_gjson();
+CALL gis.load_geojson_create_table('/data/gjson/osm_parks.geojson', 'gis', 'parks');
+CALL gis.load_geojson_create_table('/data/gjson/osm_cycle.geojson', 'gis', 'cycling');

@@ -12,7 +12,12 @@ services:
         volumes: 
             - ./db/postgis:/var/lib/postgresql
             - ./db/sql:/docker-entrypoint-initdb.d:ro
-            - ./db/gjson:/data:ro
+            - ./db/import:/data:ro
+        command: ["postgres",
+            "-c", "max_wal_size=12GB",
+            "-c", "checkpoint_timeout=15min",
+            "-c", "checkpoint_completion_target=0.9"
+            ]
     api:
         container_name: transit-api
         image: transit-go-api

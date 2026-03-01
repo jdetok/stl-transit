@@ -5,7 +5,7 @@
 
 ## Geographic scope
 Coordinates used for data queries throughout the project
-| scope        | xmin    | ymin   | xmax    | ymax  | overpass-turbo |
+| schistoricope        | xmin    | ymin   | xmax    | ymax  | overpass-turbo |
 |--------------|---------|--------|---------|-------|----------------|
 | Outer scope  | -91     | 38     | -89.5   | 39.2  | (38,-91,39.2,-89.5)
 | Inner scope  | -90.32  | 38.53  | -90.15  | 38.75 | (38.53,-90.32,38.75,-90.15)
