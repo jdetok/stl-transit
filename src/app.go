@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jdetok/stlmetromap/pkg/gis"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -10,6 +11,7 @@ import (
 
 type app struct {
 	lg     *zap.SugaredLogger
+	db     *pgxpool.Pool
 	addr   string
 	layers *gis.DataLayers
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jdetok/stlmetromap/pkg/gis"
+	"github.com/jdetok/stlmetromap/pkg/pgis"
 	"github.com/jdetok/stlmetromap/pkg/srv"
 	"github.com/joho/godotenv"
 )
@@ -24,11 +25,21 @@ func main() {
 	}
 
 	if err := godotenv.Load(); err != nil {
-		a.lg.Fatal("failed to load environment variables")
+		a.lg.Fatalf("failed to load environment variables: %v", err)
 	}
 
-	a.lg.Info("Environment configured, building data layers...")
-	layers, err := gis.BuildLayers(context.Background(), gis.BuildMode{
+	ctx := context.Background()
+
+	a.lg.Info("Environment configured, connecting to postgis...")
+
+	pool, err := pgis.NewPgxPool(ctx)
+	if err != nil {
+		a.lg.Fatalf("failed to connect to postgis: %v", err)
+	}
+	a.db = pool
+
+	a.lg.Info("postgis connection successful, building data layers...")
+	layers, err := gis.BuildLayers(ctx, gis.BuildMode{
 		Get:         true,
 		Save:        true,
 		PersistFile: "data/persist.json",

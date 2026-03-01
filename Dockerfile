@@ -13,5 +13,5 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o bin/app ./src
 
 ENTRYPOINT [ "/app/bin/app" ]
 
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD [ "curl", "-f", "http://localhost:3333/health" ]
+HEALTHCHECK --interval=10s --timeout=30s --start-period=10s --retries=3 \
+    CMD [ "curl", "-f", "http://localhost:9999/health" ]
