@@ -72,120 +72,53 @@ create table if not exists gis.stops (
     geo geography(point, 4326)
 );
 
-CREATE OR REPLACE PROCEDURE gis.load_geojson_create_table(
-    p_file_path text,
-    p_schema text,
-    p_table text
+create table if not exists gis.transit (
+	id bigserial primary key,
+	name text not null,
+	county text,
+	network text,
+	wheelchair text,
+	geom geometry(Point, 4326)
+);
+
+create index if not exists gix_transit on gis.transit using gist (geom);
+create index if not exists gix_transit_name on gis.transit (name);
+create index if not exists gix_transit_county on gis.transit (county);
+
+-- QUERY TO INSERT INTO TRANSIT TABLE:
+with metro as (
+	select a.name as county, b.name, 'Metro Transit' as network, b.wheelchair, b.geom
+	from gis.counties a
+	join gis.metro b on ST_Contains(a.geom, b.geom)
+), osm as (
+	select coalesce(name, '') as name,  
+		case
+			when tags->'network' like '%Greyhound%' then 'Greyhound'
+			when tags->'network' like '%SCAT%' then operator
+			when tags->'network' is null and operator is not null then operator
+			else coalesce(tags->'network', '')
+		end as network,
+		case 
+			when tags->'wheelchair' = 'yes' then 'POSSIBLE'
+			when tags->'wheelchair' = 'no' then 'NOT_POSSIBLE'
+			else 'NA'
+		end as wheelchair,
+		ST_Transform(way, 4326) as geom
+	from public.planet_osm_point
+	where public_transport is not null
+	and (railway is null or operator = 'Amtrak')
+	and (
+		operator in ('Amtrak', 'Madison County Transit', 'St. Charles Area Transit')
+		or tags->'network' like '%Greyhound%')
+	and (tags->'bus' = 'yes' or operator = 'Amtrak')
+	and way && ST_Transform(ST_MakeEnvelope(-99, 31, -75.5, 46.2, 4326),3857)
 )
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_raw jsonb;
-    v_sql text;
-    v_cols text;
-    v_vals text;
-
-    v_key text;
-    v_base text;
-    v_col text;
-    v_i int;
-BEGIN
-    v_raw := pg_read_file(p_file_path)::jsonb;
-
-    CREATE TEMP TABLE tmp_key_map (
-        orig_key text PRIMARY KEY,
-        col_name text UNIQUE
-    ) ON COMMIT DROP;
-
-    FOR v_key IN
-        SELECT DISTINCT k
-        FROM jsonb_array_elements(v_raw->'features') AS f
-        CROSS JOIN LATERAL jsonb_object_keys(COALESCE(f->'properties', '{}'::jsonb)) AS k
-        ORDER BY 1
-    LOOP
-        IF v_key = '@id' THEN
-            v_base := 'osm_id';
-        ELSE
-            v_base := lower(v_key);
-            v_base := regexp_replace(v_base, '[^a-z0-9]+', '_', 'g');
-            v_base := regexp_replace(v_base, '^_+|_+$', '', 'g');
-
-            IF v_base = '' THEN
-                v_base := 'prop';
-            END IF;
-
-            IF v_base = 'id' THEN
-                v_base := 'prop_id';
-            ELSIF v_base = 'geom' THEN
-                v_base := 'prop_geom';
-            END IF;
-        END IF;
-
-        v_col := v_base;
-        v_i := 2;
-
-        WHILE EXISTS (SELECT 1 FROM tmp_key_map WHERE col_name = v_col) LOOP
-            v_col := v_base || '_' || v_i::text;
-            v_i := v_i + 1;
-        END LOOP;
-
-        INSERT INTO tmp_key_map (orig_key, col_name)
-        VALUES (v_key, v_col);
-    END LOOP;
-
-    EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', p_schema);
-    EXECUTE format('DROP TABLE IF EXISTS %I.%I', p_schema, p_table);
-
-    v_sql := format(
-        'CREATE TABLE %I.%I (
-            id bigserial PRIMARY KEY,
-            %s,
-            geom geometry(Geometry, 4326)
-        )',
-        p_schema,
-        p_table,
-        (
-            SELECT string_agg(format('%I text', col_name), E',\n            ' ORDER BY col_name)
-            FROM tmp_key_map
-            WHERE col_name NOT IN ('id', 'geom')
-        )
-    );
-
-    EXECUTE v_sql;
-
-    SELECT string_agg(format('%I', col_name), ', ' ORDER BY col_name)
-    INTO v_cols
-    FROM tmp_key_map
-    WHERE col_name NOT IN ('id', 'geom');
-
-    SELECT string_agg(format('p->>%L', orig_key), ', ' ORDER BY col_name)
-    INTO v_vals
-    FROM tmp_key_map
-    WHERE col_name NOT IN ('id', 'geom');
-
-    v_sql := format($fmt$
-        INSERT INTO %I.%I (%s, geom)
-        SELECT
-            %s,
-            CASE
-                WHEN f->'geometry' IS NULL OR f->'geometry' = 'null'::jsonb THEN NULL
-                ELSE ST_SetSRID(
-                    ST_MakeValid(ST_GeomFromGeoJSON(f->>'geometry')),
-                    4326
-                )
-            END AS geom
-        FROM jsonb_array_elements($1->'features') AS f
-        CROSS JOIN LATERAL (SELECT COALESCE(f->'properties', '{}'::jsonb) AS p) pr
-    $fmt$,
-        p_schema,
-        p_table,
-        v_cols,
-        v_vals
-    );
-
-    EXECUTE v_sql USING v_raw;
-END;
-$$;
-
-CALL gis.load_geojson_create_table('/data/gjson/osm_parks.geojson', 'gis', 'parks');
-CALL gis.load_geojson_create_table('/data/gjson/osm_cycle.geojson', 'gis', 'cycling');
+insert into gis.transit (name, county, network, wheelchair, geom)
+select * from (
+	select m.name, m.county, m.network, m.wheelchair, m.geom
+	from metro m
+	union all
+	select o.name, null, o.network, o.wheelchair, o.geom
+	from osm o
+)
+;

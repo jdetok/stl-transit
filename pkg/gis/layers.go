@@ -119,7 +119,8 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 		if err := acs.Data.Get(ctx, acs.URL, true); err != nil {
 			return fmt.Errorf("failed to get new acs data: %w", err)
 		}
-		return nil
+		// return EnsureAndUpsertACS(ctx, db, "gis", "acs", acs.Data.(*ACSData).Data)
+		return pgis.EnsureAndUpsert(ctx, db, pgis.NewConfig("gis", "acs"), pgis.Data(acs.Data.(*ACSData).Data))
 	})
 
 	g.Go(func() error {

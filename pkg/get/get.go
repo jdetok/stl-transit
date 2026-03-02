@@ -22,6 +22,7 @@ func NewGetRequest(ctx context.Context, url string, timeout bool, timeoutSec, at
 func Get(r *GetRequest) (*http.Response, error) {
 	var resp *http.Response
 	var err error
+	fmt.Println(r.url)
 	for i := 0; i < r.attempts; i++ {
 		if r.ctx != nil && r.ctx.Err() != nil {
 			return nil, fmt.Errorf("%s: context error: %w", r.ctx.Err())

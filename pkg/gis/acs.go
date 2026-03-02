@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 
 	"github.com/jdetok/stlmetromap/pkg/get"
 )
@@ -128,4 +130,38 @@ func GetACSData(ctx context.Context) (*ACSData, error) {
 		}
 	}
 	return &ACSData{Labels: buildACSHeaders(), Data: data}, nil
+}
+
+// quoteIdent safely quotes a single SQL identifier (column/table/schema name).
+func quoteIdent(s string) string {
+	// Double-up any embedded quotes, then wrap in quotes.
+	return `"` + strings.ToLower(strings.ReplaceAll(s, `"`, `""`)) + `"`
+}
+
+// fqTable returns a safely-quoted schema-qualified table name.
+func fqTable(schema, table string) string {
+	if schema == "" {
+		return quoteIdent(table)
+	}
+	return quoteIdent(schema) + "." + quoteIdent(table)
+}
+
+// headersUnion returns sorted unique headers present in the ACSObj.
+func headersUnion(data ACSObj) []string {
+	set := make(map[string]struct{}, 256)
+	for _, row := range data {
+		for h := range row {
+			if h == "" {
+				continue
+			}
+			set[h] = struct{}{}
+		}
+	}
+
+	headers := make([]string, 0, len(set))
+	for h := range set {
+		headers = append(headers, h)
+	}
+	sort.Strings(headers)
+	return headers
 }
