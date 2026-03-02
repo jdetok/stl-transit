@@ -5,7 +5,6 @@ create table if not exists test.point (
     id serial primary key,
     geom geometry
 );
-
 -- generate test points
 with x as (
     select generate_series(1,10000),
@@ -14,6 +13,53 @@ with x as (
         (38.4 + random() * (39.2 - 38.4))::float
     ), 4326) geom
 ) insert into test.point (geom) select geom from x;
+
+create table if not exists gis.metro (
+    id bigserial primary key,
+    stop_id text unique not null,
+    name text not null,
+    typ text not null,
+    wheelchair text not null,
+    tract_geoid text,
+    routes jsonb not null default '[]'::jsonb,
+    geom geometry(Point, 4326) not null
+);
+
+create index if not exists gix_metro_stops on gis.metro using gist (geom);
+
+create table if not exists gis.tracts (
+    id bigserial primary key,
+    geoid text unique not null,
+    county text,
+    tract text,
+    name text,
+    arealand bigint,
+    popl int,
+    poplsqmi double precision,
+    income double precision,
+    mgrent double precision,
+    age double precision,
+    stops_in_tract int,
+    bus_stops_in_tract int,
+    ml_stops_in_tract int,
+    pct_has_comp double precision,
+    pct_inc_below_pov double precision,
+    geom geometry(Polygon, 4326) not null
+);
+
+create index if not exists gix_tracts on gis.tracts using gist (geom);
+
+create table if not exists gis.counties (
+    id bigserial primary key,
+    geoid text unique not null,
+    state int,
+    county text,
+    name text,
+    arealand bigint,
+    geom geometry(Polygon, 4326) not null
+);
+
+create index if not exists gix_counties on gis.counties using gist (geom);
 
 -- handle raw json imports
 create schema if not exists raw;
