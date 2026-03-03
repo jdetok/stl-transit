@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jdetok/stlmetromap/pkg/etl"
 	"github.com/jdetok/stlmetromap/pkg/gis"
 	"github.com/jdetok/stlmetromap/pkg/pgis"
 	"github.com/jdetok/stlmetromap/pkg/srv"
@@ -40,14 +41,7 @@ func main() {
 
 	a.lg.Info("postgis connection successful, building data layers...")
 
-	if err := pgis.CreateTableNotExists(ctx, a.db, &pgis.TableConf{
-		Table:      "test1",
-		Schema:     "test",
-		Headers:    []string{"col1", "col2", "col3"},
-		Indexes:    map[string]string{"": "col1"},
-		GeoIndexes: map[string]string{"": "geom"},
-		GeomType:   "Point",
-	}, a.lg); err != nil {
+	if err := etl.ExecETLProc(ctx, a.db, a.lg); err != nil {
 		a.lg.Error(err)
 	}
 
@@ -60,6 +54,19 @@ func main() {
 		a.lg.Fatal(err)
 	}
 	a.layers = layers
+
+	// if err := pgis.CreateTableNotExists(ctx, a.db, &pgis.TableConf{
+	// 	Table:   "acs",
+	// 	Schema:  "test",
+	// 	KeyCol:  "geo_id",
+	// 	Headers: pgis.GetColHeaders(pgis.InsertData(a.layers.ACS.Data.(*gis.ACSData).Data), "geo_id"),
+	// 	// Headers:    []string{"col1", "col2", "col3", "col4"},
+	// 	// Indexes:    map[string]string{"0": "col2", "1": "col3"},
+	// 	// GeoIndexes: map[string]string{"": "geom"},
+	// 	GeomType: "",
+	// }, a.lg); err != nil {
+	// 	a.lg.Error(err)
+	// }
 
 	a.lg.Infof("finished buildling DataLayers, starting HTTP server at %s...", a.addr)
 

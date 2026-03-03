@@ -36,10 +36,6 @@ func NewConfig(schema, table string) Config {
 	}
 }
 
-func quoteIdent(s string) string {
-	return `"` + strings.ToLower(strings.ReplaceAll(s, `"`, `""`)) + `"`
-}
-
 func fqTable(schema, table string) string {
 	if schema == "" {
 		return quoteIdent(table)

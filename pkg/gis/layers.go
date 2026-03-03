@@ -121,6 +121,7 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 		}
 		// return EnsureAndUpsertACS(ctx, db, "gis", "acs", acs.Data.(*ACSData).Data)
 		return pgis.EnsureAndUpsert(ctx, db, pgis.NewConfig("gis", "acs"), pgis.Data(acs.Data.(*ACSData).Data))
+		// return pgis.EnsureAndUpsert(ctx, db, pgis.NewConfig("gis", "acs"), pgis.Data(acs.Data.(*ACSData).Data))
 	})
 
 	g.Go(func() error {
