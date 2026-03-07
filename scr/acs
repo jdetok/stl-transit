@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# restore database dump of acs schema 
+
+# env
+export PGHOST="${POSTGRES_HOST}"
+export PGPORT="${POSTGRES_PORT}"
+export PGUSER="${POSTGRES_USER}"
+export PGPASSWORD="${POSTGRES_PASSWORD}"
+export PGDATABASE="${POSTGRES_DB}"
+
+# def
+SCHEMA="acs"
+DIR="dump"
+DUMPF="acs.dump"
+
+# cmd
+set -euo pipefail
+
+mkdir -p /$DIR && cd /$DIR
+
+if [ ! -f "$DUMPF" ]; then
+    echo "can't find expected dump file at $DIR/$DUMPF"
+    exit 1
+fi
+
+psql -c "drop schema if exists $SCHEMA cascade;"
+
+pg_restore -d "${PGDATABASE}" "${DUMPF}"
+
+echo "restoration complete in db ${PGDATABASE} schema ${SCHEMA}"

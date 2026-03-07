@@ -1,6 +1,6 @@
 services:
     postgis: 
-        container_name: transit-db
+        container_name: pgis
         image: transit-postgis
         build:
             context: .
@@ -10,19 +10,34 @@ services:
         ports: 
             - "4321:5432"
         volumes: 
-            - ./db/postgis:/var/lib/postgresql
-            - ./db/sql:/docker-entrypoint-initdb.d:ro
-            - ./db/import:/data:ro
-        command: ["postgres",
-            "-c", "max_wal_size=12GB",
-            "-c", "checkpoint_timeout=15min",
-            "-c", "checkpoint_completion_target=0.9"
-            ]
-    api:
+            - postgis_data:/var/lib/postgresql
+            - ./scr:/scr:ro
+            - ./db/initdb:/docker-entrypoint-initdb.d:ro
+            - ./db/dump:/dump
+            - ./db/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+        command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf" ]
+
+    # one-off containers for importing data into db
+    osm:
+        container_name: fetch-osm
         depends_on:
             postgis:
                 condition: service_healthy
+        image: fetch-osm
+        build:
+            context: .
+            dockerfile: ./db/osm.Dockerfile
+        env_file:
+            - .env
+        volumes:
+            - ./osm:/data:ro
+            - ./scr/osm:/scr/osm:ro
+        entrypoint: [ "/scr/osm" ]
+    api:
         container_name: transit-api
+        depends_on:
+            postgis:
+                condition: service_healthy
         image: transit-go-api
         build:
             context: .
@@ -35,10 +50,10 @@ services:
             - ./data/cycle_osm.geojson:/app/data/cycle_osm.geojson
     
     proxy:
+        container_name: transit-proxy
         depends_on:
             api:
                 condition: service_healthy
-        container_name: transit-proxy
         image: transit-nginx-proxy
         build: 
             context: .
@@ -49,3 +64,5 @@ services:
             - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./www/index.html:/var/www/index.html:ro
             - ./www/css:/var/www/css:ro
+volumes: 
+    postgis_data:
