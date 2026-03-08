@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jdetok/stlmetromap/pkg/etl"
 	"github.com/jdetok/stlmetromap/pkg/gis"
 	"github.com/jdetok/stlmetromap/pkg/pgis"
 	"github.com/jdetok/stlmetromap/pkg/srv"
@@ -41,10 +40,6 @@ func main() {
 
 	a.lg.Info("postgis connection successful, building data layers...")
 
-	if err := etl.ExecETLProc(ctx, a.db, a.lg); err != nil {
-		a.lg.Error(err)
-	}
-
 	layers, err := gis.BuildLayers(ctx, gis.BuildMode{
 		Get:         true,
 		Save:        true,
@@ -55,31 +50,8 @@ func main() {
 	}
 	a.layers = layers
 
-	// if err := pgis.CreateTableNotExists(ctx, a.db, &pgis.TableConf{
-	// 	Table:   "acs",
-	// 	Schema:  "test",
-	// 	KeyCol:  "geo_id",
-	// 	Headers: pgis.GetColHeaders(pgis.InsertData(a.layers.ACS.Data.(*gis.ACSData).Data), "geo_id"),
-	// 	// Headers:    []string{"col1", "col2", "col3", "col4"},
-	// 	// Indexes:    map[string]string{"0": "col2", "1": "col3"},
-	// 	// GeoIndexes: map[string]string{"": "geom"},
-	// 	GeomType: "",
-	// }, a.lg); err != nil {
-	// 	a.lg.Error(err)
-	// }
-
 	a.lg.Infof("finished buildling DataLayers, starting HTTP server at %s...", a.addr)
 
-	if err := gis.UpsertStops(ctx, a.db, a.layers.Metro.Data.(*gis.StopMarkers)); err != nil {
-		a.lg.Errorf("upsert failed: %v", err)
-	}
-
-	if err := gis.UpsertTracts(ctx, a.db, a.layers.TractsPoplDens); err != nil {
-		a.lg.Errorf("upsert failed: %v", err)
-	}
-	if err := gis.UpsertCounties(ctx, a.db, a.layers.CountiesPoplDens); err != nil {
-		a.lg.Errorf("upsert failed: %v", err)
-	}
 	mux := srv.NewMux(a.layers)
 	if err := srv.Serve(a.addr, mux); err != nil {
 		a.lg.Fatal(err)
