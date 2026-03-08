@@ -18,21 +18,17 @@ services:
         command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf" ]
 
     # one-off containers for importing data into db
-    osm:
-        container_name: fetch-osm
-        depends_on:
-            postgis:
-                condition: service_healthy
-        image: fetch-osm
+    gtfs: 
+        container_name: gtfs-import
         build:
             context: .
-            dockerfile: ./db/osm.Dockerfile
+            dockerfile: ./db/gtfs.Dockerfile
         env_file:
             - .env
         volumes:
-            - ./osm:/data:ro
-            - ./scr/osm:/scr/osm:ro
-        entrypoint: [ "/scr/osm" ]
+            - ./scr/gtfs:/scr/gtfs:ro
+        entrypoint: [ "scr/gtfs" ]
+
     api:
         container_name: transit-api
         depends_on:

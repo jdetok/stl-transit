@@ -129,3 +129,34 @@ join acs.b28008_moe g on g.geoid = a.geoid
 join tgr.tract t on t.geoid = substring(a.geoid, 8)
 join tgr.county x on x.geoid = substring(t.geoid, 1, 5)
 where a.geoid like any (array['14000US29%', '14000US17%']);
+
+select * from public.stop_times;
+select * from public.routes;
+
+select a.stop_id, c.stop_name, c.stop_loc, string_agg(d.route_short_name, ', ') as routes
+from public.stop_times a
+inner join public.trips b on b.trip_id = a.trip_id
+inner join public.stops c on c.stop_id = a.stop_id
+inner join public.routes d on d.route_id = b.route_id 
+group by a.stop_id, c.stop_name, c.stop_loc; 
+
+-- rail stops
+select a.stop_id, c.stop_name, c.stop_loc, 
+	string_agg(distinct d.route_short_name, ', ') as route_ids,
+	string_agg(distinct d.route_long_name, ', ') as route_names
+from public.stop_times a
+inner join public.trips b on b.trip_id = a.trip_id
+inner join public.stops c on c.stop_id = a.stop_id
+inner join public.routes d on d.route_id = b.route_id
+where d.route_type = '2'
+group by a.stop_id, c.stop_name, c.stop_loc
+-- bus stops
+select a.stop_id, c.stop_name, c.stop_loc, 
+	string_agg(distinct d.route_short_name, ', ') as route_ids,
+	string_agg(distinct d.route_long_name, ', ') as route_names
+from public.stop_times a
+inner join public.trips b on b.trip_id = a.trip_id
+inner join public.stops c on c.stop_id = a.stop_id
+inner join public.routes d on d.route_id = b.route_id
+where d.route_type = '2'
+group by a.stop_id, c.stop_name, c.stop_loc
