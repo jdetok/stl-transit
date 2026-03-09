@@ -17,7 +17,9 @@ import {
     LAYER_GROCERY,
     LAYER_PARKS, 
     LAYER_FUN,
-    LAYER_SCHOOL
+    LAYER_SCHOOL,
+    LAYER_AMTRAK,
+    LAYER_SOCIAL
 } from "../layers.js";
 export const TAG = "map-window";
 
@@ -81,10 +83,12 @@ export class MapWindow extends HTMLElement {
             LAYER_CENSUS_COUNTIES,
             LAYER_CENSUS_TRACTS,
             LAYER_GROCERY,
+            LAYER_SOCIAL,
             LAYER_SCHOOL,
             LAYER_PARKS,
             LAYER_FUN,
             LAYER_CYCLING,
+            LAYER_AMTRAK,
             LAYER_BUS_STOPS,
             LAYER_ML_STOPS,
         ];

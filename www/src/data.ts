@@ -14,10 +14,10 @@ export const COUNTIES_LAYER_TTL = "St. Louis MSA Counties";
 export const COUNTIES_LAYER_URL = "/counties";
 
 export const ML_LAYER_TTL = "MetroLink Stops";
-export const ML_LAYER_URL = "/rail";
+export const ML_LAYER_URL = "/metrolink";
 
 export const BUS_LAYER_TTL = "MetroBus Stops";
-export const BUS_LAYER_URL = "/bus";
+export const BUS_LAYER_URL = "/metrobus";
 
 export const CYCLE_LAYER_TTL = "Bicycle/Walking Paths";
 export const CYCLE_LAYER_URL = "/bikes";
@@ -162,3 +162,32 @@ export const SCHOOL_FIELDINFOS = [
     { fieldName: "amenity", label: "Amenity" },
     { fieldName: "operator", label: "Operator" },
 ];
+
+export const AMTRAK_FIELDS: __esri.FieldProperties[] = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "operator", alias: "Operator", type: "string" },
+];
+
+export const AMTRAK_FIELDINFOS = [
+    { fieldName: "ObjectID", label: "ObjectID" },
+    { fieldName: "name", label: "Name" },
+    { fieldName: "operator", label: "Operator" },
+];
+
+
+export const SOCIAL_FIELDS = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "amenity", alias: "Amenity", type: "string" },
+    { name: "operator", alias: "Operator", type: "string" },
+    { name: "brand", alias: "Brand", type: "string" },
+];
+
+export const SOCIAL_FIELDINFOS = [
+    { fieldName: "ObjectID", label: "ObjectID" },
+    { fieldName: "name", label: "Name" },
+    { fieldName: "amenity", label: "Amenity" },
+    { fieldName: "operator", label: "Operator" },
+    { fieldName: "brand", label: "Brand" },
+]

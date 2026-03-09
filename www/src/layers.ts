@@ -15,7 +15,8 @@ import {
     CYCLE_LAYER_URL, CYCLE_LAYER_TTL, CYCLING_FIELDS,
     STOP_FIELDINFOS, STOP_FIELDS, GROCERY_FIELDS, GROCERY_FIELDINFOS,
     PARKS_FIELDS, PARKS_FIELDINFOS, FUN_FIELDS, FUN_FIELDINFOS,
-    SCHOOL_FIELDS, SCHOOL_FIELDINFOS
+    SCHOOL_FIELDS, SCHOOL_FIELDINFOS, AMTRAK_FIELDS, AMTRAK_FIELDINFOS,
+    SOCIAL_FIELDS, SOCIAL_FIELDINFOS
 } from "./data.js";
 import Polygon from "@arcgis/core/geometry/Polygon.js";
 export type FeatureLayerMeta = {
@@ -42,15 +43,15 @@ const COUNTIES_OUTLINE_SIZE = 1.5;
 const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
 
 // const BUS_STOP_Y_COLOR = 'mediumseagreen';
-const BUS_STOP_Y_COLOR = 'cyan';
-const BUS_STOP_NO_COLOR = [180, 110, 200, 0.7];
+const BUS_STOP_Y_COLOR = [0, 255, 255, 0.5];
+const BUS_STOP_NO_COLOR = [180, 110, 200, 0.5];
 const BUS_STOP_NA_COLOR = [0, 165, 255, 0.5];
 const BUS_STOP_SIZE = 4;
 
 const ML_STOP_SIZE = 10;
-const MLB_STOP_COLOR = 'blue';
-const MLR_STOP_COLOR = 'red';
-const MLC_STOP_COLOR = 'purple';
+const MLB_STOP_COLOR = [0, 0, 255, 0.5];
+const MLR_STOP_COLOR = [255, 0, 0, 0.5];
+const MLC_STOP_COLOR = [127, 0, 255, 0.5];
 
 const CYCLE_LAYER_GRAVEL_COLOR = [180, 80, 170, 0.7];
 const CYCLE_LAYER_ASPHALT_COLOR = [208, 148, 75, 0.7];
@@ -165,6 +166,11 @@ export const LAYER_ML_STOPS: FeatureLayerMeta = {
                     style: "circle",
                     color: MLR_STOP_COLOR,
                     size: ML_STOP_SIZE,
+                    outline: new SimpleLineSymbol({
+                        color: 'red',
+                        width: 1,
+                        style: "solid",
+                    })
                 }),
             },
             {
@@ -174,6 +180,11 @@ export const LAYER_ML_STOPS: FeatureLayerMeta = {
                     style: "circle",
                     color: MLB_STOP_COLOR,
                     size: ML_STOP_SIZE,
+                    outline: new SimpleLineSymbol({
+                        color: 'blue',
+                        width: 1,
+                        style: "solid",
+                    })
                 }),
             },
             {
@@ -183,6 +194,11 @@ export const LAYER_ML_STOPS: FeatureLayerMeta = {
                     style: "circle",
                     color: MLC_STOP_COLOR,
                     size: ML_STOP_SIZE,
+                    outline: new SimpleLineSymbol({
+                        color: 'purple',
+                        width: 1,
+                        style: "solid",
+                    })
                 }),
             },
         ],
@@ -193,6 +209,40 @@ export const LAYER_ML_STOPS: FeatureLayerMeta = {
             {
                 type: "fields",
                 fieldInfos: STOP_FIELDINFOS
+            },
+        ],
+    },
+    toGraphics: stopsToGraphics,
+};
+
+
+const AMTRAK_LAYER_TTL = "Amtrak";
+const AMTRAK_LAYER_URL = "/amtrak";
+const AMTRAK_COLOR = [77, 64, 117, 0.25];
+const AMTRAK_SIZE = 18;
+export const LAYER_AMTRAK: FeatureLayerMeta = {
+    title: AMTRAK_LAYER_TTL,
+    dataUrl: AMTRAK_LAYER_URL,
+    geometryType: "point",
+    fields: AMTRAK_FIELDS,
+    renderer: new SimpleRenderer({
+        symbol: new SimpleMarkerSymbol({
+            style: "circle",
+            color: AMTRAK_COLOR,
+            size: AMTRAK_SIZE,
+            outline: new SimpleLineSymbol({
+                color: 'black',
+                width: 1,
+                style: "solid",
+            }),
+        }),
+    }),
+    popupTemplate: {
+        title: `Amtrak Stop: {name}`,
+        content: [
+            {
+                type: "fields",
+                fieldInfos: AMTRAK_FIELDINFOS
             },
         ],
     },
@@ -405,6 +455,39 @@ export const LAYER_FUN: FeatureLayerMeta = {
             {
                 type: "fields",
                 fieldInfos: FUN_FIELDINFOS,
+            },
+        ],
+    },
+    toGraphics: toPolygon,
+};
+
+const SOCIAL_LAYER_TTL = "Social Facilities";
+const SOCIAL_LAYER_URL = "/social";
+const SOCIAL_COLOR = [184, 217, 255, 0.5];
+const SOCIAL_OUTLINE_SIZE = .5;
+
+export const LAYER_SOCIAL: FeatureLayerMeta = {
+    title: SOCIAL_LAYER_TTL,
+    dataUrl: SOCIAL_LAYER_URL,
+    geometryType: "polygon",
+    fields: SOCIAL_FIELDS as __esri.FieldProperties[],
+    renderer: new SimpleRenderer({
+        symbol: new SimpleFillSymbol({
+            color: SOCIAL_COLOR,
+            style: "diagonal-cross",
+            outline: new SimpleLineSymbol({
+                color: 'black',
+                width: SOCIAL_OUTLINE_SIZE,
+                style: "solid",
+            }),
+        }),
+    }),
+    popupTemplate: {
+        title: "{name}",
+        content: [
+            {
+                type: "fields",
+                fieldInfos: SOCIAL_FIELDINFOS,
             },
         ],
     },
