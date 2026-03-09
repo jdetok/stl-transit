@@ -1,11 +1,13 @@
-import Map from "@arcgis/core/Map";
-import MapView from "@arcgis/core/views/MapView";
+import "@arcgis/map-components/dist/components/arcgis-map";
+import "@arcgis/map-components/dist/components/arcgis-layer-list";
+import "@arcgis/map-components/dist/components/arcgis-legend";
+import "@arcgis/map-components/dist/components/arcgis-expand";
+import "@esri/calcite-components/dist/components/calcite-action-bar";
+import "@esri/calcite-components/dist/components/calcite-action";
+import "@esri/calcite-components/dist/components/calcite-panel";
 import Graphic from "@arcgis/core/Graphic";
 import Polygon from "@arcgis/core/geometry/Polygon";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import LayerList from "@arcgis/core/widgets/LayerList";
-import Expand from "@arcgis/core/widgets/Expand";
-import Legend from "@arcgis/core/widgets/Legend";
 import { STLCOORDS, STLWKID, BASEMAP } from "../data.js";
 import {
     FeatureLayerMeta,
@@ -21,63 +23,19 @@ import {
     LAYER_AMTRAK,
     LAYER_SOCIAL
 } from "../layers.js";
+
 export const TAG = "map-window";
 
-type mapCoords = {
-    xmin: number;
-    ymin: number;
-    xmax: number;
-    ymax: number;
-    spatialReference: { wkid: number };
-};
-
-export function newMapCoords(
-    xmin: number,
-    ymin: number,
-    xmax: number,
-    ymax: number,
-    wkid: number,
-): mapCoords {
-    return { xmin, ymin, xmax, ymax, spatialReference: { wkid } };
-}
-
 export class MapWindow extends HTMLElement {
-    private div!: HTMLDivElement;
-    private view: __esri.MapView;
-    private map: __esri.Map;
-    private coords: mapCoords;
-    private legend: Expand;
-    private legendResizeObserver?: ResizeObserver;
+    private arcgisMap!: HTMLArcgisMapElement;
     private layers: FeatureLayerMeta[];
+    private layerListPanel!: HTMLElement;
+    private legendPanel!: HTMLElement;
     public constructor() {
         super();
 
         const root = this.attachShadow({ mode: "open" });
-        this.div = Object.assign(document.createElement("div"), { style: "min-height: 100%;" });
-
-        this.coords = newMapCoords(
-            STLCOORDS.xmin,
-            STLCOORDS.ymin,
-            STLCOORDS.xmax,
-            STLCOORDS.ymax,
-            STLWKID,
-        );
-
-        this.map = new Map({
-            basemap: BASEMAP,
-        });
-
-        this.view = new MapView({
-            container: this.div,
-            map: this.map,
-            extent: this.coords,
-            popupEnabled: true,
-            popup: {
-                dockEnabled: false,
-                dockOptions: { buttonEnabled: false },
-            },
-        });
-
+        
         // order matters
         this.layers = [
             LAYER_CENSUS_COUNTIES,
@@ -92,68 +50,109 @@ export class MapWindow extends HTMLElement {
             LAYER_BUS_STOPS,
             LAYER_ML_STOPS,
         ];
-
-        this.legend = this.addLegend();
-
-        this.view.when(
-            async () => {
-                // ADD LAYERS TO MAP VIEW
-                for (let i = 0; i < this.layers.length; i++) {
-                    this.map.add(await this.makeFeatureLayer(this.layers[i]), i);
-                }
-
-                // add UI buttons/popups
-                this.view.ui.add(this.addLayerList(), "bottom-left");
-                this.view.ui.add(this.legend, "bottom-right");
-
-                this.watchSizeForLegendCollapse();
-            },
-            (e: Error) => console.error("failed to build or display map:", e),
+        root.append(
+            this.addStyling(),
+            this.buildMap(),
+            this.buildLayerListPanel(),
+            this.buildLegendPanel(),
+            this.buildActionBar(),
         );
-
-        root.append(this.addStyling(), this.div);
     }
     disconnectedCallback(): void {
-        this.legendResizeObserver?.disconnect();
-        this.legendResizeObserver = undefined;
+        this.arcgisMap?.remove();
+    }
+    
+    private buildMap(): HTMLArcgisMapElement {
+        this.arcgisMap = document.createElement("arcgis-map") as HTMLArcgisMapElement;
+        this.arcgisMap.basemap = BASEMAP;
+        this.arcgisMap.extent = {
+            xmin: STLCOORDS.xmin,
+            ymin: STLCOORDS.ymin,
+            xmax: STLCOORDS.xmax,
+            ymax: STLCOORDS.ymax,
+            spatialReference: {wkid: STLWKID}
+        } as __esri.Extent
 
-        // Optional but recommended for ArcGIS
-        if (this.view) {
-            this.view.container = null as any;
-            this.view.destroy();
-        }
-    }
-    private addStyling(): HTMLStyleElement {
-        return Object.assign(document.createElement("style"), { textContent: STYLE });
-    }
-    private addLayerList(): Expand {
-        return new Expand({
-            view: this.view,
-            content: new LayerList({ view: this.view }),
-            expanded: true,
-        });
-    }
-    private addLegend(): Expand {
-        return new Expand({
-            view: this.view,
-            content: new Legend({
-                view: this.view,
-            }),
-            expanded: true,
-            mode: "floating",
-        });
-    }
-    private watchSizeForLegendCollapse(): void {
-        const apply = () => {
-            // "xsmall" | "small" | "medium" | "large" | "xlarge"
-            const bp = this.view.heightBreakpoint;
-            if (bp === "xsmall" || bp === "small") {
-                this.legend.expanded = false;
+        this.arcgisMap.addEventListener("arcgisViewReadyChange", async () => {
+            for (let i = 0; i < this.layers.length; i++) {
+                try {
+                    const view = this.arcgisMap.view as __esri.MapView;
+                    (this.layerListPanel.querySelector("arcgis-layer-list") as any).view = view;
+                    (this.legendPanel.querySelector("arcgis-legend") as any).view = view;
+                    const layer = await this.makeFeatureLayer(this.layers[i]);
+                    this.arcgisMap.map?.add(layer, i);
+                } catch (e) {
+                    console.error(e);
+                }
             }
+        }, { once: true });
+
+        return this.arcgisMap;
+    }
+    private buildActionBar(): HTMLElement {
+        const actionBar = document.createElement("calcite-action-bar") as any;
+        actionBar.layout = "vertical";
+
+        const actions = [
+            { id: "layers", icon: "layers", text: "Layers" },
+            { id: "legend", icon: "legend", text: "Legend" },
+        ];
+
+        for (const a of actions) {
+            const action = document.createElement("calcite-action") as any;
+            action.dataset.actionId = a.id;
+            action.icon = a.icon;
+            action.text = a.text;
+            action.addEventListener("click", () => this.togglePanel(a.id, actionBar));
+            actionBar.appendChild(action);
+        }
+
+        return actionBar;
+    }
+
+    private togglePanel(id: string, actionBar: any): void {
+        const panels: Record<string, HTMLElement> = {
+            layers: this.layerListPanel,
+            legend: this.legendPanel,
         };
 
-        apply();
-        this.view.watch("heightBreakpoint", apply);
+        // toggle active action
+        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
+            a.active = a.dataset.actionId === id ? !a.active : false;
+        });
+
+        // show/hide panels
+        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
+            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
+        });
+    }
+    private buildLayerListPanel(): HTMLElement {
+        const panel = document.createElement("calcite-panel") as any;
+        panel.heading = "Layers";
+        panel.hidden = true;
+
+        const layerList = document.createElement("arcgis-layer-list") as HTMLArcgisLayerListElement;
+        panel.appendChild(layerList);
+
+        this.layerListPanel = panel;
+        return panel;
+    }
+
+    private buildLegendPanel(): HTMLElement {
+        const panel = document.createElement("calcite-panel") as any;
+        panel.heading = "Legend";
+        panel.hidden = true;
+
+        const legend = document.createElement("arcgis-legend") as HTMLArcgisLegendElement;
+        legend.legendStyle = "classic";
+        panel.appendChild(legend);
+
+        this.legendPanel = panel;
+        return panel;
+    }
+    
+    private addStyling(): HTMLStyleElement {
+        return Object.assign(document.createElement("style"), { textContent: STYLE });
     }
     private async makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
         try {
@@ -165,22 +164,17 @@ export class MapWindow extends HTMLElement {
                 // build graphics layer if specified
                 if (meta.toGraphics) {
                     meta.source = meta.toGraphics(data);
-                } else if (meta.toPolygons) {
-                    meta.source = meta.toPolygons(data);
                 } else {
                     if (!data?.features?.length) {
                         throw new Error(`layer "${meta.title}" expected data.features[]`);
                     }
-                    meta.source = data.features.map(
-                        (f: any) =>
-                            new Graphic({
-                                geometry: new Polygon({
-                                    rings: f.geometry.rings,
-                                    spatialReference: { wkid: STLWKID },
-                                }),
-                                attributes: f.attributes,
-                            }),
-                    );
+                    meta.source = data.features.map((f: any) => new Graphic({
+                        geometry: new Polygon({
+                            rings: f.geometry.rings,
+                            spatialReference: { wkid: STLWKID },
+                        }),
+                        attributes: f.attributes,
+                    }));
                 }
             }
         } catch (e) {
@@ -198,75 +192,42 @@ export class MapWindow extends HTMLElement {
         });
     }
 }
+
 const STYLE = `
 :host {
-    --popup-bdr: 2px solid black;
-    --popup-bdrrad: .5rem;
-    --popup-bg: rgba(125, 140, 151, 0.82);
-    /*--popup-bg: rgba(192, 201, 209, 0.85);*/
-    position: relative;
-    overflow: hidden;
     display: block;
     width: 100%;
     min-height: 0;
     height: 100%;
+    --popup-bg: rgba(125, 140, 151, 0.82);
     --calcite-color-brand: var(--popup-bg);
-    --calcite-popover-background-color: var(--popup-bg);
-    --calcite-popover-corner-radius: 1rem;
-    --calcite-popover-padding: 1rem;
+    --calcite-color-background: var(--popup-bg);
+    --calcite-color-foreground-1: var(--popup-bg);
+    overflow: hidden;
+    position: relative;
 }
 
-.esri-component * {
-    pointer-events: auto;
-    /*text-align: left;*/
-}
-
-.esri-widget--button {
-    background-color: var(--popup-bg);
-}
-
-/* endless scroll and no expands without these */
-.esri-ui-corner {
+calcite-action-bar {
     position: absolute;
+    bottom: 1.8rem;
+    right: .2rem;
+    z-index: 10;
 }
-.esri-ui-top-left     { top: 15px;    left: 15px;   }
-.esri-ui-top-right    { top: 15px;    right: 15px;  }
-.esri-ui-bottom-left  { bottom: 15px; left: 15px;   }
-.esri-ui-bottom-right { bottom: 15px; right: 15px;  }
 
-.esri-popup {
-    text-align: right;
-    background-color: var(--popup-bg);
-    margin: 0 auto;
+calcite-panel {
+    position: absolute;
+    bottom: 1.8rem;
+    right: .2rem;
+    z-index: 10;
     width: fit-content;
-    max-width: 400px;
-    padding: .5rem;
-    border-radius: var(--popup-bdrrad);
+    height: fit-content;
+    max-height: 48%;
+    max-width: 98%;
 }
-
-.esri-feature-fields__field-data {
-    text-align: left;
-}
-
-/* force legend padding */
-.esri-expand__content-container {
-    padding: .5rem;
-}
-
-.esri-ui-manual-container {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-.esri-attribution {
-    display: none;
-    position: absolute;
-    bottom: auto;
-    left: 0;
-    right: 0;
-    margin-top: 2px;
-    height: 16px;
-    pointer-events: auto;
+arcgis-map {
+    border-radius: 1rem;
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 `;

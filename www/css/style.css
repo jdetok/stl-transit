@@ -16,7 +16,6 @@ body {
   height: 100vh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-
 }
 
 body > * {
@@ -25,23 +24,12 @@ body > * {
     min-height: 0;
 }
 
-#map {
+map-window {
     margin: 0 auto;
     min-height: 0;
     height: 100%;
-    overflow: hidden;
-    margin-left: var(--map-margin);
-    margin-right: var(--map-margin);
     border: 8px solid black;
     border-radius: 2rem;
-}
-#map > * {
-    height: 100%;
-    width: 100%;
-    border-radius: 1.5rem;
+    /* overflow: hidden; */
 }
 
-map-window {
-    height: 100%;
-    display: block;
-}

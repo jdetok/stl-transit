@@ -28,7 +28,6 @@ export type FeatureLayerMeta = {
     fields?: __esri.FieldProperties[];
     geometryType?: 'point' | 'polygon' | 'polyline';
     toGraphics?: (data: any) => Graphic[];
-    toPolygons?: (data: any) => Graphic[];
 }
 const POPLDENS_ALPHA = 0.15;
 const POPLDENS_CHOROPLETH_LEVELS: cplethEls[] = [
@@ -38,7 +37,7 @@ const POPLDENS_CHOROPLETH_LEVELS: cplethEls[] = [
     [7500, 10000, [44, 60, 255]],
     [10000, 99999, [50, 1, 63]],
 ];
-const COUNTIES_OUTLINE_COLOR = [250, 250, 250, 0.5];
+const COUNTIES_OUTLINE_COLOR = [0, 0, 0, 0.5];
 const COUNTIES_OUTLINE_SIZE = 1.5;
 const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
 
@@ -214,7 +213,6 @@ export const LAYER_ML_STOPS: FeatureLayerMeta = {
     },
     toGraphics: stopsToGraphics,
 };
-
 
 const AMTRAK_LAYER_TTL = "Amtrak";
 const AMTRAK_LAYER_URL = "/amtrak";
