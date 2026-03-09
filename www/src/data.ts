@@ -106,3 +106,59 @@ export const CYCLING_FIELDS = [
     { name: "highway", alias: "Highway", type: "string" },
     { name: "surface", alias: "Surface", type: "string" },
 ];
+
+export const GROCERY_FIELDS = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "operator", alias: "Operator", type: "string" },
+    { name: "brand", alias: "Brand", type: "string" },
+];
+
+export const GROCERY_FIELDINFOS = [
+    { fieldName: "ObjectID", label: "ObjectID" },
+    { fieldName: "name", label: "Name" },
+    { fieldName: "operator", label: "Operator" },
+    { fieldName: "brand", label: "Brand" },
+];
+
+export const PARKS_FIELDS = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "operator", alias: "Operator", type: "string" },
+];
+
+export const PARKS_FIELDINFOS = [
+    { fieldName: "ObjectID", label: "ObjectID" },
+    { fieldName: "name", label: "Name" },
+    { fieldName: "operator", label: "Operator" },
+];
+
+export const FUN_FIELDS = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "amenity", alias: "Amenity", type: "string" },
+    { name: "operator", alias: "Operator", type: "string" },
+    { name: "brand", alias: "Brand", type: "string" },
+];
+
+export const FUN_FIELDINFOS = [
+    { fieldName: "ObjectID", label: "ObjectID" },
+    { fieldName: "name", label: "Name" },
+    { fieldName: "amenity", label: "Amenity" },
+    { fieldName: "operator", label: "Operator" },
+    { fieldName: "brand", label: "Brand" },
+];
+
+export const SCHOOL_FIELDS = [
+    { name: "ObjectID", alias: "ObjectID", type: "oid" },
+    { name: "name", alias: "Name", type: "string" },
+    { name: "amenity", alias: "Amenity", type: "string" },
+    { name: "operator", alias: "Operator", type: "string" },
+];
+
+export const SCHOOL_FIELDINFOS = [
+    { fieldName: "ObjectID", label: "ObjectID" },
+    { fieldName: "name", label: "Name" },
+    { fieldName: "amenity", label: "Amenity" },
+    { fieldName: "operator", label: "Operator" },
+];

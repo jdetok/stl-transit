@@ -103,16 +103,6 @@ and (
 	or round(a.b01001001::numeric * 2589988.0 / nullif(t.aland, 0), 2) >= 1000
 )
 `
-	GROCERY_STORES = `
-select
-	osm_id,
-	COALESCE(name, '') AS name,
-	shop,
-	ST_AsGeoJSON(ST_Transform(way, 4326)) AS geom
-from planet_osm_polygon
-where shop = 'supermarket'
-and way && ST_Transform(ST_MakeEnvelope(-99.11,31.77,-75.54,45.87, 4326), 3857)
-	`
 	TRN_STOPS = `
 select a.stop_id, c.stop_name, string_agg(distinct d.route_short_name, ', ') as route_ids,
 	string_agg(distinct d.route_long_name, ', ') as route_names, c.wheelchair_boarding as wheelchair,
@@ -146,6 +136,51 @@ select osm_id,
 from public.planet_osm_line
 where highway='cycleway'
 `
+	GROCERY = `
+select
+	osm_id, name, brand, operator, shop,
+	ST_AsGeoJSON(ST_Transform(way, 4326)) as geom
+from public.planet_osm_polygon
+where shop in ('greengrocer', 'grocery', 'supermarket', 'deli', 'farm', 'butcher', 'seafood', 'bakery', 'convenience')
+and way && ST_Transform(
+    ST_MakeEnvelope(-91, 38, -89.5, 40, 4326),
+    3857
+)
+	`
+	PARKS = `
+select osm_id, name, operator, leisure,
+ST_AsGeoJSON(ST_Transform(way, 4326)) as geom
+from public.planet_osm_polygon
+where leisure = 'park'
+and way && ST_Transform(
+    ST_MakeEnvelope(-92.5, 37, -89.5, 40, 4326),
+    3857
+)	
+	`
+	FUN = `
+select osm_id, name, amenity, brand, operator, leisure,
+	ST_AsGeoJSON(ST_Transform(way, 4326)) as geom
+from public.planet_osm_polygon
+where amenity in ('theatre', 'stadium', 'stage', 
+ 	'ampitheatre', 'stripclub', 'banquet_hall', 'batting_cage',
+ 	'bicycle_rental', 'biergarten', 'casino', 'cinema', 'clubhouse',
+ 	'driving_range', 'dojo', 'events_venue', 'hookah_lounge', 'nightclub',
+ 	'planetarium', 'pub', 'bar', 'arts_centre')
+and way && ST_Transform(
+    ST_MakeEnvelope(-92.5, 37, -89.5, 40, 4326),
+    3857
+)	
+	`
+	SCHOOLS = `
+select osm_id, name, amenity, operator,
+	ST_AsGeoJSON(ST_Transform(way, 4326)) as geom
+from public.planet_osm_polygon
+where amenity in ('school', 'college', 'university', 'kindergarten')
+and way && ST_Transform(
+    ST_MakeEnvelope(-92.5, 37, -89.5, 40, 4326),
+    3857
+)	
+	`
 	METRO_AND_OSM_STOPS = `
 with metro as (
 	select a.name as county, b.name, 'Metro Transit' as network, b.wheelchair, b.geom

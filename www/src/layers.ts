@@ -13,7 +13,9 @@ import {
     COUNTIES_LAYER_URL, COUNTIES_LAYER_TTL, COUNTIES_FIELDS, COUNTIES_FIELDINFOS,
     ML_LAYER_URL, ML_LAYER_TTL, BUS_LAYER_TTL, BUS_LAYER_URL,
     CYCLE_LAYER_URL, CYCLE_LAYER_TTL, CYCLING_FIELDS,
-    STOP_FIELDINFOS, STOP_FIELDS
+    STOP_FIELDINFOS, STOP_FIELDS, GROCERY_FIELDS, GROCERY_FIELDINFOS,
+    PARKS_FIELDS, PARKS_FIELDINFOS, FUN_FIELDS, FUN_FIELDINFOS,
+    SCHOOL_FIELDS, SCHOOL_FIELDINFOS
 } from "./data.js";
 import Polygon from "@arcgis/core/geometry/Polygon.js";
 export type FeatureLayerMeta = {
@@ -39,7 +41,8 @@ const COUNTIES_OUTLINE_COLOR = [250, 250, 250, 0.5];
 const COUNTIES_OUTLINE_SIZE = 1.5;
 const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
 
-const BUS_STOP_Y_COLOR = 'mediumseagreen';
+// const BUS_STOP_Y_COLOR = 'mediumseagreen';
+const BUS_STOP_Y_COLOR = 'cyan';
 const BUS_STOP_NO_COLOR = [180, 110, 200, 0.7];
 const BUS_STOP_NA_COLOR = [0, 165, 255, 0.5];
 const BUS_STOP_SIZE = 4;
@@ -220,7 +223,7 @@ export const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
             },
         ],
     },
-    toPolygons: toPolygon,
+    toGraphics: toPolygon,
 };
 
 export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
@@ -241,7 +244,7 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
             },
         ],
     },
-    toPolygons: toPolygon,
+    toGraphics: toPolygon,
 };
 
 
@@ -307,4 +310,136 @@ export const LAYER_CYCLING: FeatureLayerMeta = {
             }),
         );
     }
+};
+
+const GROCERY_LAYER_TTL = "Grocery Stores";
+const GROCERY_LAYER_URL = "/grocery";
+const GROCERY_INNER_COLOR = 'blue';
+const GROCERY_OUTLINE_SIZE = .5;
+
+export const LAYER_GROCERY: FeatureLayerMeta = {
+    title: GROCERY_LAYER_TTL,
+    dataUrl: GROCERY_LAYER_URL,
+    geometryType: "polygon",
+    fields: GROCERY_FIELDS as __esri.FieldProperties[],
+    renderer: new SimpleRenderer({
+        symbol: new SimpleFillSymbol({
+            color: GROCERY_INNER_COLOR,
+            style: "diagonal-cross",
+            outline: new SimpleLineSymbol({
+                color: 'black',
+                width: GROCERY_OUTLINE_SIZE,
+                style: "solid",
+            }),
+        }),
+    }),
+    popupTemplate: {
+        title: "{name}",
+        content: [
+            {
+                type: "fields",
+                fieldInfos: GROCERY_FIELDINFOS,
+            },
+        ],
+    },
+    toGraphics: toPolygon,
+};
+
+const PARKS_LAYER_TTL = "Parks";
+const PARKS_LAYER_URL = "/parks";
+const PARKS_COLOR = [20, 255, 115, 0.45];
+const PARKS_OUTLINE_SIZE = .5;
+
+export const LAYER_PARKS: FeatureLayerMeta = {
+    title: PARKS_LAYER_TTL,
+    dataUrl: PARKS_LAYER_URL,
+    geometryType: "polygon",
+    fields: PARKS_FIELDS as __esri.FieldProperties[],
+    renderer: new SimpleRenderer({
+        symbol: new SimpleFillSymbol({
+            color: PARKS_COLOR,
+            style: "diagonal-cross",
+            outline: new SimpleLineSymbol({
+                color: 'black',
+                width: PARKS_OUTLINE_SIZE,
+                style: "solid",
+            }),
+        }),
+    }),
+    popupTemplate: {
+        title: "{name}",
+        content: [
+            {
+                type: "fields",
+                fieldInfos: PARKS_FIELDINFOS,
+            },
+        ],
+    },
+    toGraphics: toPolygon,
+};
+
+const FUN_LAYER_TTL = "Entertainment";
+const FUN_LAYER_URL = "/fun";
+const FUN_COLOR = [255, 153, 255, 0.56];
+const FUN_OUTLINE_SIZE = .5;
+
+export const LAYER_FUN: FeatureLayerMeta = {
+    title: FUN_LAYER_TTL,
+    dataUrl: FUN_LAYER_URL,
+    geometryType: "polygon",
+    fields: FUN_FIELDS as __esri.FieldProperties[],
+    renderer: new SimpleRenderer({
+        symbol: new SimpleFillSymbol({
+            color: FUN_COLOR,
+            style: "diagonal-cross",
+            outline: new SimpleLineSymbol({
+                color: 'black',
+                width: FUN_OUTLINE_SIZE,
+                style: "solid",
+            }),
+        }),
+    }),
+    popupTemplate: {
+        title: "{name}",
+        content: [
+            {
+                type: "fields",
+                fieldInfos: FUN_FIELDINFOS,
+            },
+        ],
+    },
+    toGraphics: toPolygon,
+};
+
+const SCHOOL_LAYER_TTL = "Schools";
+const SCHOOL_LAYER_URL = "/school";
+const SCHOOL_COLOR = [242, 238, 122, 0.6];
+const SCHOOL_OUTLINE_SIZE = .5;
+
+export const LAYER_SCHOOL: FeatureLayerMeta = {
+    title: SCHOOL_LAYER_TTL,
+    dataUrl: SCHOOL_LAYER_URL,
+    geometryType: "polygon",
+    fields: SCHOOL_FIELDS as __esri.FieldProperties[],
+    renderer: new SimpleRenderer({
+        symbol: new SimpleFillSymbol({
+            color: SCHOOL_COLOR,
+            style: "diagonal-cross",
+            outline: new SimpleLineSymbol({
+                color: 'black',
+                width: SCHOOL_OUTLINE_SIZE,
+                style: "solid",
+            }),
+        }),
+    }),
+    popupTemplate: {
+        title: "{name}",
+        content: [
+            {
+                type: "fields",
+                fieldInfos: SCHOOL_FIELDINFOS,
+            },
+        ],
+    },
+    toGraphics: toPolygon,
 };

@@ -43,6 +43,10 @@ type DataLayers struct {
 	CyclePaths *FeatureColl
 	BusStops   *FeatureColl
 	TrnStops   *FeatureColl
+	Grocery    *FeatureColl
+	Schools    *FeatureColl
+	Parks      *FeatureColl
+	Fun        *FeatureColl
 }
 
 func (l *DataLayers) DataToJSONFile() error {
@@ -96,6 +100,10 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 	cyclPths := &FeatureColl{}
 	busStops := &FeatureColl{}
 	trnStops := &FeatureColl{}
+	grocery := &FeatureColl{}
+	schools := &FeatureColl{}
+	parks := &FeatureColl{}
+	fun := &FeatureColl{}
 
 	g.Go(func() error {
 		lg.Infof("getting counties from db")
@@ -137,6 +145,38 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 		return nil
 	})
 
+	g.Go(func() error {
+		lg.Infof("getting grocery stores from db")
+		if err := grocery.QueryDB(ctx, db, pgis.GROCERY, "geom", []any{}); err != nil {
+			return fmt.Errorf("failed to fetch grocery stores: %w", err)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		lg.Infof("getting parks from db")
+		if err := parks.QueryDB(ctx, db, pgis.PARKS, "geom", []any{}); err != nil {
+			return fmt.Errorf("failed to fetch parks: %w", err)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		lg.Infof("getting fun from db")
+		if err := fun.QueryDB(ctx, db, pgis.FUN, "geom", []any{}); err != nil {
+			return fmt.Errorf("failed to fetch fun: %w", err)
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		lg.Infof("getting schools from db")
+		if err := schools.QueryDB(ctx, db, pgis.SCHOOLS, "geom", []any{}); err != nil {
+			return fmt.Errorf("failed to fetch schools: %w", err)
+		}
+		return nil
+	})
+
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
@@ -150,6 +190,10 @@ func GetDataLayers(ctx context.Context, fname string, db *pgxpool.Pool, lg *zap.
 		BusStops:   busStops,
 		TrnStops:   trnStops,
 		CyclePaths: cyclPths,
+		Grocery:    grocery,
+		Schools:    schools,
+		Parks:      parks,
+		Fun:        fun,
 	}, nil
 }
 

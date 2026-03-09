@@ -14,6 +14,10 @@ import {
     LAYER_CENSUS_COUNTIES,
     LAYER_CENSUS_TRACTS,
     LAYER_CYCLING,
+    LAYER_GROCERY,
+    LAYER_PARKS, 
+    LAYER_FUN,
+    LAYER_SCHOOL
 } from "../layers.js";
 export const TAG = "map-window";
 
@@ -76,6 +80,10 @@ export class MapWindow extends HTMLElement {
         this.layers = [
             LAYER_CENSUS_COUNTIES,
             LAYER_CENSUS_TRACTS,
+            LAYER_GROCERY,
+            LAYER_SCHOOL,
+            LAYER_PARKS,
+            LAYER_FUN,
             LAYER_CYCLING,
             LAYER_BUS_STOPS,
             LAYER_ML_STOPS,
