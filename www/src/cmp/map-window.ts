@@ -12,6 +12,10 @@ import "@esri/calcite-components/dist/components/calcite-action";
 import "@esri/calcite-components/dist/components/calcite-panel";
 import "@esri/calcite-components/dist/components/calcite-select";
 import "@esri/calcite-components/dist/components/calcite-option";
+import "@esri/calcite-components/dist/components/calcite-table";
+import "@esri/calcite-components/dist/components/calcite-table-header";
+import "@esri/calcite-components/dist/components/calcite-table-row";
+import "@esri/calcite-components/dist/components/calcite-table-cell";
 import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect";
 import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import Graphic from "@arcgis/core/Graphic";
@@ -29,6 +33,7 @@ import {
     LAYER_PLACES
 } from "../layers.js";
 
+
 function buildCalcitePanel(elementType: string, heading: string): HTMLCalcitePanelElement {
     const panel = document.createElement("calcite-panel");
     panel.heading = heading;
@@ -44,12 +49,12 @@ export class MapWindow extends HTMLElement {
     private arcgisMap!: HTMLArcgisMapElement;
     private layers: FeatureLayerMeta[];
     private busStopsLayer!: FeatureLayer;
-    private layerListPanel!: HTMLElement;
-    private routeInfoPanel!: HTMLElement;
     private routePanel!: HTMLElement;
-    private legendPanel!: HTMLElement;
-    private basemapPanel!: HTMLElement;
-    private printPanel!: HTMLElement;
+    private layerListPanel!: HTMLCalcitePanelElement;
+    private routeInfoPanel!: HTMLCalcitePanelElement;
+    private legendPanel!: HTMLCalcitePanelElement;
+    private basemapPanel!: HTMLCalcitePanelElement;
+    private printPanel!: HTMLCalcitePanelElement;
     private routesData: any[] = [];
     public constructor() {
         super();
@@ -66,6 +71,7 @@ export class MapWindow extends HTMLElement {
             LAYER_BUS_STOPS,
             LAYER_ML_STOPS,
         ];
+
         root.append(
             this.addStyling(),
             this.buildMap(),
@@ -116,7 +122,15 @@ export class MapWindow extends HTMLElement {
         }, { once: true });
         return this.arcgisMap;
     }
-    private buildActionBar(): HTMLElement {
+    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
+        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
+            a.active = a.dataset.actionId === id ? !a.active : false;
+        });
+        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
+            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
+        });
+    }
+    private buildActionBar(): HTMLCalciteActionBarElement {
         const actionBar = document.createElement("calcite-action-bar") as any;
         actionBar.layout = "horizontal";
 
@@ -160,43 +174,36 @@ export class MapWindow extends HTMLElement {
         this.routePanel = wrapper;
         return wrapper;
     }
-    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
-        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
-            a.active = a.dataset.actionId === id ? !a.active : false;
-        });
-        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
-            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
-        });
-    }
-    private buildLayerListPanel(): HTMLElement {
+    
+    private buildLayerListPanel(): HTMLCalcitePanelElement {
         const panel = buildCalcitePanel("arcgis-layer-list", "Layers");
         this.layerListPanel = panel;
         return panel;
     }
-    private buildPrintPanel(): HTMLElement {
+    private buildPrintPanel(): HTMLCalcitePanelElement {
         const panel = buildCalcitePanel("arcgis-print", "Export");
         this.printPanel = panel;
         return panel;
     }
-    private buildLegendPanel(): HTMLElement {
+    private buildLegendPanel(): HTMLCalcitePanelElement {
         const panel = buildCalcitePanel("arcgis-legend", "Legend");
         this.legendPanel = panel;
         return panel;
     }
-    private buildBasemapPanel(): HTMLElement {
+    private buildBasemapPanel(): HTMLCalcitePanelElement {
         const panel = buildCalcitePanel("arcgis-basemap-gallery", "Basemaps");
         this.basemapPanel = panel;
         return panel;
     }
-    private buildZoom(): HTMLElement {
+    private buildZoom(): HTMLArcgisZoomElement {
         return document.createElement("arcgis-zoom");
     }
-    private buildSearch(): HTMLElement {
+    private buildSearch(): HTMLArcgisSearchElement {
         const search = document.createElement("arcgis-search");
         search.view = this.arcgisMap.view;
         return search;
     }
-    private buildRouteInfoPanel(): HTMLElement {
+    private buildRouteInfoPanel(): HTMLCalcitePanelElement {
         const panel = document.createElement("calcite-panel");
         panel.classList.add("route-info");
         panel.heading = "Route Info";
@@ -219,24 +226,38 @@ export class MapWindow extends HTMLElement {
         if (!feature) return;
 
         const props = feature.properties;
-        this.routeInfoPanel.innerHTML = "";
-        (this.routeInfoPanel as any).heading = `Route ${props.route}`;
-        (this.routeInfoPanel as any).closed = false;
-        (this.routeInfoPanel as any).closable = true;
+        this.routeInfoPanel.querySelector("calcite-table")?.remove();
+        this.routeInfoPanel.heading = `${route}: ${props.stops_total} stops`;
+        this.routeInfoPanel.closed = false;
+        this.routeInfoPanel.closable = true;
 
-        const list = document.createElement("calcite-list");
-
-        for (const [key, val] of Object.entries(props)) {
-            if (key === "route") continue;
-            const item = document.createElement("calcite-list-item") as any;
-            item.label = key.replace(/_/g, " ");
-            item.description = String(val ?? "—");
-            list.appendChild(item);
-        }
-
-        this.routeInfoPanel.appendChild(list);
+        const tbl = this.buildPropsTable(`Route ${props.route}`, props);
+        this.routeInfoPanel.appendChild(tbl);
         this.routeInfoPanel.hidden = false;
     }
+    private buildPropsTable(routeHeading: string, props: any): HTMLCalciteTableElement {
+        const tbl = document.createElement("calcite-table");
+        tbl.setAttribute("caption", routeHeading);
+
+        const hdg = Object.assign(document.createElement("calcite-table-row"), { slot: "table-header" });
+        const h1 = Object.assign(document.createElement("calcite-table-header"), { heading: "Amenity Type" });
+        const h2 = Object.assign(document.createElement("calcite-table-header"), { heading: "Stops w/ Access" });
+        hdg.append(h1, h2);
+        tbl.appendChild(hdg);
+        // add the key as the first table cell and the val as the second
+        for (const [key, val] of Object.entries(props)) {
+            if (!key.includes("_access_")) continue;
+            const row = document.createElement("calcite-table-row");
+            
+            const keyVal = key.split("_").at(-1);
+            const amenity = Object.assign(document.createElement("calcite-table-cell"), { innerText: `${String(keyVal).charAt(0).toUpperCase()}${String(keyVal).slice(1)}` });
+            const access = Object.assign(document.createElement("calcite-table-cell"), { innerText: val });
+            row.append(amenity, access);
+            tbl.appendChild(row);
+        }
+        return tbl;
+    }
+
     private async populateRouteSelect(): Promise<void> {
         const res = await fetch("layers/routes");
         const data = await res.json();
@@ -247,8 +268,8 @@ export class MapWindow extends HTMLElement {
         const select = this.routePanel.querySelector("calcite-select") as any;
 
         const allOption = document.createElement("calcite-option") as any;
-        allOption.value = "";
-        allOption.label = "All routes";
+        allOption.value = "all" ;
+        allOption.label = "All MetroBus Routes";
         select.appendChild(allOption);
 
         for (const r of routes) {
@@ -266,15 +287,15 @@ export class MapWindow extends HTMLElement {
             return;
         }
 
+        const whereClause = `route_names like '%${routeName}%'`;
+
         layerView.featureEffect = new FeatureEffect({
-            filter: new FeatureFilter({
-                where: `route_names like '%${routeName}%'`
-            }),
+            filter: new FeatureFilter({ where: whereClause }),
             includedEffect: "bloom(2, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
             excludedEffect: "opacity(60%) brightness(1)"
         });
         const result = await this.busStopsLayer.queryFeatures({
-            where: `route_names like '%${routeName}%'`,
+            where: whereClause,
             returnGeometry: true,
             outSpatialReference: { wkid: STLWKID },
         });
@@ -282,9 +303,7 @@ export class MapWindow extends HTMLElement {
             await this.arcgisMap.view.goTo(result.features, { duration: 600 });
         }
     }
-    private addStyling(): HTMLStyleElement {
-        return Object.assign(document.createElement("style"), { textContent: STYLE });
-    }
+    
     private async makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
         try {
             if (meta.dataUrl) {
@@ -321,6 +340,9 @@ export class MapWindow extends HTMLElement {
             popupTemplate: meta.popupTemplate,
             fields: meta.fields,
         });
+    }
+    private addStyling(): HTMLStyleElement {
+        return Object.assign(document.createElement("style"), { textContent: STYLE });
     }
 }
 
@@ -369,17 +391,13 @@ calcite-panel {
     z-index: 10;
     width: 220px;
 }
-calcite-panel.route-info {
-    left: 230px;
-    right: unset;
-}
 calcite-panel.filter {
     left: 5px;
-    right: unset;  /* override the global right */
+    right: unset;
 }
 
 calcite-panel.route-info {
-    left: 25px;
+    left: 5px;
     right: unset;
 }
 

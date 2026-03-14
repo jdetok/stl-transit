@@ -171,7 +171,7 @@ where x.statefp in ('29', '17')
 var QROUTES = &Query{Q: `
 select 
     route, route_type, route_name, route_desc,
-    stops_total, stops_accessible,
+    stops_total, stops_access_wheelchair,
     stops_access_amenities, stops_access_grocery,
     stops_access_schools, stops_access_colleges, stops_access_parks,
     stops_access_social_facilities, stops_access_churches, stops_access_entertainment

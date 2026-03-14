@@ -9,7 +9,7 @@ create table if not exists api.routes (
 	route_desc text,
 	trips text,
 	stops_total integer,
-	stops_accessible integer,
+	stops_access_wheelchair integer,
 	stops_access_amenities integer,
 	stops_access_grocery integer,
 	stops_access_schools integer,
@@ -63,7 +63,7 @@ with mtr as (
         a.route_id,
         string_agg(distinct a.trip_headsign, ', ') as trips,
         count(distinct b.stop_id) as stops_total,
-        count(distinct case when c.wheelchair_boarding = 'accessible' then b.stop_id end) as stops_accessible,
+        count(distinct case when c.wheelchair_boarding = 'accessible' then b.stop_id end) as stops_access_wheelchair,
         count(distinct case when sn.has_any then b.stop_id end) as stops_access_amenities,
         count(distinct case when sn.has_grocery then b.stop_id end) as stops_access_grocery,
         count(distinct case when sn.has_school then b.stop_id end) as stops_access_schools,
@@ -79,13 +79,13 @@ with mtr as (
     left join stops_near sn on sn.stop_id = b.stop_id
     group by a.route_id
 )
-insert into api.routes (route, route_type, route_name, route_desc, trips, stops_total, stops_accessible, 
+insert into api.routes (route, route_type, route_name, route_desc, trips, stops_total, stops_access_wheelchair, 
 	stops_access_amenities, stops_access_grocery, stops_access_schools, stops_access_colleges, stops_access_parks, 
 	stops_access_social_facilities, stops_access_medical, stops_access_churches, stops_access_entertainment
 )
 select
     route, route_type, route_name, route_desc, trips,
-    stops_total, stops_accessible,
+    stops_total, stops_access_wheelchair,
     stops_access_amenities, stops_access_grocery,
     stops_access_schools, stops_access_colleges, stops_access_parks,
     stops_access_social_facilities, stops_access_medical, stops_access_churches, stops_access_entertainment
@@ -96,7 +96,7 @@ order by stops_total desc;
 select * from api.routes;
 select 
     route, route_type, route_name, route_desc,
-    stops_total, stops_accessible,
+    stops_total, stops_access_wheelchair,
     stops_access_amenities, stops_access_grocery,
     stops_access_schools, stops_access_colleges, stops_access_parks,
     stops_access_social_facilities, stops_access_entertainment
