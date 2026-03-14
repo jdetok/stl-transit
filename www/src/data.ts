@@ -45,12 +45,30 @@ export const STOP_FIELDS: __esri.FieldProperties[] = [
     { name: "wheelchair_access", alias: "Wheelchair Accessible", type: "string" },
     { name: "route_names", alias: "Route Names", type: "string" },
     { name: "route_ids", alias: "Route Nums", type: "string" },
+    { name: "amenity_access", alias: "Amenity Access", type: "string" },
+    { name: "grocery_access", alias: "Grocery Store Access", type: "string" },
+    { name: "school_access", alias: "School/Kindergarten Access", type: "string" },
+    { name: "college_access", alias: "College/University Access", type: "string" },
+    { name: "park_access", alias: "Park Access", type: "string" },
+    { name: "facility_access", alias: "Social Facility Access", type: "string" },
+    { name: "medical_access", alias: "Medical Facility Access", type: "string" },
+    { name: "church_access", alias: "Place of Worship Access", type: "string" },
+    { name: "entertainment_access", alias: "Entertainment Access", type: "string" },
 ];
 
 export const STOP_FIELDINFOS = [
     { fieldName: "stop_name", label: "Name" },
-    { fieldName: "wheelchair_access", label: "Wheelchair Accessible" },
     { fieldName: "route_names", label: "Route Names" },
+    { fieldName: "wheelchair_access", label: "Wheelchair Accessible" },
+    { fieldName: "amenity_access", label: "Amenity Access" },
+    { fieldName: "grocery_access", label: "Grocery Store Access" },
+    { fieldName: "school_access", label: "School/Kindergarten Access" },
+    { fieldName: "college_access", label: "College/University Access" },
+    { fieldName: "park_access", label: "Park Access" },
+    { fieldName: "facility_access", label: "Social Facility Access" },
+    { fieldName: "medical_access", label: "Medical Facility Access" },
+    { fieldName: "church_access", label: "Place of Worship Access" },
+    { fieldName: "entertainment_access", label: "Entertainment Access" },
 ];
 
 export const TRACTS_FIELDS = [

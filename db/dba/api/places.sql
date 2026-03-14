@@ -81,7 +81,6 @@ with mbus as (
 ), bus_stops as (
     select a.stop_id, c.stop_name, c.wheelchair_boarding as wheelchair,
     array_agg(distinct(d.route_short_name || '-' || d.route_long_name)) as route_names,
---        string_agg(distinct(d.route_short_name || '-' || d.route_long_name), ', ') as route_names,
         c.stop_loc
     from public.stop_times a
     inner join public.trips b on b.trip_id = a.trip_id
@@ -92,7 +91,6 @@ with mbus as (
 ), rail_stops as (
     select a.stop_id, c.stop_name, c.wheelchair_boarding as wheelchair,
     	array_agg(distinct(d.route_long_name)) as route_names,
---        string_agg(distinct d.route_long_name, ', ') as route_names,
         c.stop_loc
     from public.stop_times a
     inner join public.trips b on b.trip_id = a.trip_id
