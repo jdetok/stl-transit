@@ -52,6 +52,8 @@ export class MapWindow extends HTMLElement {
     private BUS_META: FeatureLayerMeta;
     private PLACE_META: FeatureLayerMeta;
     private busStopsLayer!: FeatureLayer;
+    private placesLayer!: FeatureLayer;
+    private parkHighlightHandle: __esri.Handle | null = null;
     private routePanel!: HTMLElement;
     private layerListPanel!: HTMLCalcitePanelElement;
     private routeInfoPanel!: HTMLCalcitePanelElement;
@@ -93,6 +95,7 @@ export class MapWindow extends HTMLElement {
             this.buildPrintPanel(),
             this.buildBasemapPanel(),
             this.buildActionBar(),
+            this.buildToggleBar(),
             this.buildRoutesFilter(),
             this.buildRouteInfoPanel(),
         );
@@ -125,6 +128,9 @@ export class MapWindow extends HTMLElement {
                     const layer = await this.makeFeatureLayer(this.layers[i]);
                     if (this.layers[i] === this.BUS_META) {
                         this.busStopsLayer = layer;
+                    }
+                    if (this.layers[i] === this.PLACE_META) {
+                        this.placesLayer = layer;
                     }
                     this.arcgisMap.map?.add(layer, i);
                 } catch (e) {
@@ -206,6 +212,7 @@ export class MapWindow extends HTMLElement {
             { id: "legend", icon: "legend", text: "Legend" },
             { id: "layers", icon: "layers", text: "Layers" },
             { id: "basemaps", icon: "basemap", text: "Basemaps" },
+            // { id: "parks", icon: "tree", text: "Highlight Parks" },
             { id: "print", icon: "print", text: "Export" },
         ];
         for (const a of actions) {
@@ -213,16 +220,76 @@ export class MapWindow extends HTMLElement {
             action.dataset.actionId = a.id;
             action.icon = a.icon;
             action.text = a.text;
-            action.addEventListener("click", () => this.togglePanel(a.id, actionBar, {
-                layers: this.layerListPanel,
-                legend: this.legendPanel,
-                basemaps: this.basemapPanel,
-                print: this.printPanel,
-            }));
+
+            if (a.id === "parks") {
+                action.addEventListener("click", async () => {
+                    await this.highlightParks(action);
+                });
+            } else {
+                action.addEventListener("click", () => {
+                    this.togglePanel(a.id, actionBar, {
+                        layers: this.layerListPanel,
+                        legend: this.legendPanel,
+                        basemaps: this.basemapPanel,
+                        print: this.printPanel,
+                    });
+                });
+            }
             actionBar.appendChild(action);
         }
         actionBar.appendChild(this.buildFsBtn())
         return actionBar;
+    }
+    private buildToggleBar(): HTMLCalciteActionBarElement {
+        const actionBar = document.createElement("calcite-action-bar") as any;
+        actionBar.layout = "vertical";
+        actionBar.classList.add("place_toggles");
+
+        const actions = [
+            { id: "parks", icon: "tree", text: "Highlight Parks" },
+        ];
+        for (const a of actions) {
+            const action = document.createElement("calcite-action") as any;
+            action.dataset.actionId = a.id;
+            action.icon = a.icon;
+            action.text = a.text;
+            action.addEventListener("click", async () => {
+                await this.highlightParks(action);
+            });
+            actionBar.appendChild(action);
+        }
+        return actionBar;
+    }
+    private async highlightParks(btn: any): Promise<void> {
+        const layerView = await this.arcgisMap.view.whenLayerView(this.placesLayer) as __esri.FeatureLayerView;
+        // const btn = this.shadowRoot!.querySelector("[data-action-id='parks']") as any
+
+        if (btn.active) {
+            btn.active = false;
+            this.parkHighlightHandle?.remove();
+            this.parkHighlightHandle = null;
+            return;
+        }
+
+        btn.active = true;
+
+        const whereClause = `type = 'park'`;
+        // layerView.featureEffect = new FeatureEffect({
+        //     filter: new FeatureFilter({ where: whereClause }),
+        //     includedEffect: "bloom(2, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
+        // });
+
+        const result = await this.placesLayer.queryFeatures({
+            where: whereClause,
+            returnGeometry: true,
+            outSpatialReference: { wkid: STLWKID },
+        });
+
+        if (result.features.length) {
+            const objIds = result.features.map((f: any) => f.attributes.ObjectID);
+            this.parkHighlightHandle = layerView.highlight(objIds);
+            await this.arcgisMap.view.goTo(result.features, { duration: 600 });
+        }
     }
     private buildFsBtn(): HTMLCalciteActionElement {
         const fsAction = document.createElement("calcite-action") as any;
@@ -435,7 +502,12 @@ const STYLE = `
     left: 5px;
     width: min-content;
 }
-
+.place_toggles {
+    position: absolute;
+    bottom: 4.5rem;
+    right: 5px;
+    z-index: 10;
+}
 calcite-action-bar {
     position: absolute;
     bottom: 1.8rem;
@@ -444,7 +516,7 @@ calcite-action-bar {
 }
 calcite-panel {
     position: absolute;
-    right: 5px;
+    right: 55px;
     bottom: 70px;
     z-index: 10;
     width: fit-content;

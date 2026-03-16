@@ -106,27 +106,27 @@ with mbus as (
 			('No rail stops within ' || (select meters || unit || '(~' || str || ')' from mrail))) as rail_near,
 		way
 	from (
- 		select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from gstores union all
-	    select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from school union all
-	    select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from uni union all
-	    select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from social union all
-	    select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from parks union all
-	    select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from medical union all
-		select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from church union all
-	    select osm_id, type, name, operator, ST_Centroid(way) as centroid, way from fun
+ 		select osm_id, type, name, operator, way from gstores union all
+	    select osm_id, type, name, operator, way from school union all
+	    select osm_id, type, name, operator, way from uni union all
+	    select osm_id, type, name, operator, way from social union all
+	    select osm_id, type, name, operator, way from parks union all
+	    select osm_id, type, name, operator, way from medical union all
+		select osm_id, type, name, operator, way from church union all
+	    select osm_id, type, name, operator, way from fun
 	) a
 	left join lateral (
 	    select unnest(b.route_names) as route_names
 	    from bus_stops b
-	    where st_dwithin(b.stop_loc::geography, a.centroid::geography, (select meters from mbus))
-	    order by st_distance(b.stop_loc::geography, a.centroid::geography)
+	    where st_dwithin(b.stop_loc::geography, a.way::geography, (select meters from mbus))
+	    order by st_distance(b.stop_loc::geography, a.way::geography)
 	    limit 20
 	) b on true
 	left join lateral (
 	    select unnest(r.route_names) as route_names
 	    from rail_stops r
-	    where st_dwithin(r.stop_loc::geography, a.centroid::geography, (select meters from mrail))
-	    order by st_distance(r.stop_loc::geography, a.centroid::geography)
+	    where st_dwithin(r.stop_loc::geography, a.way::geography, (select meters from mrail))
+	    order by st_distance(r.stop_loc::geography, a.way::geography)
 	    limit 20
 	) c on true
 	where a.way && ST_MakeEnvelope(-91, 38, -89.5, 39.2, 4326)	

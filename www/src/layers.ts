@@ -81,6 +81,7 @@ function makeRoutesButtons(routeNames: string,
     let routeBtns: HTMLCalciteButtonElement[] = [];
     if (routeNames) {
         routeNames.split(", ").forEach((route: string) => {
+            if (route.includes("No bus stop")) return;
             const btn = makeRtsBtn(route);
             btn.addEventListener("click", () => onRouteClick(route.trim()));
             routeBtns.push(btn);
