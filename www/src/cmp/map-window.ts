@@ -68,6 +68,7 @@ function buildCalcitePanel(elementType: string, heading: string): HTMLCalcitePan
     return panel;
 }
 export const TAG = "map-window";
+
 export class MapWindow extends HTMLElement {
     private arcgisMap!: HTMLArcgisMapElement;
     private highlightHandles: Map<string, __esri.Handle> = new Map();
@@ -83,6 +84,7 @@ export class MapWindow extends HTMLElement {
     private basemapPanel!: HTMLCalcitePanelElement;
     private printPanel!: HTMLCalcitePanelElement;
     private routesData: any[] = [];
+    
     public constructor() {
         super();
 
@@ -138,36 +140,47 @@ export class MapWindow extends HTMLElement {
 
         this.arcgisMap.addEventListener("arcgisViewReadyChange", async () => {
             const view = this.arcgisMap.view as __esri.MapView;
+
+            // BUILD UTILITY WIDGETS
             this.arcgisMap.appendChild(this.buildZoom());
             this.arcgisMap.appendChild(this.buildSearch());
+
+            // SET CALCITE PANEL VIEWS
             (this.layerListPanel.querySelector("arcgis-layer-list") as any).view = view;
             (this.legendPanel.querySelector("arcgis-legend") as any).view = view;
             (this.basemapPanel.querySelector("arcgis-basemap-gallery") as any).view = view;
             (this.printPanel.querySelector("arcgis-print") as any).view = view;
+
+            // BUILD FEATURE LAYERS
             for (let i = 0; i < this.layers.length; i++) {
                 try {
                     const layer = await this.makeFeatureLayer(this.layers[i]);
+                    this.arcgisMap.map?.add(layer, i);
                     if (this.layers[i] === this.BUS_META) {
                         this.busStopsLayer = layer;
                     }
                     if (this.layers[i] === this.PLACE_META) {
                         this.placesLayer = layer;
                     }
-                    this.arcgisMap.map?.add(layer, i);
                 } catch (e) {
                     console.error(e);
                 }
             }
+
+            // BUILD ROUTE SELECTOR
             await this.populateRouteSelect();
-            // re-render stop size based on zoom amount
+
+            // ADD LISTENER ON ZOOM AMOUNT, RE RENDER FEATURES AT SPECIFIC POINTS
             this.renderOnZoom();
 
-            // SET OBJECT HIGH LIGHT COLOR
+            // SET OBJECT HIGHLIGHT COLORS
             view.highlights = HIGHLIGHTS;
+
         }, { once: true });
 
         return this.arcgisMap;
     }
+    // WATCH VIEW ZOOM, RERENDER FEATURES ACCORDINGLY
     private renderOnZoom() {
         this.arcgisMap.view.watch("zoom", (zoom) => {
             console.log("zoom: ", zoom);
@@ -181,6 +194,7 @@ export class MapWindow extends HTMLElement {
             ];
         });
     }
+    // BUILD A FEATURE LAYER FROM FeatureLayerMeta
     private async makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
         try {
             if (meta.dataUrl) {
@@ -217,46 +231,7 @@ export class MapWindow extends HTMLElement {
             outFields: ["*"],
         });
     }
-    private addStyling(): HTMLStyleElement {
-        return Object.assign(document.createElement("style"), { textContent: STYLE });
-    }
-    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
-        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
-            a.active = a.dataset.actionId === id ? !a.active : false;
-        });
-        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
-            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
-        });
-    }
-    private buildActionBar(): HTMLCalciteActionBarElement {
-        const actionBar = document.createElement("calcite-action-bar") as any;
-        actionBar.layout = "horizontal";
-
-        const actions = [
-            { id: "legend", icon: "legend", text: "Legend" },
-            { id: "layers", icon: "layers", text: "Layers" },
-            { id: "basemaps", icon: "basemap", text: "Basemaps" },
-            { id: "print", icon: "print", text: "Export" },
-        ];
-        for (const a of actions) {
-            const action = document.createElement("calcite-action") as any;
-            action.dataset.actionId = a.id;
-            action.icon = a.icon;
-            action.text = a.text;
-
-            action.addEventListener("click", () => {
-                this.togglePanel(a.id, actionBar, {
-                    layers: this.layerListPanel,
-                    legend: this.legendPanel,
-                    basemaps: this.basemapPanel,
-                    print: this.printPanel,
-                });
-            });
-            actionBar.appendChild(action);
-        }
-        actionBar.appendChild(this.buildFsBtn())
-        return actionBar;
-    }
+    // BUILD CALCITE ACTION BAR WITH TOGGLE BUTTONS FOR HIGHLIGHTING FEATURES
     private buildToggleBar(): HTMLCalciteActionBarElement {
         const actionBar = document.createElement("calcite-action-bar") as any;
         actionBar.layout = "vertical";
@@ -305,7 +280,14 @@ export class MapWindow extends HTMLElement {
             action.icon = a.icon;
             action.text = a.text;
             action.addEventListener("click", async () => {
-                await this.highlightFeatures(action, a.layer(), a.where, a.id, a.highlight.name ?? 'default');
+                if (action.active) {
+                    action.active = false;
+                    this.highlightHandles.get(a.id)?.remove();
+                    this.highlightHandles.delete(a.id);
+                    return;
+                }
+                action.active = true;
+                await this.highlightFeatures(a.layer(), a.where, a.id, a.highlight.name ?? 'default');
             });
             actionBar.appendChild(action);
         }
@@ -331,17 +313,11 @@ export class MapWindow extends HTMLElement {
 
         return actionBar;
     }
-    private async highlightFeatures(btn: any, layer: FeatureLayer, whereClause: string, id: string, highlight: string): Promise<void> {
+    // HIGHLIGHT SPECIFIC FEATURES BASED ON whereClause
+    private async highlightFeatures(
+        layer: FeatureLayer, whereClause: string, id: string, highlight: string
+    ): Promise<void> {
         const layerView = await this.arcgisMap.view.whenLayerView(layer) as __esri.FeatureLayerView;
-
-        if (btn.active) {
-            btn.active = false;
-            this.highlightHandles.get(id)?.remove();
-            this.highlightHandles.delete(id);
-            return;
-        }
-
-        btn.active = true;
         const result = await layer.queryFeatures({
             where: whereClause,
             returnGeometry: true,
@@ -351,8 +327,45 @@ export class MapWindow extends HTMLElement {
         if (result.features.length) {
             const objIds = result.features.map((f: any) => f.attributes.ObjectID);
             this.highlightHandles.set(id, layerView.highlight(objIds, {name: highlight}));
-            // await this.arcgisMap.view.goTo(result.features, { duration: 600 });
         }
+    }
+        // SHOW/HIDE CALCITE PANELS FROM THE ACTION BAR
+    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
+        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
+            a.active = a.dataset.actionId === id ? !a.active : false;
+        });
+        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
+            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
+        });
+    }
+    // BUILD CALCITE ACTION BAR, ACTIONS DISPLAY CALCITE PANELS
+    private buildActionBar(): HTMLCalciteActionBarElement {
+        const actionBar = document.createElement("calcite-action-bar") as any;
+        actionBar.layout = "horizontal";
+        const actions = [
+            { id: "legend", icon: "legend", text: "Legend" },
+            { id: "layers", icon: "layers", text: "Layers" },
+            { id: "basemaps", icon: "basemap", text: "Basemaps" },
+            { id: "print", icon: "print", text: "Export" },
+        ];
+        for (const a of actions) {
+            const action = document.createElement("calcite-action") as any;
+            action.dataset.actionId = a.id;
+            action.icon = a.icon;
+            action.text = a.text;
+
+            action.addEventListener("click", () => {
+                this.togglePanel(a.id, actionBar, {
+                    layers: this.layerListPanel,
+                    legend: this.legendPanel,
+                    basemaps: this.basemapPanel,
+                    print: this.printPanel,
+                });
+            });
+            actionBar.appendChild(action);
+        }
+        actionBar.appendChild(this.buildFsBtn())
+        return actionBar;
     }
     private buildFsBtn(): HTMLCalciteActionElement {
         const fsAction = document.createElement("calcite-action") as any;
@@ -541,6 +554,9 @@ export class MapWindow extends HTMLElement {
         if (result.features.length) {
             await this.arcgisMap.view.goTo(result.features, { duration: 600 });
         }
+    }
+    private addStyling(): HTMLStyleElement {
+        return Object.assign(document.createElement("style"), { textContent: STYLE });
     }
 }
 
