@@ -45,7 +45,6 @@ function newHighlightSetting(name: string, color: __esri.ColorProperties): __esr
 
 const HL_PARKS = newHighlightSetting("parks", "mediumseagreen");
 const HL_SCHOOLS = newHighlightSetting("schools", "khaki");
-const HL_UNI = newHighlightSetting("uni", "yellow");
 const HL_CHURCH = newHighlightSetting("church", "violet");
 const HL_MED = newHighlightSetting("med", "mediumvioletred");
 const HL_GROCERY = newHighlightSetting("grocery", "white");
@@ -56,6 +55,39 @@ const HIGHLIGHTS: __esri.CollectionProperties<__esri.HighlightOptionsProperties>
     HL_CHURCH, 
     HL_MED,
     HL_GROCERY,
+];
+
+type toggleAction = {
+    id: string,
+    icon: string,
+    text: string,
+    where: string,
+    highlightName: string,
+}
+
+const TOGGLE_ACTIONS: toggleAction[] = [
+    {
+        id: "parks", icon: "tree", text: "Highlight Parks",
+        where: `type = 'park'`, highlightName: HL_PARKS.name!,
+    }, {
+        id: "medical", icon: "medical", text: "Highlight Hospitals",
+        where: `type = 'medical'`, highlightName: HL_MED.name!,
+    }, {
+        id: "university", icon: "mooc", text: "Highlight Universities",
+        where: `type = 'university'`, highlightName: HL_SCHOOLS.name!,
+    }, {
+        id: "school", icon: "education", text: "Highlight Schools",
+        where: `type = 'school'`, highlightName: HL_SCHOOLS.name!,
+    }, {
+        id: "grocery", icon: "shopping-cart", text: "Highlight Grocery Stores",
+        where: `type = 'grocery'`, highlightName: HL_GROCERY.name!,
+    }, {
+        id: "church", icon: "organization", text: "Highlight Places of Worship",
+        where: `type = 'church'`, highlightName: HL_CHURCH.name!,
+    }, {
+        id: "social_facility", icon: "home", text: "Highlight Community Centers",
+        where: `type = 'social_facility'`, highlightName: HL_MED.name!,
+    },
 ];
 
 function buildCalcitePanel(elementType: string, heading: string): HTMLCalcitePanelElement {
@@ -84,7 +116,7 @@ export class MapWindow extends HTMLElement {
     private basemapPanel!: HTMLCalcitePanelElement;
     private printPanel!: HTMLCalcitePanelElement;
     private routesData: any[] = [];
-    
+    private TOGGLE_ACTIONS: toggleAction[]
     public constructor() {
         super();
 
@@ -99,6 +131,9 @@ export class MapWindow extends HTMLElement {
             (route) => { this.filterByRoute(route); this.showRouteInfo(route); },
             (routes) => { this.filterByRoutes(routes);  },
         );
+
+        this.TOGGLE_ACTIONS = TOGGLE_ACTIONS;
+
         // order matters
         this.layers = [
             LAYER_CENSUS_COUNTIES,
@@ -200,24 +235,12 @@ export class MapWindow extends HTMLElement {
             if (meta.dataUrl) {
                 const res = await fetch(meta.dataUrl);
                 const data = await res.json();
-
-                if (meta.toGraphics) {
-                    meta.source = meta.toGraphics(data);
-                } else {
-                    if (!data?.features?.length) {
-                        throw new Error(`layer "${meta.title}" expected data.features[]`);
-                    }
-                    meta.source = data.features.map((f: any) => new Graphic({
-                        geometry: new Polygon({
-                            rings: f.geometry.rings,
-                            spatialReference: { wkid: STLWKID },
-                        }),
-                        attributes: f.attributes,
-                    }));
-                }
+                meta.source = this.buildGraphics(meta, data);
+            } else {
+                throw new Error(`no data source for ${meta.title} layer`);
             }
         } catch (e) {
-            throw new Error(`no data source for ${meta.title} layer: ${e}`);
+            throw new Error(`failed to create feature layer: ${e}`);
         }
         return new FeatureLayer({
             title: meta.title,
@@ -231,87 +254,54 @@ export class MapWindow extends HTMLElement {
             outFields: ["*"],
         });
     }
+    private buildGraphics(meta: FeatureLayerMeta, data: any): Graphic[] {
+        if (meta.toGraphics) {
+            return meta.toGraphics(data);
+        } else {
+            if (!data?.features?.length) {
+                throw new Error(`layer "${meta.title}" expected data.features[]`);
+            }
+            return data.features.map((f: any) => new Graphic({
+                geometry: new Polygon({
+                    rings: f.geometry.rings,
+                    spatialReference: { wkid: STLWKID },
+                }),
+                attributes: f.attributes,
+            }));
+        }
+    }
     // BUILD CALCITE ACTION BAR WITH TOGGLE BUTTONS FOR HIGHLIGHTING FEATURES
     private buildToggleBar(): HTMLCalciteActionBarElement {
         const actionBar = document.createElement("calcite-action-bar") as any;
         actionBar.layout = "vertical";
         actionBar.classList.add("place_toggles");
 
-        const actions = [
-            {
-                id: "parks", icon: "tree", text: "Highlight Parks",
-                layer: () => this.placesLayer, where: `type = 'park'`,
-                highlight: HL_PARKS,
-            },
-            {
-                id: "medical", icon: "medical", text: "Highlight Hospitals",
-                layer: () => this.placesLayer, where: `type = 'medical'`,
-                highlight: HL_MED,
-            },
-            {
-                id: "university", icon: "mooc", text: "Highlight Universities",
-                layer: () => this.placesLayer, where: `type = 'university'`,
-                highlight: HL_SCHOOLS,
-            },
-            {
-                id: "school", icon: "education", text: "Highlight Schools",
-                layer: () => this.placesLayer, where: `type = 'school'`,
-                highlight: HL_SCHOOLS,
-            },
-            {
-                id: "grocery", icon: "shopping-cart", text: "Highlight Grocery Stores",
-                layer: () => this.placesLayer, where: `type = 'grocery'`,
-                highlight: HL_GROCERY,
-            },
-            {
-                id: "church", icon: "organization", text: "Highlight Places of Worship",
-                layer: () => this.placesLayer, where: `type = 'church'`,
-                highlight: HL_CHURCH,
-            },
-            {
-                id: "social_facility", icon: "home", text: "Highlight Community Centers",
-                layer: () => this.placesLayer, where: `type = 'social_facility'`,
-                highlight: HL_MED,
-            },
-        ];
-        for (const a of actions) {
-            const action = document.createElement("calcite-action") as any;
-            action.dataset.actionId = a.id;
-            action.icon = a.icon;
-            action.text = a.text;
-            action.addEventListener("click", async () => {
-                if (action.active) {
-                    action.active = false;
-                    this.highlightHandles.get(a.id)?.remove();
-                    this.highlightHandles.delete(a.id);
-                    return;
-                }
-                action.active = true;
-                await this.highlightFeatures(a.layer(), a.where, a.id, a.highlight.name ?? 'default');
-            });
-            actionBar.appendChild(action);
+        for (const a of this.TOGGLE_ACTIONS) {
+            actionBar.appendChild(this.buildToggleBtn(a));
         }
 
-        const resetPlacesBtn = document.createElement("calcite-action");
-        resetPlacesBtn.icon = 'reset';
-        resetPlacesBtn.text = "Reset Highlighted Places"
-        resetPlacesBtn.addEventListener("click", async () => {
-            this.highlightHandles.forEach(h => h.remove());
-            this.highlightHandles.clear();
-            actionBar.querySelectorAll("calcite-action").forEach((a: any) => a.active = false)
-        })
-        actionBar.appendChild(resetPlacesBtn);
-
-        const resetBusesBtn = document.createElement("calcite-action");
-        resetBusesBtn.icon = 'bus';
-        resetBusesBtn.text = "Reset Highlighted Bus Stops"
-        resetBusesBtn.addEventListener("click", async () => {
-            const busLayerView = await this.arcgisMap.view.whenLayerView(this.busStopsLayer) as __esri.FeatureLayerView;
-            busLayerView.featureEffect = null;
-        })
-        actionBar.appendChild(resetBusesBtn);
+        // BUILD AND APPEND RESET BUTTONS (BUS AND PLACES HIGHIGHTS)
+        actionBar.appendChild(this.resetPlacesHighlight(actionBar));
+        actionBar.appendChild(this.resetBusRoutesBtn());
 
         return actionBar;
+    }
+    private buildToggleBtn(a: toggleAction): HTMLCalciteActionElement {
+        const action = document.createElement("calcite-action");
+        action.dataset.actionId = a.id;
+        action.icon = a.icon;
+        action.text = a.text;
+        action.addEventListener("click", async () => {
+            if (action.active) {
+                action.active = false;
+                this.highlightHandles.get(a.id)?.remove();
+                this.highlightHandles.delete(a.id);
+                return;
+            }
+            action.active = true;
+            await this.highlightFeatures(this.placesLayer, a.where, a.id, a.highlightName);
+        });
+        return action;
     }
     // HIGHLIGHT SPECIFIC FEATURES BASED ON whereClause
     private async highlightFeatures(
@@ -329,14 +319,28 @@ export class MapWindow extends HTMLElement {
             this.highlightHandles.set(id, layerView.highlight(objIds, {name: highlight}));
         }
     }
-        // SHOW/HIDE CALCITE PANELS FROM THE ACTION BAR
-    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
-        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
-            a.active = a.dataset.actionId === id ? !a.active : false;
-        });
-        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
-            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
-        });
+    // REMOVE HIGHLIGHTED PLACES, DESELECT ALL BUTTONS IN TOGGLE PANEL
+    private resetPlacesHighlight(actionBar: HTMLCalciteActionBarElement): HTMLCalciteActionElement {
+        const btn = document.createElement("calcite-action");
+        btn.icon = 'reset';
+        btn.text = "Reset Highlighted Places"
+        btn.addEventListener("click", async () => {
+            this.highlightHandles.forEach(h => h.remove());
+            this.highlightHandles.clear();
+            actionBar.querySelectorAll("calcite-action").forEach((a: any) => a.active = false)
+        })
+        return btn;
+    }
+    // REMOVE ANY FEATURE EFFECTS FROM THE BUS STOP LAYER
+    private resetBusRoutesBtn(): HTMLCalciteActionElement {
+        const btn = document.createElement("calcite-action");
+        btn.icon = 'bus';
+        btn.text = "Reset Highlighted Bus Stops"
+        btn.addEventListener("click", async () => {
+            const busLayerView = await this.arcgisMap.view.whenLayerView(this.busStopsLayer) as __esri.FeatureLayerView;
+            busLayerView.featureEffect = null;
+        })
+        return btn;
     }
     // BUILD CALCITE ACTION BAR, ACTIONS DISPLAY CALCITE PANELS
     private buildActionBar(): HTMLCalciteActionBarElement {
@@ -349,24 +353,36 @@ export class MapWindow extends HTMLElement {
             { id: "print", icon: "print", text: "Export" },
         ];
         for (const a of actions) {
-            const action = document.createElement("calcite-action") as any;
-            action.dataset.actionId = a.id;
-            action.icon = a.icon;
-            action.text = a.text;
-
-            action.addEventListener("click", () => {
-                this.togglePanel(a.id, actionBar, {
-                    layers: this.layerListPanel,
-                    legend: this.legendPanel,
-                    basemaps: this.basemapPanel,
-                    print: this.printPanel,
-                });
-            });
-            actionBar.appendChild(action);
+            actionBar.appendChild(this.buildActionBtn(a as toggleAction, actionBar));
         }
         actionBar.appendChild(this.buildFsBtn())
         return actionBar;
     }
+    private buildActionBtn(a: toggleAction, actionBar: HTMLCalciteActionBarElement): HTMLCalciteActionElement {
+        const action = document.createElement("calcite-action");
+        action.dataset.actionId = a.id;
+        action.icon = a.icon;
+        action.text = a.text;
+        action.addEventListener("click", () => {
+            this.togglePanel(a.id, actionBar, {
+                layers: this.layerListPanel,
+                legend: this.legendPanel,
+                basemaps: this.basemapPanel,
+                print: this.printPanel,
+            });
+        });
+        return action;
+    }
+    // SHOW/HIDE CALCITE PANELS FROM THE ACTION BAR
+    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
+        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
+            a.active = a.dataset.actionId === id ? !a.active : false;
+        });
+        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
+            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
+        });
+    }
+    // BUILD FULL SCREEN ACTION BUTTON
     private buildFsBtn(): HTMLCalciteActionElement {
         const fsAction = document.createElement("calcite-action") as any;
         fsAction.icon = "extent";
@@ -380,6 +396,7 @@ export class MapWindow extends HTMLElement {
         });
         return fsAction;
     }
+    // BUILD A CALCITE SELECT TO FILTER BY BUS ROUTE
     private buildRoutesFilter(): HTMLElement {
         const wrapper = document.createElement("div");
         wrapper.id = "filterbar";
@@ -429,17 +446,15 @@ export class MapWindow extends HTMLElement {
         return search;
     }
     private buildRouteInfoPanel(): HTMLCalcitePanelElement {
-        const panel = document.createElement("calcite-panel");
-        panel.classList.add("route-info");
-        panel.heading = "Route Info";
-        panel.hidden = true;
-        panel.closed = false;
-        panel.closable = true;
-        panel.addEventListener("calcitePanelClose", () => {
+        this.routeInfoPanel = document.createElement("calcite-panel");
+        this.routeInfoPanel.classList.add("route-info");
+        this.routeInfoPanel.heading = "Route Info";
+        this.routeInfoPanel.hidden = true;
+        this.routeInfoPanel.closable = true;
+        this.routeInfoPanel.addEventListener("calcitePanelClose", () => {
             this.routeInfoPanel.hidden = true;
         });
-        this.routeInfoPanel = panel;
-        return panel;
+        return this.routeInfoPanel;
     }
     private showRouteInfo(route: string): void {
         if (!route) {
@@ -485,7 +500,7 @@ export class MapWindow extends HTMLElement {
         }
         return tbl;
     }
-
+    // BUILD SELECT LIST OF ALL BUS ROUTES
     private async populateRouteSelect(): Promise<void> {
         const res = await fetch("layers/routes");
         const data = await res.json();
@@ -507,6 +522,7 @@ export class MapWindow extends HTMLElement {
             select.appendChild(option);
         }
     }
+    // HIGHLIGHT ALL STOPS IN A BUS ROUTE
     private async filterByRoute(routeName: string): Promise<void> {
         const layerView = await this.arcgisMap.view.whenLayerView(this.busStopsLayer) as __esri.FeatureLayerView;
 
@@ -531,6 +547,7 @@ export class MapWindow extends HTMLElement {
             await this.arcgisMap.view.goTo(result.features, { duration: 600 });
         }
     }
+    // HIGHLIGHT ALL STOPS FROM SEVERAL BUS ROUTES
     private async filterByRoutes(routeNames: string[]): Promise<void> {
         const layerView = await this.arcgisMap.view.whenLayerView(this.busStopsLayer) as __esri.FeatureLayerView;
 
