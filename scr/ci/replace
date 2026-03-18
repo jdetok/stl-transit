@@ -25,8 +25,9 @@ echo $BRANCH
 for file in "$HTMLDIR"/*.html; do
     echo $file
     if [[ "$BRANCH" = "jdme" ]]; then
-        sed -i '' "s|$JS_MAIN|$JS_JDME|g; s|$CSS_MAIN|$CSS_JDME|g" "$file"
+        # have to add '' before if running on mac
+        sed -i "s|$JS_MAIN|$JS_JDME|g; s|$CSS_MAIN|$CSS_JDME|g" "$file"
     else
-        sed -i '' "s|$JS_JDME|$JS_MAIN|g; s|$CSS_JDME|$CSS_MAIN|g" "$file"
+        sed -i "s|$JS_JDME|$JS_MAIN|g; s|$CSS_JDME|$CSS_MAIN|g" "$file"
     fi
 done
