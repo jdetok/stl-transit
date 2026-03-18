@@ -35,13 +35,12 @@ import {
     LAYER_AMTRAK,
     BUS_STOP_SIZE,
 } from "../layers.js";
-import Basemap from "@arcgis/core/Basemap.js";
 
 // HELPER TO CREATE CUSTOM HIGHLIGHT SETTINGS
 function newHighlightSetting(name: string, color: __esri.ColorProperties): __esri.HighlightOptionsProperties {
     return {
         name: name, color: color,
-        fillOpacity: 0.25, shadowColor: "black",
+        fillOpacity: 0.05, shadowColor: "black",
         shadowOpacity: 0.4, shadowDifference: 0.2,
     }
 }
@@ -544,7 +543,7 @@ export class MapWindow extends HTMLElement {
         
         const row = document.createElement("calcite-table-row");
         for (const f of [props.freq_wk, props.freq_sa, props.freq_su]) {
-            row.appendChild(Object.assign(document.createElement("calcite-table-cell"), { innerText: f }));
+            row.appendChild(Object.assign(document.createElement("calcite-table-cell"), { innerText: f ?? 'NA' }));
         }
         tbl.appendChild(row);
         return tbl;
@@ -566,7 +565,7 @@ export class MapWindow extends HTMLElement {
             const keyVal = key.split("_").at(-1);
 
             keyCell.innerText = `${String(keyVal).charAt(0).toUpperCase()}${String(keyVal).slice(1)}`;
-            valCell.innerText = String(val);
+            valCell.innerText = String(val) ?? 'NA';
 
             row.append(keyCell, valCell);
             tbl.appendChild(row);
