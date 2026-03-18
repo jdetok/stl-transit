@@ -18,16 +18,30 @@ parse_flags() {
     done
 }
 
-parse_flags "$@"
+sed_files() {
+    # have to add '' before if running on mac
+    SED_CMD=(sed -i)
+    [[ $(uname) == "Darwin" ]] && SED_CMD=(sed -i '')
+    
+    for file in "$HTMLDIR"/*.html; do
+        echo searching "$file"
+        
+        if [[ "$BRANCH" == "jdme" ]]; then
+            "${SED_CMD[@]}" "s|$JS_MAIN|$JS_JDME|g; s|$CSS_MAIN|$CSS_JDME|g" "$file"
+        else
+            "${SED_CMD[@]}" "s|$JS_JDME|$JS_MAIN|g; s|$CSS_JDME|$CSS_MAIN|g" "$file"
+        fi
+    done
+}
 
-echo $BRANCH
+main() {
+    echo "$0" "$@"
+    
+    parse_flags "$@"
 
-for file in "$HTMLDIR"/*.html; do
-    echo $file
-    if [[ "$BRANCH" = "jdme" ]]; then
-        # have to add '' before if running on mac
-        sed -i "s|$JS_MAIN|$JS_JDME|g; s|$CSS_MAIN|$CSS_JDME|g" "$file"
-    else
-        sed -i "s|$JS_JDME|$JS_MAIN|g; s|$CSS_JDME|$CSS_MAIN|g" "$file"
-    fi
-done
+    echo branch: "$BRANCH"
+
+    sed_files
+}
+
+main "$@"
