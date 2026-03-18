@@ -559,13 +559,22 @@ export class MapWindow extends HTMLElement {
 
         // const freqTbl = this.buildFreqTable(props);
         const freqTbl = buildCalciteTableBlock(
-            "Frequency (minutes)", props,
-            false, true, this.buildFreqTable,
-            "Frequencies were derived by\ntaking the mode of the difference\nin start times between two\nconsecutive trips. Frequencies\nmay differ during early/late hours." 
+            "Frequency (minutes)", props, false, true, this.buildFreqTable,
+            `Frequencies were derived by
+            taking the mode of the
+            difference in start times 
+            between two consecutive trips. 
+            Frequencies may differ during 
+            early/late hours.` 
         );
         this.routeInfoPanel.appendChild(freqTbl);
 
-        const accessTbl = buildCalciteTableBlock("Stops w/ access to", props, true, false, this.buildPropsTable);
+        const accessTbl = buildCalciteTableBlock(
+            "Stops w/ access to", props, true, false, this.buildPropsTable,
+            `A stop 'has access'
+            to amenities within
+            805 meters (~1/2 mile).`,
+        );
         this.routeInfoPanel.appendChild(accessTbl);
         this.routeInfoPanel.hidden = false;
     }
