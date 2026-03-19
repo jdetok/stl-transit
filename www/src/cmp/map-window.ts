@@ -195,41 +195,7 @@ export class MapWindow extends HTMLElement {
 
         this.arcgisMap.addEventListener("arcgisViewReadyChange", async () => {
             const popupStyle = document.createElement("style");
-            popupStyle.textContent = `
-                .esri-popup {
-                    max-height: 30% !important;
-                }
-                .esri-popup__main-container {
-                    width: fit-content;
-                    max-width: 50%;
-                    background: rgba(115, 128, 137, 0.75) !important;
-                }
-                .esri-widget__table {
-                    font-size: 0.75rem !important;
-                }
-                div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > h2 {
-                    padding-left: 0.3rem;
-                    font-weight: bold;
-                    font-size: 1.1rem !important;
-                    text-align: left !important;
-                }
-                .esri-feature-fields__field-header,
-                    div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(1) {
-                    padding: 0 !important;
-                    margin-top: 0 !important;
-                    margin-bottom: 0 !important;    
-                    text-align: right !important;
-                    font-weight: bold;
-                }
-                .esri-feature-fields__field-data,
-                div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) > calcite-button,
-                div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) {
-                    margin-top: 0 !important;    
-                    margin-bottom: 0 !important;    
-                    text-align: left !important;
-                }
-                
-            `;
+            popupStyle.textContent = MAP_STYLE;
             this.arcgisMap.shadowRoot?.appendChild(popupStyle);
 
             // BUILD FEATURE LAYERS
@@ -275,9 +241,9 @@ export class MapWindow extends HTMLElement {
             this.renderOnZoom();
 
             // open legend when bus stop layer has been created
-            this.busStopsLayer.when(() => this.togglePanel('legend', this.actionBar, {
-                legend: this.legendPanel,
-            }));
+            this.busStopsLayer.when(() => {
+                if (this.arcgisMap.offsetWidth > 800) this.togglePanel('legend', this.actionBar, { legend: this.legendPanel })
+            });
         }, { once: true });
 
         return this.arcgisMap;
@@ -794,4 +760,44 @@ calcite-notice > div {
     width: 100%;
     max-width: 100%;
 }
+`;
+const MAP_STYLE = `
+.esri-popup {
+    max-height: 30% !important;
+}
+.esri-popup__main-container {
+    width: fit-content;
+    max-width: 50%;
+    background: rgba(115, 128, 137, 0.75) !important;
+}
+@media ( max-width: 900px ) {
+    .esri-popup__main-container {
+        max-width: 85%;
+    }
+}           
+.esri-widget__table {
+    font-size: 0.75rem !important;
+}
+div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > h2 {
+    padding-left: 0.3rem;
+    font-weight: bold;
+    font-size: 1.1rem !important;
+    text-align: left !important;
+}
+.esri-feature-fields__field-header,
+    div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(1) {
+    padding: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;    
+    text-align: right !important;
+    font-weight: bold;
+}
+.esri-feature-fields__field-data,
+div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) > calcite-button,
+div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) {
+    margin-top: 0 !important;    
+    margin-bottom: 0 !important;    
+    text-align: left !important;
+}
+
 `;
