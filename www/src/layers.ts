@@ -4,22 +4,23 @@ import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
 import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable.js";
-import Point from "@arcgis/core/geometry/Point";
-import Polyline from "@arcgis/core/geometry/Polyline";
 import Graphic from "@arcgis/core/Graphic";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import Renderer from "@arcgis/core/renderers/Renderer";
 import "@esri/calcite-components/dist/components/calcite-button";
+import { makeRoutesButtons } from "./calcite.js";
+import { cplethEls, makeChoroplethLevels, toPoint, toPolygon, toPolyline } from "./arcgis.js";
 import {
-    STLWKID, TRACTS_LAYER_URL, TRACTS_LAYER_TTL, TRACTS_FIELDS, TRACTS_FIELDINFOS,
+    TRACTS_LAYER_URL, TRACTS_LAYER_TTL, TRACTS_FIELDS, TRACTS_FIELDINFOS,
     COUNTIES_LAYER_URL, COUNTIES_LAYER_TTL, COUNTIES_FIELDS, COUNTIES_FIELDINFOS,
     ML_LAYER_URL, ML_LAYER_TTL, BUS_LAYER_TTL, BUS_LAYER_URL,
     CYCLE_LAYER_URL, CYCLE_LAYER_TTL, CYCLING_FIELDS,
     STOP_FIELDINFOS, STOP_FIELDS, AMTRAK_FIELDS, AMTRAK_FIELDINFOS,
     PLACE_FIELDS, PLACE_FIELDINFOS,
-    LINES_FIELDS
+    LINES_FIELDS,
+    LINES_FIELDINFOS
 } from "./data.js";
-import Polygon from "@arcgis/core/geometry/Polygon.js";
+
 export type FeatureLayerMeta = {
     title: string;
     source?: Graphic[];
@@ -32,17 +33,15 @@ export type FeatureLayerMeta = {
     toGraphics?: (data: any) => Graphic[];
 }
 
-// const BUS_STOP_Y_COLOR = 'mediumseagreen';
 export const BUS_STOP_SIZE = 4;
 const BUS_STOP_Y_COLOR = [0, 255, 255, 0.5];
 const BUS_STOP_NO_COLOR = [180, 110, 200, 0.5];
 const BUS_STOP_NA_COLOR = [0, 165, 255, 0.5];
 const ML_STOP_SIZE = 10;
 const RAIL_INNER_COLOR = [0, 0, 0, 0.6];
-const CYCLE_LAYER_GRAVEL_COLOR = [180, 80, 170, 0.5];
-const CYCLE_LAYER_ASPHALT_COLOR = [208, 148, 75, 0.5];
-const CYCLE_LAYER_OTHER_COLOR = [75, 108, 208, 0.5];
-const CYCLE_LAYER_UNPAVED_COLOR = [158, 145, 125, 0.5];
+const CYCLE_LAYER_GRAVEL_COLOR = [180, 80, 170, 0.6];
+const CYCLE_LAYER_ASPHALT_COLOR = [208, 148, 75, 0.6];
+const CYCLE_LAYER_OTHER_COLOR = [75, 108, 208, 0.6];
 const CYCLE_LAYER_SIZE = .8;
 const GROCERY_INNER_COLOR = [0, 0, 255, 0.5];
 const PARKS_COLOR = [20, 255, 115, 0.35];
@@ -55,7 +54,6 @@ const MED_COLOR = [255, 25, 25, 0.3];
 const COUNTIES_OUTLINE_COLOR = [0, 0, 0, 0.5];
 const COUNTIES_OUTLINE_SIZE = 1.5;
 const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
-const POPLDENS_ALPHA = 0.05;
 const POPLDENS_CHOROPLETH_LEVELS: cplethEls[] = [
     [0, 2500, [94, 150, 98]],
     [2500, 5000, [17, 200, 152]],
@@ -72,104 +70,49 @@ const LINES_CLASSBREAKS: cplethEls[] = [
     [61, 720, [255, 70, 10]],
 ];
 
-// choropleth levels, pass min val, max val, rgb val
-type cplethEls = [number, number, number[]];
-
-function makeRtsBtn(txt: string): HTMLCalciteButtonElement {
-    const btn = document.createElement("calcite-button");
-    btn.textContent = txt.trim();
-    btn.style.setProperty("--calcite-button-text-color", "black");
-    btn.setAttribute("appearance", "outline");
-    btn.setAttribute("scale", "s");
-    return btn;
-}
-function makeRoutesButtons(routeNames: string,
+// export const LAYER_LINES: FeatureLayerMeta = {
+export const makeLinesLayer = (
     onRouteClick: (route: string) => void,
     onRoutesClick: (route: string[]) => void
-): HTMLCalciteButtonElement[] {
-    let routeBtns: HTMLCalciteButtonElement[] = [];
-    if (routeNames) {
-        routeNames.split(", ").forEach((route: string) => {
-            if (route.includes("No bus stop")) return;
-            const btn = makeRtsBtn(route);
-            btn.addEventListener("click", () => onRouteClick(route.trim()));
-            routeBtns.push(btn);
-        });
-        if (routeBtns.length > 1) {
-            const allBtn = makeRtsBtn("Highlight Each");
-            allBtn.addEventListener("click", () => {
-                const routes = routeNames.split(", ").map(r => r.trim());
-                onRoutesClick(routes);
+): FeatureLayerMeta => ({
+    title: "Metro Transit Lines",
+    dataUrl: "/layers/lines",
+    geometryType: "polyline",
+    fields: LINES_FIELDS,
+    renderer: new ClassBreaksRenderer({
+        field: "freq_wk",
+        classBreakInfos: makeChoroplethLevels(LINES_CLASSBREAKS, true),
+        defaultSymbol: new SimpleLineSymbol({ color: "gray", width: 1 })
+    }),
+    toGraphics: toPolyline,
+    popupTemplate: {
+        title: "{route_desc}",
+        content: (feature: any) => {
+            const attrs = feature.graphic?.attributes;
+            const div = document.createElement("div");
+            const routeBtns = makeRoutesButtons(attrs?.route_desc, onRouteClick, onRoutesClick);
+
+            // fields table
+            const tbl = document.createElement("table");
+
+            // add each route as a button
+            const row = tbl.insertRow();
+            row.insertCell().textContent = "MetroBus Routes Served:";
+            row.insertCell().append(...routeBtns);
+
+            LINES_FIELDINFOS.forEach(({ fieldName, label }) => {
+                if (fieldName === "route_desc") return; // handled separately
+                const row = tbl.insertRow();
+                row.insertCell().textContent = label;
+                row.insertCell().textContent = attrs?.[fieldName] ?? "—";
             });
-            routeBtns.push(allBtn)
+            div.appendChild(tbl);
+
+            return div;
         }
     }
-    return routeBtns;
-}
+});
 
-// create choropleth levels for the array of min/max/color
-const newChoroplethLevel = (c: cplethEls, line?: boolean) => {
-    return {
-        minValue: c[0],
-        maxValue: c[1],
-        symbol: line ? new SimpleLineSymbol({ color: [...c[2], 0.65], width: 0.5 }) :
-            new SimpleFillSymbol({ color: [...c[2], POPLDENS_ALPHA] }),
-    };
-};
-const makeChoroplethLevels = (levels: cplethEls[], line?: boolean): __esri.ClassBreakInfoProperties[] => {
-    let lvls: __esri.ClassBreakInfoProperties[] = [];
-    for (const l of levels) {
-        lvls.push(newChoroplethLevel(l, line));
-    }
-    return lvls;
-};
-
-const toPolygon = (data: any): Graphic[] => {
-    return data.features.map((f: any) => { 
-        return new Graphic({
-            geometry: new Polygon({
-                rings: (f.geometry.type === "MultiPolygon") ? f.geometry.coordinates.flat(1) : f.geometry.coordinates,
-                spatialReference: { wkid: STLWKID },
-            }),
-            attributes: f.properties,
-        })
-    })
-}
-
-// create and return an array of graphics from passed bus/metro stop locations
-const toPoint = (data: any): Graphic[] => {
-    return data.features.map((f: any) => {
-        return new Graphic({
-            geometry: new Point({
-                longitude: f.geometry.coordinates[0],
-                latitude: f.geometry.coordinates[1],
-                spatialReference: { wkid: STLWKID },
-            }),
-            attributes: {
-                ...f.properties,
-                ObjectID: f.properties.id,
-                route_count: f.properties.route_names ? f.properties.route_names.split(", ").length : 1,
-            },
-        })
-    })
-};
-const toPolyline = (data: any): Graphic[] => {
-    return data.features.map((f: any) => {
-        return new Graphic({
-            geometry: new Polyline({
-                paths: f.geometry.coordinates,
-                // longitude: f.geometry.coordinates[0],
-                // latitude: f.geometry.coordinates[1],
-                spatialReference: { wkid: STLWKID },
-            }),
-            attributes: {
-                ...f.properties,
-                ObjectID: f.properties.id,
-                route_count: f.properties.route_names ? f.properties.route_names.split(", ").length : 1,
-            },
-        })
-    })
-};
 export const makeBusStopsLayer = (
     onRouteClick: (route: string) => void,
     onRoutesClick: (route: string[]) => void
@@ -551,32 +494,5 @@ export const LAYER_CYCLING: FeatureLayerMeta = {
             },
         ],
     },
-    toGraphics: (data: any): Graphic[] => {
-        return data.features.map((f: any, i: number): Graphic =>
-            new Graphic({
-                geometry: new Polyline({
-                    paths: [f.geometry.coordinates], // wrap once
-                    spatialReference: { wkid: STLWKID },
-                }),
-                attributes: {
-                    ObjectID: i + 1,
-                    name: f.properties.name,
-                    surface: f.properties.surface ?? "",
-                },
-            }),
-        );
-    }
-};
-
-export const LAYER_LINES: FeatureLayerMeta = {
-    title: "Metro Transit Lines",
-    dataUrl: "/layers/lines",
-    geometryType: "polyline",
-    fields: LINES_FIELDS,
-    renderer: new ClassBreaksRenderer({
-        field: "freq_wk",
-        classBreakInfos: makeChoroplethLevels(LINES_CLASSBREAKS, true),
-        defaultSymbol: new SimpleLineSymbol({ color: "gray", width: 1})
-    }),
     toGraphics: toPolyline,
-}
+};
