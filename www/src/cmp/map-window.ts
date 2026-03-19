@@ -18,13 +18,13 @@ import "@esri/calcite-components/dist/components/calcite-button";
 import "@esri/calcite-components/dist/components/calcite-table-header";
 import "@esri/calcite-components/dist/components/calcite-table-row";
 import "@esri/calcite-components/dist/components/calcite-table-cell";
-import LocalBasemapsSource from "@arcgis/core/widgets/BasemapGallery/support/LocalBasemapsSource.js";
 import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect";
 import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
 import Graphic from "@arcgis/core/Graphic";
 import Polygon from "@arcgis/core/geometry/Polygon";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { STLCOORDS, STLWKID, BASEMAP } from "../data.js";
+import { buildCalcitePanel, buildCalciteTableBlock } from "../calcite.js";
 import {
     FeatureLayerMeta,
     makeBusStopsLayer,
@@ -94,67 +94,6 @@ const TOGGLE_ACTIONS: toggleAction[] = [
     },
 ];
 
-// HELPER FOR BUIDING GENERIC CALCITE PANEL WITH THE PASSED ELEMENT AS ITS CHILD
-function buildCalcitePanel(elementType: string, heading: string, baseMaps?: LocalBasemapsSource): HTMLCalcitePanelElement {
-    const panel = document.createElement("calcite-panel");
-    panel.heading = heading;
-    panel.hidden = true;
-
-    const content = document.createElement(elementType) as any;
-    if (baseMaps) {
-        content.source = baseMaps;
-    }
-    panel.appendChild(content);
-    return panel;
-}
-
-function buildCalciteTableBlock(
-    label: string, props: any, collapsible: boolean, open: boolean,
-    buildTable: (props: unknown) => HTMLCalciteTableElement,
-    infoContent?: string
-): HTMLCalciteBlockElement {
-    const block = Object.assign(document.createElement('calcite-block'), {
-        heading: label,
-        label: label,
-        collapsible: collapsible,
-        open: open,
-        headingLevel: 2
-    });
-
-    if (infoContent) {
-        const actId = `popover-trigger-${label.replace(/\s+/g, '-')}`;
-        const btn = Object.assign(document.createElement('calcite-action'), {
-            slot: 'control',
-            icon: 'information',
-            text: 'Info',
-            id: actId,
-            scale: 'm',
-        });
-
-        const notice = Object.assign(document.createElement('calcite-notice'), {
-            open: false,
-            kind: 'info',
-            scale: 's',
-            closable: true,
-        });
-        
-        notice.appendChild(Object.assign(document.createElement('div'), {
-            slot: 'message',
-            innerText: infoContent,
-        }));
-
-        // toggle notice on button click
-        btn.addEventListener('click', () => {
-            notice.open = !notice.open;
-        });
-
-        block.appendChild(btn);
-        block.appendChild(notice);
-    }
-
-    block.appendChild(buildTable(props));
-    return block;
-}
 
 // COMPONENT CLASS 
 export const TAG = "map-window";
