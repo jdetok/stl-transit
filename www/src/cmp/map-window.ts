@@ -14,6 +14,8 @@ import "@esri/calcite-components/dist/components/calcite-option";
 import "@esri/calcite-components/dist/components/calcite-table";
 import "@esri/calcite-components/dist/components/calcite-table-header";
 import "@esri/calcite-components/dist/components/calcite-table-row";
+import "@esri/calcite-components/dist/components/calcite-slider";
+import "@esri/calcite-components/dist/components/calcite-label";
 import "@esri/calcite-components/dist/components/calcite-table-cell";
 import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect";
 import FeatureFilter from "@arcgis/core/layers/support/FeatureFilter";
@@ -28,6 +30,10 @@ import {
     FeatureLayerMeta, makeBusStopsLayer, makeLinesLayer, makePlacesLayer, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES,
     LAYER_CENSUS_TRACTS, LAYER_CYCLING, LAYER_AMTRAK, BUS_STOP_SIZE,
 } from "../layers.js";
+import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer.js";
+import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js";
+import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer.js";
+import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
 
 // CUSTOM HIGHLIGHT SETTINGS
 const HL_PARKS = newHighlightSetting("parks", "mediumseagreen");
@@ -75,12 +81,14 @@ const CLEAR_BUSES = { id: "bus_reset", icon: "bus", text: "Clear Highlighted Bus
 // ACTION BAR WITH PANELS/UTILITIES
 const MAIN_ACTIONS: calciteActionProps[] = [
     { id: "legend", icon: "legend", text: "Legend" },
-    { id: "layers", icon: "layers", text: "Layers" },
+    { id: "sliders", icon: "sliders", text: "Appearance Sliders" },
+    { id: "layers", icon: "layers", text: "Toggle Layers" },
     { id: "basemaps", icon: "basemap", text: "Basemaps" },
     { id: "print", icon: "print", text: "Export" },
 ];
 // REQUEST FULL SCREEN
 const FULLSCREEN = { id: "fs", icon: "extent", text: "Fullscreen" };
+const SLIDERS = { id: "sliders", icon: "filter", text: "Sliders" };
 
 // COMPONENT CLASS 
 export const TAG = "map-window";
@@ -100,6 +108,7 @@ export class MapWindow extends HTMLElement {
 
     // NAMED FEATURE LAYERS
     private busStopsLayer!: FeatureLayer;
+    private linesLayer!: FeatureLayer;
     private placesLayer!: FeatureLayer;
 
     // ROUTE FILTER ASSETS
@@ -113,14 +122,22 @@ export class MapWindow extends HTMLElement {
     private layerListPanel!: HTMLCalcitePanelElement;
     private basemapPanel!: HTMLCalcitePanelElement;
     private printPanel!: HTMLCalcitePanelElement;
+    private slidersPanel!: HTMLCalcitePanelElement;
 
     private actionBar!: HTMLCalciteActionBarElement;
     private toggleBar!: HTMLCalciteActionBarElement;
 
     // ACTIONS FOR TOGGLE BAR
     private TOGGLE_ACTIONS: calciteActionProps[];
+
+    // LINES SLIDER
+    private baseLineWidths: number[] = [];
+    private lineWidthSlider!: HTMLCalciteSliderElement;
     
-    // CONSTRUCTOR 
+    private baseStopSizes: number[] = [];
+    private stopSizeSlider!: HTMLCalciteSliderElement;
+    
+    // CONSTRUCTOR
     public constructor() {
         super();
         
@@ -155,7 +172,6 @@ export class MapWindow extends HTMLElement {
         const toggleBar = this.buildToggleBar();
         const actBar = this.buildMainActionBar();
         
-        
         const root = this.attachShadow({ mode: "open" });
         root.append(
             this.addStyling(),
@@ -164,6 +180,7 @@ export class MapWindow extends HTMLElement {
             this.buildLegendPanel(),
             this.buildPrintPanel(),
             this.buildBasemapPanel(),
+            this.buildSlidersPanel(),
             toggleBar.bar,
             actBar.bar,
             this.buildRoutesFilter(),
@@ -196,11 +213,23 @@ export class MapWindow extends HTMLElement {
                 try {
                     const layer = await this.makeFeatureLayer(this.layers[i]);
                     this.arcgisMap.map?.add(layer, i);
-                    if (this.layers[i] === this.BUS_META) {
-                        this.busStopsLayer = layer;
-                    }
-                    if (this.layers[i] === this.PLACE_META) {
-                        this.placesLayer = layer;
+                    switch (this.layers[i]) {
+                        case this.BUS_META:
+                            this.busStopsLayer = layer;
+                            if (this.busStopsLayer.renderer) {
+                                const sizeVar = (this.busStopsLayer.renderer as UniqueValueRenderer).visualVariables![0] as __esri.SizeVariable;
+                                this.baseStopSizes = sizeVar.stops!.map(s => (s as __esri.SizeStop).size as number);
+                            }
+                            break;
+                        case this.PLACE_META: 
+                            this.placesLayer = layer;
+                            break;
+                        case this.LINES_META:
+                            this.linesLayer = layer;
+                            this.baseLineWidths = (this.linesLayer.renderer as ClassBreaksRenderer).classBreakInfos.map((cb) => {
+                                return (cb.symbol as SimpleLineSymbol).width;
+                            })
+                            break;
                     }
                 } catch (e) {
                     console.error(e);
@@ -225,6 +254,7 @@ export class MapWindow extends HTMLElement {
                 [this.legendPanel, "arcgis-legend"],
                 [this.basemapPanel, "arcgis-basemap-gallery"],
                 [this.printPanel, "arcgis-print"],
+                // [this.slidersPanel, "calcite-panel"],
             ]));
 
             // BUILD ROUTE SELECTOR
@@ -397,6 +427,7 @@ export class MapWindow extends HTMLElement {
                     legend: this.legendPanel,
                     basemaps: this.basemapPanel,
                     print: this.printPanel,
+                    sliders: this.slidersPanel,
                 })
             });
             actionBar.append(action);
@@ -471,6 +502,15 @@ export class MapWindow extends HTMLElement {
     private buildBasemapPanel(): HTMLCalcitePanelElement {
         const panel = buildCalcitePanel("arcgis-basemap-gallery", "Basemaps")
         this.basemapPanel = panel;
+        return panel;
+    }
+    private buildSlidersPanel(): HTMLCalcitePanelElement {
+        const panel = document.createElement("calcite-panel");
+        panel.heading = 'Sliders';
+        panel.hidden = true; panel.classList.add('action-panel');
+        panel.appendChild(this.buildLineWidthSlider());
+        panel.appendChild(this.buildStopSizeSlider());
+        this.slidersPanel = panel;
         return panel;
     }
     private buildZoom(): HTMLArcgisZoomElement {
@@ -639,6 +679,70 @@ export class MapWindow extends HTMLElement {
         if (result.features.length) {
             await this.arcgisMap.view.goTo(result.features, { duration: 600 });
         }
+    }
+    private buildLineWidthSlider(): HTMLCalciteBlockElement {
+        const container = document.createElement('calcite-block');
+        container.heading = 'Route Line Width';
+        container.open = true;
+        container.className = 'line-width-control';
+        
+        const slider = Object.assign(document.createElement('calcite-slider'), {
+            min: 0.25,
+            max: 15,
+            step: 0.25,
+            value: 1,
+            snap: true
+        });
+
+        slider.addEventListener('calciteSliderInput', () => {
+            this.updateLineWidths(slider.value);
+        });
+
+        this.lineWidthSlider = slider;
+        container.append(slider);
+
+        return container;
+    }
+    private updateLineWidths(mult: number) {
+        const renderer = this.linesLayer?.renderer as ClassBreaksRenderer;
+        if (!renderer) return;
+        renderer.classBreakInfos.forEach((cb, i) => {
+            (cb.symbol as SimpleLineSymbol).width = this.baseLineWidths[i] * mult;
+        });
+        this.linesLayer.renderer = renderer.clone();
+    }
+    private buildStopSizeSlider(): HTMLCalciteBlockElement {
+        const container = document.createElement('calcite-block');
+        container.heading = 'MetroBus Stop Size';
+        container.open = true;
+        container.className = 'stop-size-control';
+        
+        const slider = Object.assign(document.createElement('calcite-slider'), {
+            min: 0.1,
+            max: 3,
+            step: 0.1,
+            value: 1,
+            snap: true
+        });
+
+        slider.addEventListener('calciteSliderInput', () => {
+            this.updateStopSize(slider.value);
+        });
+
+        this.stopSizeSlider = slider;
+        container.append(slider);
+
+        return container;
+    }
+    private updateStopSize(mult: number) {
+        const renderer = this.busStopsLayer?.renderer as UniqueValueRenderer;
+        if (!renderer) return;
+
+        const sizeVar = renderer.visualVariables![0] as __esri.SizeVariable;
+        sizeVar.stops!.forEach((stop, i) => {
+            (stop as __esri.SizeStop).size = this.baseStopSizes[i] * mult;
+        });
+        this.busStopsLayer.renderer = renderer.clone();
     }
     private addStyling(): HTMLStyleElement {
         return Object.assign(document.createElement("style"), { textContent: STYLE });

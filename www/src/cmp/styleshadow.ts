@@ -14,7 +14,6 @@ export const STYLE = `
     --calcite-spacing-md: 0.5rem;
     --calcite-spacing-lg: 0.75rem;
 }
-
 #filterbar {
     left: 0.8rem;
     width: min-content;
@@ -41,6 +40,7 @@ calcite-panel {
     bottom: 7.2rem;
     z-index: 10;
     width: fit-content;
+    min-width: 18%;
     height: fit-content;
     max-height: 65%;
     max-width: 98%;
@@ -107,6 +107,11 @@ calcite-tooltip {
 .esri-popup {
     max-height: 30% !important;
     z-index: 100;
+}
+calcite-slider {
+    --calcite-slider-track-color: black;
+    --calcite-slider-handle-fill-color: rgba(192, 204, 250, 0.5);
+    --calcite-slider-accent-color: rgba(3, 11, 41, 0.5);
 }
 `;
 export const MAP_STYLE = `
