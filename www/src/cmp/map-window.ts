@@ -24,7 +24,7 @@ import Polygon from "@arcgis/core/geometry/Polygon";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { STLCOORDS, PROJID, BASEMAP } from "../data.js";
 import { STYLE, MAP_STYLE } from "./styleshadow.js";
-import { newHighlightSetting, updateRenderedSizes } from "../arcgis.js";
+import { applyFeatureEffect, newHighlightSetting, queryLayer, updateRenderedSizes } from "../arcgis.js";
 import { buildCalciteAction, buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps } from "../calcite.js";
 import {
     FeatureLayerMeta, makeBusStopsLayer, makeLinesLayer, makePlacesLayer, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES,
@@ -144,15 +144,15 @@ export class MapWindow extends HTMLElement {
         
         // BUILD DYNAMIC FEATURE LAYER METAS
         this.BUS_META = makeBusStopsLayer(
-            (route) => { this.filterByRoute(route); this.showRouteInfo(route); },
+            (route) => { this.filterByRoutes(route); this.showRouteInfo(route); },
             (routes) => { this.filterByRoutes(routes);  },
         );
         this.LINES_META = makeLinesLayer(
-            (route) => { this.filterByRoute(route); this.showRouteInfo(route); },
+            (route) => { this.filterByRoutes(route); this.showRouteInfo(route); },
             (routes) => { this.filterByRoutes(routes);  },
         );
         this.PLACE_META = makePlacesLayer(
-            (route) => { this.filterByRoute(route); this.showRouteInfo(route); },
+            (route) => { this.filterByRoutes(route); this.showRouteInfo(route); },
             (routes) => { this.filterByRoutes(routes);  },
         );
 
@@ -409,8 +409,11 @@ export class MapWindow extends HTMLElement {
         actionBar.querySelectorAll("calcite-action").forEach((a: any) => a.active = false);
     }
     private async clearBusStops() {
-        const busLayerView = await this.arcgisMap.view.whenLayerView(this.busStopsLayer) as __esri.FeatureLayerView;
-        busLayerView.featureEffect = null;
+        const layers = [this.busStopsLayer, this.linesLayer];
+        layers.forEach(async (layer) => {
+            const layerView = await this.arcgisMap.view.whenLayerView(layer) as __esri.FeatureLayerView;
+            layerView.featureEffect = null;
+        })
     }
     // BUILD CALCITE ACTION BAR, ACTIONS DISPLAY CALCITE PANELS
     private buildMainActionBar(): { bar: HTMLCalciteActionBarElement, tooltips: HTMLCalciteTooltipElement[] } {
@@ -632,52 +635,64 @@ export class MapWindow extends HTMLElement {
     }
     // HIGHLIGHT ALL STOPS IN A BUS ROUTE
     private async filterByRoute(routeName: string): Promise<void> {
-        const layerView = await this.arcgisMap.view.whenLayerView(this.busStopsLayer) as __esri.FeatureLayerView;
-
-        if (!routeName) {
-            layerView.featureEffect = null;
-            return;
-        }
-
+        const layers = [this.busStopsLayer, this.linesLayer];
         const whereClause = `route_names like '%${routeName}%'`;
+        const whereClauseLine = `route_desc like '%${routeName}%'`;
+        
+        layers.forEach(async (layer: FeatureLayer, i: number) => {
 
-        layerView.featureEffect = new FeatureEffect({
-            filter: new FeatureFilter({ where: whereClause }),
-            includedEffect: "bloom(2, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
-            excludedEffect: "opacity(60%) brightness(1)"
-        });
-        const result = await this.busStopsLayer.queryFeatures({
-            where: whereClause,
-            returnGeometry: true,
-            outSpatialReference: { wkid: PROJID },
-        });
-        if (result.features.length) {
-            await this.arcgisMap.view.goTo(result.features, { duration: 600 });
+            const layerView = await this.arcgisMap.view.whenLayerView(layer) as __esri.FeatureLayerView;
+
+            if (!routeName) {
+                layerView.featureEffect = null;
+                return;
+            }
+
+            layerView.featureEffect = new FeatureEffect({
+                filter: new FeatureFilter({ where: i === 0 ? whereClause : whereClauseLine }),
+                includedEffect: "bloom(2, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
+                excludedEffect: "opacity(60%) brightness(1)"
+            });
+        })
+        const res = await queryLayer(this.busStopsLayer, whereClause);
+        if (res.features.length) {
+            await this.arcgisMap.view.goTo(res.features, { duration: 600 });
         }
+            
     }
     // HIGHLIGHT ALL STOPS FROM SEVERAL BUS ROUTES
-    private async filterByRoutes(routeNames: string[]): Promise<void> {
-        const layerView = await this.arcgisMap.view.whenLayerView(this.busStopsLayer) as __esri.FeatureLayerView;
+    private async filterByRoutes(routeNames: string | string[]): Promise<void> {
+        const routes = Array.isArray(routeNames) ? routeNames : [routeNames];
+        const layers = [this.busStopsLayer, this.linesLayer];
 
-        if (!routeNames) {
-            layerView.featureEffect = null;
-            return;
+        let whereStop: string;
+        let whereLine: string;
+        if (routeNames.length > 1) {
+            whereStop = (routes as string[]).map(r => `route_names like '%${r}%'`).join(" or ");
+            whereLine = (routes as string[]).map(r => `route_desc like '%${r}%'`).join(" or ");
+        } else {
+            whereStop = `route_names like '%${routeNames[0]}%'`;
+            whereLine = `route_desc like '%${routeNames[0]}%'`;
         }
 
-        const whereClause = routeNames.map(r => `route_names like '%${r}%'`).join(" or ");
+        layers.forEach(async (layer: FeatureLayer, i: number) => {
 
-        layerView.featureEffect = new FeatureEffect({
-            filter: new FeatureFilter({ where: whereClause }),
-            includedEffect: "bloom(2, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
-            excludedEffect: "opacity(60%) brightness(1)"
-        });
-        const result = await this.busStopsLayer.queryFeatures({
-            where: whereClause,
-            returnGeometry: true,
-            outSpatialReference: { wkid: PROJID },
-        });
-        if (result.features.length) {
-            await this.arcgisMap.view.goTo(result.features, { duration: 600 });
+            const layerView = await this.arcgisMap.view.whenLayerView(layer) as __esri.FeatureLayerView;
+
+            if (!routeNames) {
+                layerView.featureEffect = null;
+                return;
+            }
+
+            layerView.featureEffect = new FeatureEffect({
+                filter: new FeatureFilter({ where: i === 0 ? whereStop : whereLine }),
+                includedEffect: "bloom(2, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
+                excludedEffect: "opacity(60%) brightness(1)"
+            });
+        })
+        const res = await queryLayer(this.linesLayer, whereLine);
+        if (res.features.length) {
+            await this.arcgisMap.view.goTo(res.features, { duration: 600 });
         }
     }
     private buildLineWidthSlider(): HTMLCalciteBlockElement {
@@ -707,7 +722,6 @@ export class MapWindow extends HTMLElement {
         const { block, slider} = buildCalciteSliderBlock({
             heading: 'MetroBus Stop Size',
             cssClass: 'stop-size-control',
-            // onInput: async () => this.updateStopSize(),
             onInput: async () => {
                 this.busStopsLayer.renderer = updateRenderedSizes(
                     (this.busStopsLayer.renderer as UniqueValueRenderer),

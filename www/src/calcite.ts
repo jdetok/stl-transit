@@ -101,7 +101,7 @@ function buildCalciteButton(txt: string, appearance?: string, scale?: string): H
 }
 export function makeRoutesButtons(routeNames: string,
     onRouteClick: (route: string) => void,
-    onRoutesClick: (route: string[]) => void
+    onRoutesClick: (route: string | string[]) => void
 ): HTMLCalciteButtonElement[] {
     let routeBtns: HTMLCalciteButtonElement[] = [];
     if (routeNames) {

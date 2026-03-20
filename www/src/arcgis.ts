@@ -8,6 +8,8 @@ import { PROJID } from "./data";
 import Renderer from "@arcgis/core/renderers/Renderer";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
+import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect";
 
 // HELPER TO CREATE CUSTOM HIGHLIGHT SETTINGS
 export function newHighlightSetting(name: string, color: __esri.ColorProperties): __esri.HighlightOptionsProperties {
@@ -99,3 +101,15 @@ export function updateRenderedSizes(renderer: Renderer, baseSizes: number[], mul
     };
     return renderer as renderers;
 }
+
+export async function queryLayer(layer: FeatureLayer, query: string): Promise<__esri.FeatureSet> {
+    return await layer.queryFeatures({
+        where: query,
+        returnGeometry: true,
+        outSpatialReference: {wkid: PROJID},
+    });
+}
+
+export function applyFeatureEffect(view: __esri.FeatureLayerView, fx: FeatureEffect): void {
+    view.featureEffect = fx;
+} 
