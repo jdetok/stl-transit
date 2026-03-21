@@ -28,6 +28,7 @@ import { newHighlightSetting, queryLayer, updateRenderedSizes } from "../arcgis.
 import {
     buildCalciteAction, buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps,
     buildCalciteLegendPanel,buildCalciteSelect,
+    buildCalciteTable,
  } from "../calcite.js";
 import {
     FeatureLayerMeta, makeBusStopsLayer, makeMetroLinkLayer, makeLinesLayer, makePlacesLayer, LAYER_CENSUS_COUNTIES,
@@ -557,12 +558,12 @@ export class MapWindow extends HTMLElement {
     }
     
     private buildLayerListPanel(): HTMLCalcitePanelElement {
-        const panel = buildCalcitePanel("arcgis-layer-list", "Layers");
+        const panel = buildCalcitePanel({ elementType: "arcgis-layer-list", heading: "Layers"});
         this.layerListPanel = panel;
         return panel;
     }
     private buildPrintPanel(): HTMLCalcitePanelElement {
-        const panel = buildCalcitePanel("arcgis-print", "Export");
+        const panel = buildCalcitePanel({ elementType: "arcgis-print", heading: "Export" });
         this.printPanel = panel;
         return panel;
     }
@@ -572,7 +573,7 @@ export class MapWindow extends HTMLElement {
         return panel;
     }
     private buildBasemapPanel(): HTMLCalcitePanelElement {
-        const panel = buildCalcitePanel("arcgis-basemap-gallery", "Basemaps")
+        const panel = buildCalcitePanel({ elementType: "arcgis-basemap-gallery", heading: "Basemaps"})
         this.basemapPanel = panel;
         return panel;
     }
@@ -723,11 +724,7 @@ export class MapWindow extends HTMLElement {
         }
     }
     private buildRouteInfoPanel(): HTMLCalcitePanelElement {
-        this.routeInfoPanel = document.createElement("calcite-panel");
-        this.routeInfoPanel.classList.add("route-info");
-        this.routeInfoPanel.heading = "Route Info";
-        this.routeInfoPanel.hidden = true;
-        this.routeInfoPanel.closable = true;
+        this.routeInfoPanel = buildCalcitePanel({ heading: 'Route Info', cssClass: 'route-info' }); 
         this.routeInfoPanel.addEventListener("calcitePanelClose", () => {
             this.routeInfoPanel.hidden = true;
         });
@@ -738,7 +735,6 @@ export class MapWindow extends HTMLElement {
             this.routeInfoPanel.hidden = true;
             return;
         }
-
         const feature = this.routesData.find((f: any) => f.properties.route_desc === route);
         if (!feature) return;
 
@@ -748,9 +744,15 @@ export class MapWindow extends HTMLElement {
         this.routeInfoPanel.closed = false;
         this.routeInfoPanel.closable = true;
 
+        // stop frequency table
         const freqTbl = buildCalciteTableBlock(
-            "Frequency (minutes)", props, false, true, this.buildFreqTable,
-            `Frequencies were derived by
+            "Frequency (minutes)", props, false, true,
+            () => buildCalciteTable({
+                hasHeader: true, rows: [
+                    ['Weekday', 'Saturday', 'Sunday'],
+                    [props.freq_wk, props.freq_sa, props.freq_su],
+                ]
+            }), `Frequencies were derived by
             taking the mode of the
             difference in start times 
             between two consecutive trips. 
@@ -759,55 +761,26 @@ export class MapWindow extends HTMLElement {
         );
         this.routeInfoPanel.append(freqTbl);
 
+        // 'access to' table
         const accessTbl = buildCalciteTableBlock(
-            "Stops w/ access to", props, true, false, this.buildPropsTable,
-            `A stop 'has access'
+            "Stops w/ access to", props, true, false, 
+            () => {
+                const rows: string[][] = [];
+                for (const [key, val] of Object.entries(props)) {
+                if (!key.includes("_access_")) continue;
+                    if ((!key.toLowerCase().includes("amenity")) && String(val) === "false") continue;
+                    
+                    // last string after last _
+                    const keyVal = key.split("_").at(-1);
+                    rows.push([`${String(keyVal).charAt(0).toUpperCase()}${String(keyVal).slice(1)}`, String(val) ?? 'NA']);
+                }
+                return buildCalciteTable({ hasHeader: false, rows });
+            }, `A stop 'has access'
             to amenities within
             805 meters (~1/2 mile).`,
         );
         this.routeInfoPanel.append(accessTbl);
         this.routeInfoPanel.hidden = false;
-    }
-    private buildFreqTable(props: any): HTMLCalciteTableElement {
-        const tbl = document.createElement("calcite-table");
-
-        const hdg = Object.assign(document.createElement("calcite-table-row"), { slot: "table-header" });
-        const h1 = Object.assign(document.createElement("calcite-table-header"), { heading: "Weekday" });
-        const h2 = Object.assign(document.createElement("calcite-table-header"), { heading: "Saturday" });
-        const h3 = Object.assign(document.createElement("calcite-table-header"), { heading: "Sunday" });
-        hdg.append(h1, h2, h3);
-        tbl.append(hdg);
-        
-        const row = document.createElement("calcite-table-row");
-        for (const f of [props.freq_wk, props.freq_sa, props.freq_su]) {
-            row.append(Object.assign(document.createElement("calcite-table-cell"), { innerText: f ?? 'NA' }));
-        }
-        tbl.append(row);
-        return tbl;
-    }
-    private buildPropsTable(props: any): HTMLCalciteTableElement {
-        const tbl = document.createElement("calcite-table");
-        
-        // add the key as the first table cell and the val as the second
-        for (const [key, val] of Object.entries(props as any)) {
-            // exclusions
-            if (!key.includes("_access_")) continue;
-            if ((!key.toLowerCase().includes("amenity")) && String(val) === "false") continue;
-            
-            const row = document.createElement("calcite-table-row");
-            const keyCell = document.createElement("calcite-table-cell");
-            const valCell = document.createElement("calcite-table-cell");
-            
-            // last string after last _
-            const keyVal = key.split("_").at(-1);
-
-            keyCell.innerText = `${String(keyVal).charAt(0).toUpperCase()}${String(keyVal).slice(1)}`;
-            valCell.innerText = String(val) ?? 'NA';
-
-            row.append(keyCell, valCell);
-            tbl.append(row);
-        }
-        return tbl;
     }
     private buildZoom(): HTMLArcgisZoomElement {
         return document.createElement("arcgis-zoom");

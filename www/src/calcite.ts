@@ -1,16 +1,17 @@
 import LocalBasemapsSource from "@arcgis/core/widgets/BasemapGallery/support/LocalBasemapsSource.js";
 // HELPER FOR BUIDING GENERIC CALCITE PANEL WITH THE PASSED ELEMENT AS ITS CHILD
-export function buildCalcitePanel(elementType: string, heading: string, baseMaps?: LocalBasemapsSource): HTMLCalcitePanelElement {
+export function buildCalcitePanel(props: {
+    elementType?: string, heading?: string, closable?: boolean, cssClass?: string
+}): HTMLCalcitePanelElement {
     const panel = document.createElement("calcite-panel");
-    panel.heading = heading;
+    if (props.heading) panel.heading = props.heading;
     panel.hidden = true;
-
-    const content = document.createElement(elementType) as any;
-    if (!content) throw new Error(`couldn't create element of type ${elementType}`);
-    if (baseMaps) {
-        content.source = baseMaps;
+    panel.closable = props.closable ?? true;
+    if (props.cssClass) panel.classList.add(props.cssClass)
+    if (props.elementType) {
+        const content = document.createElement(props.elementType) as any;
+        panel.appendChild(content);
     }
-    panel.appendChild(content);
     return panel;
 }
 export function buildCalciteLegendPanel(heading: string): HTMLCalcitePanelElement {
@@ -40,6 +41,8 @@ export function buildCalciteSliderBlock(props: calciteSliderBlock): { block: HTM
     block.append(slider);
     return { block, slider};
 };
+
+// build a calcite block that accepts a function to built a table inside the block
 export function buildCalciteTableBlock(
     label: string, props: any, collapsible: boolean, open: boolean,
     buildTable: (props: unknown) => HTMLCalciteTableElement,
@@ -55,12 +58,58 @@ export function buildCalciteTableBlock(
 
     if (infoContent) {
         const notice = buildCalciteNotice(label, infoContent);
-        block.appendChild(notice.btn);
-        block.appendChild(notice.notice);
+        block.append(notice.btn, notice.notice);
     }
 
-    block.appendChild(buildTable(props));
+    block.append(buildTable(props));
     return block;
+}
+
+// table builder helper
+export type calciteTableProps = {
+    hasHeader: boolean,
+    rows: any[][],
+}
+// if the table has a header row, pass it as the first row and set hasHeader to true
+export function buildCalciteTable(props: calciteTableProps): HTMLCalciteTableElement {
+    if (!props.rows.length) throw new Error(`no rows passed`);
+
+    // all rows must respect this length
+    const numCols = props.rows[0].length;
+
+    // build a row for each
+    const rows: Array<HTMLCalciteTableRowElement> = [];
+    props.rows.forEach((r: any[], i: number) => { 
+        if (r.length !== numCols) {
+            throw new Error(
+                `number of values (${r.length}) in row array ${i + 1}/${rows.length} does not match the numCols variable (${numCols})`
+            );
+        }
+        rows.push(document.createElement('calcite-table-row'));
+    });
+
+    // if hasHeader, set first row as the a slotted header element 
+    if (props.hasHeader) {
+        props.rows[0].forEach((r: any) => {
+            rows[0].slot = 'table-header';
+            rows[0].append(Object.assign(document.createElement('calcite-table-header'), { heading: String(r) }));
+        });
+    }
+
+    // append each val in each row as a cell in the table
+    // start at row 0 if no header, row 1 if hasHeader
+    const cellRows = (props.hasHeader) ? rows.slice(1) : rows;
+    cellRows.forEach((r: HTMLCalciteTableRowElement, i: number) => {
+        const rowIdx = props.hasHeader ? i + 1 : i;
+        props.rows[rowIdx].forEach((val: any) => {
+            r.append(Object.assign(document.createElement('calcite-table-cell'), { innerText: String(val) ?? 'NA' }));
+        });
+    });
+
+    // create table and append all rows
+    const tbl = document.createElement("calcite-table");
+    tbl.append(...rows);
+    return tbl;
 }
 
 // calcite notice with info button
