@@ -25,9 +25,13 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { STLCOORDS, PROJID, BASEMAP } from "../data.js";
 import { STYLE, MAP_STYLE } from "./styleshadow.js";
 import { newHighlightSetting, queryLayer, updateRenderedSizes } from "../arcgis.js";
-import { buildCalciteAction, buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps } from "../calcite.js";
 import {
-    FeatureLayerMeta, makeBusStopsLayer, makeMetroLinkLayer, makeLinesLayer, makePlacesLayer, LAYER_ML_STOPS, LAYER_CENSUS_COUNTIES,
+    buildCalciteAction, buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps,
+    buildCalciteLegendPanel,
+    buildCalciteSelect
+ } from "../calcite.js";
+import {
+    FeatureLayerMeta, makeBusStopsLayer, makeMetroLinkLayer, makeLinesLayer, makePlacesLayer, LAYER_CENSUS_COUNTIES,
     LAYER_CENSUS_TRACTS, LAYER_CYCLING, LAYER_AMTRAK, BUS_STOP_SIZE,
 } from "../layers.js";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer.js";
@@ -110,10 +114,14 @@ export class MapWindow extends HTMLElement {
     private metroStopsLayer!: FeatureLayer;
     private linesLayer!: FeatureLayer;
     private placesLayer!: FeatureLayer;
+    private cyclingLayer!: FeatureLayer;
+    private countiesLayer!: FeatureLayer;
+    private tractsLayer!: FeatureLayer;
+    private amtrakLayer!: FeatureLayer;
 
     // ROUTE FILTER ASSETS
     private routesData: any[] = [];
-    private routePanel!: HTMLElement;
+    private routeSelect!: HTMLCalciteSelectElement;
     private routeInfoPanel!: HTMLCalcitePanelElement;
 
     // ACTION BAR PANELS
@@ -141,6 +149,9 @@ export class MapWindow extends HTMLElement {
     private metroStopSliderBlock!: HTMLCalciteBlockElement;
     private busStopSizeSlider!: HTMLCalciteSliderElement;
     private metroStopSizeSlider!: HTMLCalciteSliderElement;
+
+    // append all tooltips to this array, append to shadow root at once
+    private tooltips: HTMLCalciteTooltipElement[] = []; 
 
     // CONSTRUCTOR
     public constructor() {
@@ -171,16 +182,21 @@ export class MapWindow extends HTMLElement {
             LAYER_CENSUS_COUNTIES,
             LAYER_CENSUS_TRACTS,
             LAYER_CYCLING,
+            LAYER_AMTRAK,
             this.PLACE_META,
             this.LINES_META,
-            LAYER_AMTRAK,
             this.BUS_META,
             this.METRO_META,
         ];
 
         const toggleBar = this.buildToggleBar();
+        this.toggleBar = toggleBar.bar;
+        this.tooltips.push(...toggleBar.tooltips);
+
         const actBar = this.buildMainActionBar();
-        
+        this.actionBar = actBar.bar;
+        this.tooltips.push(...actBar.tooltips);
+
         const root = this.attachShadow({ mode: "open" });
         root.append(
             this.addStyling(),
@@ -190,13 +206,16 @@ export class MapWindow extends HTMLElement {
             this.buildPrintPanel(),
             this.buildBasemapPanel(),
             this.buildSlidersPanel(),
-            toggleBar.bar,
-            actBar.bar,
-            this.buildRoutesFilter(),
             this.buildRouteInfoPanel(),
-            ...actBar.tooltips,
-            ...toggleBar.tooltips,
+            this.toggleBar,
+            this.actionBar,
+            ...this.tooltips,
         );
+    }
+    // built sections requiring async
+    async connectedCallback(): Promise<void> {
+        this.routeSelect = await this.buildRoutesFilter();
+        this.shadowRoot?.append(this.routeSelect);
     }
     disconnectedCallback(): void {
         this.arcgisMap?.remove();
@@ -239,15 +258,31 @@ export class MapWindow extends HTMLElement {
                             }
                             break;
                         }
-                        case this.PLACE_META: {
-                            this.placesLayer = layer;
-                            break;
-                        }
                         case this.LINES_META: {
                             this.linesLayer = layer;
                             this.baseLineWidths = (this.linesLayer.renderer as ClassBreaksRenderer).classBreakInfos.map((cb) => {
                                 return (cb.symbol as SimpleLineSymbol).width;
                             });
+                            break;
+                        }
+                        case this.PLACE_META: {
+                            this.placesLayer = layer;
+                            break;
+                        }
+                        case LAYER_CYCLING: {
+                            this.cyclingLayer = layer;
+                            break;
+                        }    
+                        case LAYER_AMTRAK: {
+                            this.amtrakLayer = layer;
+                            break;
+                        }
+                        case LAYER_CENSUS_COUNTIES: {
+                            this.countiesLayer = layer;
+                            break;
+                        }
+                        case LAYER_CENSUS_TRACTS: {
+                            this.tractsLayer = layer;
                             break;
                         }
                     }
@@ -278,15 +313,31 @@ export class MapWindow extends HTMLElement {
             ]));
 
             // BUILD ROUTE SELECTOR
-            await this.populateRouteSelect();
+            // await this.populateRouteSelect();
 
             // ADD LISTENER ON ZOOM AMOUNT, RE RENDER FEATURES AT SPECIFIC POINTS
             // this.renderOnZoom();
 
             // open legend when bus stop layer has been created
-            this.busStopsLayer.when(() => {
-                if (this.arcgisMap.offsetWidth > 800) this.togglePanel('legend', this.actionBar, { legend: this.legendPanel })
+            this.busStopsLayer.when(async () => {
+                await customElements.whenDefined('arcgis-legend');
+                const legend = this.legendPanel.querySelector("arcgis-legend");
+                if (!legend) return;
+                // legend.view = this.arcgisMap.view;
+                // [this.busStopsLayer, this.metroStopsLayer, this.linesLayer].forEach(l => l.legendEnabled = false);
+                const layers: __esri.LegendViewModelLayerInfo[] = [
+                    this.linesLayer, this.metroStopsLayer, this.busStopsLayer, this.cyclingLayer, this.placesLayer,
+                    this.tractsLayer, this.amtrakLayer, this.countiesLayer,
+                ].map((l) => {
+                    return { layer: l }
+                });
+                legend.layerInfos = layers;
+                console.log(this.arcgisMap.offsetHeight);
+                const type = this.arcgisMap.offsetHeight < 650 ? 'card' : 'classic';
+                legend.legendStyle = { type, layout: 'stack' };
+                if (this.arcgisMap.offsetWidth > 800) this.togglePanel('legend', this.actionBar, { legend: this.legendPanel });
             });
+            
         }, { once: true });
 
         return this.arcgisMap;
@@ -335,6 +386,7 @@ export class MapWindow extends HTMLElement {
             popupTemplate: meta.popupTemplate,
             fields: meta.fields,
             outFields: ["*"],
+            legendEnabled: meta.legendEnabled ?? true,
         });
     }
     private buildGraphics(meta: FeatureLayerMeta, data: any): Graphic[] {
@@ -486,26 +538,6 @@ export class MapWindow extends HTMLElement {
             panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
         });
     }
-    // BUILD A CALCITE SELECT TO FILTER BY BUS ROUTE
-    private buildRoutesFilter(): HTMLElement {
-        const wrapper = document.createElement("div");
-        wrapper.id = "filterbar";
-
-        const select = document.createElement("calcite-select") as any;
-        select.label = "Route";
-        select.id = "route-select";
-        select.addEventListener("calciteSelectChange", () => {
-            this.filterByRoutes(select.value);
-            this.showRouteInfo(select.value);
-            if (!select.value) {
-                this.routeInfoPanel.hidden = true;
-            }
-        });
-
-        wrapper.appendChild(select);
-        this.routePanel = wrapper;
-        return wrapper;
-    }
     
     private buildLayerListPanel(): HTMLCalcitePanelElement {
         const panel = buildCalcitePanel("arcgis-layer-list", "Layers");
@@ -518,7 +550,7 @@ export class MapWindow extends HTMLElement {
         return panel;
     }
     private buildLegendPanel(): HTMLCalcitePanelElement {
-        const panel = buildCalcitePanel("arcgis-legend", "Legend");
+        const panel = buildCalciteLegendPanel('Legend', this.arcgisMap);
         this.legendPanel = panel;
         return panel;
     }
@@ -539,7 +571,7 @@ export class MapWindow extends HTMLElement {
         this.slidersPanel = panel;
         return panel;
     }
-        private buildLineWidthSlider(): HTMLCalciteBlockElement {
+    private buildLineWidthSlider(): HTMLCalciteBlockElement {
         const { block, slider} = buildCalciteSliderBlock({
             heading: 'Route Line Width',
             onInput: async () => {
@@ -605,7 +637,74 @@ export class MapWindow extends HTMLElement {
         this.metroStopSizeSlider = slider;
         return this.metroStopSliderBlock;
     }
-    
+        // BUILD A CALCITE SELECT TO FILTER BY BUS ROUTE
+    private async buildRoutesFilter(): Promise<HTMLCalciteSelectElement> {
+        const sel = await buildCalciteSelect({
+            heading: "Route",
+            onSelChange: (val: string) => {
+                this.filterByRoutes(val);
+                this.showRouteInfo(val);
+                if (!val) {
+                    this.routeInfoPanel.hidden = true;
+                }
+            },
+            optsProps: {
+                allOpt: { label: 'All MetroBus Routes', value: 'all' },
+                dataUrl: '/layers/routes',
+                mapFeatures: (features) => {
+                    this.routesData = features;
+                    return features.map((f: any) => f.properties.route_desc).sort();
+                }
+            }
+        });
+        this.routeSelect = sel;
+        return sel;
+    }
+    // HIGHLIGHT ALL STOPS FROM SEVERAL BUS ROUTES
+    private async filterByRoutes(routeNames: string | string[]): Promise<void> {
+        const routes = Array.isArray(routeNames) ? routeNames : [routeNames];
+        
+        // ORDER MATTERS (lines layer needs to be last)
+        const layers = [
+            this.busStopsLayer,
+            this.metroStopsLayer,
+            this.linesLayer
+        ];
+
+        // stops layers use route_names field, lines layer uses route_desc field. build separate queries for each
+        let whereStop: string;
+        let whereLine: string;
+        if (routeNames.length > 1) {
+            whereStop = (routes as string[]).map(r => `route_names like '%${r}%'`).join(" or ");
+            if (routes.some(r => r.includes("MetroLink"))) {
+                // lines layer stores metro routes as "MetroLink Red Line" rather than "MLR-MetroLink Red Line"
+                whereLine = (routes as string[]).map(r => `route_desc like '%${r.substring(4)}%'`).join(" or ");
+                console.log(whereLine)
+            } else {
+                whereLine = (routes as string[]).map(r => `route_desc like '%${r}%'`).join(" or ");
+            }
+        } else {
+            whereStop = `route_names like '%${routeNames[0]}%'`;
+            whereLine = `route_desc like '%${routeNames[0]}%'`;
+        }
+
+        // add the feature effect for each layer
+        layers.forEach(async (layer: FeatureLayer, i: number) => {
+            const layerView = await this.arcgisMap.view.whenLayerView(layer) as __esri.FeatureLayerView;
+
+            layerView.featureEffect = new FeatureEffect({
+                filter: new FeatureFilter({ where: i < (layers.length - 1) ? whereStop : whereLine }),
+                includedEffect: "bloom(1, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
+                excludedEffect: "opacity(60%) brightness(1)"
+            });
+        })
+        
+        // query just the lines and move the map there
+        const res = await queryLayer(this.linesLayer, whereLine);
+        if (res.features.length) {
+            await this.arcgisMap.view.goTo(res.features, { duration: 600 });
+        }
+    }
     private buildRouteInfoPanel(): HTMLCalcitePanelElement {
         this.routeInfoPanel = document.createElement("calcite-panel");
         this.routeInfoPanel.classList.add("route-info");
@@ -692,78 +791,6 @@ export class MapWindow extends HTMLElement {
             tbl.appendChild(row);
         }
         return tbl;
-    }
-    // BUILD SELECT LIST OF ALL BUS ROUTES
-    private async populateRouteSelect(): Promise<void> {
-        const res = await fetch("layers/routes");
-        const data = await res.json();
-
-        this.routesData = data.features;
-        const routes = data.features.map((f: any) => f.properties.route_desc).sort();
-
-        const select = this.routePanel.querySelector("calcite-select") as any;
-
-        const allOption = document.createElement("calcite-option") as any;
-        allOption.value = "all" ;
-        allOption.label = "All MetroBus Routes";
-        select.appendChild(allOption);
-
-        for (const r of routes) {
-            const option = document.createElement("calcite-option") as any;
-            option.value = r;
-            option.label = r;
-            select.appendChild(option);
-        }
-    }
-    // HIGHLIGHT ALL STOPS FROM SEVERAL BUS ROUTES
-    private async filterByRoutes(routeNames: string | string[]): Promise<void> {
-        const routes = Array.isArray(routeNames) ? routeNames : [routeNames];
-        
-        // ORDER MATTERS (lines layer needs to be last)
-        const layers = [
-            this.busStopsLayer,
-            this.metroStopsLayer,
-            this.linesLayer
-        ];
-
-        // stops layers use route_names field, lines layer uses route_desc field. build separate queries for each
-        let whereStop: string;
-        let whereLine: string;
-        if (routeNames.length > 1) {
-            whereStop = (routes as string[]).map(r => `route_names like '%${r}%'`).join(" or ");
-            if (routes.some(r => r.includes("MetroLink"))) {
-                // lines layer stores metro routes as "MetroLink Red Line" rather than "MLR-MetroLink Red Line"
-                whereLine = (routes as string[]).map(r => `route_desc like '%${r.substring(4)}%'`).join(" or ");
-                console.log(whereLine)
-            } else {
-                whereLine = (routes as string[]).map(r => `route_desc like '%${r}%'`).join(" or ");
-            }
-        } else {
-            whereStop = `route_names like '%${routeNames[0]}%'`;
-            whereLine = `route_desc like '%${routeNames[0]}%'`;
-        }
-
-        // add the feature effect for each layer
-        layers.forEach(async (layer: FeatureLayer, i: number) => {
-            const layerView = await this.arcgisMap.view.whenLayerView(layer) as __esri.FeatureLayerView;
-
-            // if (!routeNames) {
-            //     layerView.featureEffect = null;
-            //     return;
-            // }
-
-            layerView.featureEffect = new FeatureEffect({
-                filter: new FeatureFilter({ where: i < (layers.length - 1) ? whereStop : whereLine }),
-                includedEffect: "bloom(1, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
-                excludedEffect: "opacity(60%) brightness(1)"
-            });
-        })
-        
-        // query just the lines and move the map there
-        const res = await queryLayer(this.linesLayer, whereLine);
-        if (res.features.length) {
-            await this.arcgisMap.view.goTo(res.features, { duration: 600 });
-        }
     }
     private buildZoom(): HTMLArcgisZoomElement {
         return document.createElement("arcgis-zoom");

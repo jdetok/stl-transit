@@ -6,10 +6,23 @@ export function buildCalcitePanel(elementType: string, heading: string, baseMaps
     panel.hidden = true;
 
     const content = document.createElement(elementType) as any;
+    if (!content) throw new Error(`couldn't create element of type ${elementType}`);
     if (baseMaps) {
         content.source = baseMaps;
     }
     panel.appendChild(content);
+    return panel;
+}
+export function buildCalciteLegendPanel(heading: string, container: HTMLElement): HTMLCalcitePanelElement {
+    const panel = document.createElement("calcite-panel");
+    panel.heading = heading;
+    panel.hidden = true;
+    const content = document.createElement('arcgis-legend');
+        // legendStyle: {
+        //     type: layout,
+        //     layout: 'auto',
+        // }
+    panel.append(content);
     return panel;
 }
 
@@ -171,3 +184,58 @@ export function buildCalciteAction(props: calciteActionProps): calciteActionRetu
     }
     return { action, tooltip }
 };
+
+// calcite select helpers
+export type calciteOptionProps = {
+    value: string,
+    label: string,
+}
+export type calciteSelectProps = {
+    heading: string,
+    onSelChange: (val: string) => void,
+    cssClass?: string,
+    optsProps?: {
+        allOpt?: calciteOptionProps,
+        dataUrl?: string,
+        mapFeatures: (features: any[]) => any[],
+    },
+}
+export async function buildCalciteSelect(props: calciteSelectProps): Promise<HTMLCalciteSelectElement> {
+    const sel = Object.assign(document.createElement('calcite-select'), {
+        heading: props.heading,
+        label: props.heading,
+    });
+    if (props.cssClass) sel.classList.add(props.cssClass);
+    sel.addEventListener('calciteSelectChange', () => props.onSelChange(sel.value));
+
+    if (props.optsProps) {
+        let builtOpts: HTMLCalciteOptionElement[] = [];
+        
+        // all option
+        if (props.optsProps.allOpt) {
+            builtOpts.push(Object.assign(document.createElement('calcite-option'), {
+                label: props.optsProps.allOpt.label,
+                value: props.optsProps.allOpt.value,
+            }));
+        }
+        if (props.optsProps.dataUrl) {
+            try {
+                const data = await fetch(props.optsProps.dataUrl).then(r => r.json());
+                const opts = props.optsProps.mapFeatures(data.features);
+                for (const opt of opts) {
+                    builtOpts.push(Object.assign(document.createElement('calcite-option'), {
+                        label: opt,
+                        value: opt,
+                    }));
+                }
+            } catch (e) {
+                throw new Error(`failed to fetch data from ${props.optsProps.dataUrl}: ${e}`);
+            }
+        }
+        if (builtOpts.length === 0) {
+            throw new Error('no options');
+        }
+        sel.append(...builtOpts);
+    }
+    return sel;
+}
