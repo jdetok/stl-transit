@@ -290,6 +290,10 @@ export class MapWindow extends HTMLElement {
             if (view.popup) {
                 view.popup.dockOptions = { breakpoint: false };
                 view.popup.dockEnabled = true;
+                view.watch("size", (view) => {
+                    const [w, h] = view.size;
+                    view.popup.dockEnabled = w >= 980 && h >= 980;
+                });
             }
             
             view.highlights = HIGHLIGHTS;
@@ -300,7 +304,21 @@ export class MapWindow extends HTMLElement {
                 [this.basemapPanel, "arcgis-basemap-gallery"],
                 [this.printPanel, "arcgis-print"],
             ]));
+            // if (view.popup) {
+            //     // view.popup.dockOptions = {
+            //     //     breakpoint: false,
+            //     //     // breakpoint: {
+            //     //     //     width: 900,
+            //     //     //     height: 980,
+            //     //     // }
+            //     // }
 
+            //     view.watch("size", (view) => {
+            //         const [w, h] = view.size;
+            //         view.popup.dockEnabled = w >= h && h >= 980;
+            //     });
+            // }
+            
             // ADD LISTENER ON ZOOM AMOUNT, RE RENDER FEATURES AT SPECIFIC POINTS
             // this.renderOnZoom();
             view.on("click", async (event) => {

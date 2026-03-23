@@ -61,7 +61,7 @@ calcite-dropdown {
     --calcite-dropdown-width: var(--route-combo-width);
     left: var(--route-combo-left);
 }
-@media (max-width: 900px) {
+@media (max-width: 980px) {
     calcite-dropdown {
         top: 0.4rem;
         bottom: unset;
@@ -171,51 +171,18 @@ calcite-button {
 }
 .esri-popup {
     max-height: 40% !important;
-    z-index: 100 !important;
-    max-width: 70% !important;
 }
-.esri-popup__main-container {
-    z-index: 100 !important;
-    position: relative;
-    width: fit-content;
-    background: rgba(115, 128, 137, 0.75) !important;
-}
-@media ( max-width: 900px ) and (max-height: 900px ) {
-    .esri-popup, .esri-popup__main-container {
-        max-width: 85%;
-        max-height: 25%;
+@media ( max-width: 980px ) and (max-height: 980px ) {
+    .esri-popup {
+        width: fit-content;
+        max-width: 100%;
+        max-height: 20%;
     }
-}           
-.esri-widget__table {
-    font-size: 0.75rem !important;
-}
-div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > h2 {
-    padding-left: 0.3rem;
-    font-weight: bold;
-    font-size: 1.1rem !important;
-    text-align: left !important;
-}
-.esri-feature-fields__field-header,
-    div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(1) {
-    padding: 0 !important;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;    
-    text-align: right !important;
-    font-weight: bold;
-}
-.esri-feature-fields__field-data,
-div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) > calcite-button,
-div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) {
-div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) > calcite-button,
-div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right > div > div > calcite-flow > calcite-flow-item > div > div > div > div > div > div > div > table > tbody > tr > td:nth-child(2) {
-    margin-top: 0 !important;    
-    margin-bottom: 0 !important;    
-    text-align: left !important;
-}
-    .esri-component.esri-popup {
-    z-index: 200 !important;
-}
-.esri-component.esri-legend {
-    z-index: 50 !important;
 }
 `;
+
+
+// `
+// div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--aligned-bottom-center.esri-popup--shadow
+// div > div.esri-view-root > div.esri-ui.calcite-mode-light > div.esri-ui-inner-container.esri-ui-manual-container > div.esri-component.esri-popup.esri-popup--is-docked.esri-popup--is-docked-top-right
+// `
