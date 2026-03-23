@@ -28,10 +28,10 @@ import Polygon from "@arcgis/core/geometry/Polygon";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import { STLCOORDS, PROJID, BASEMAP } from "../data.js";
 import { STYLE, MAP_STYLE } from "./styleshadow.js";
-import { newHighlightSetting, queryLayer, updateRenderedSizes } from "../arcgis.js";
+import { drawCircle, newHighlightSetting, queryLayer, updateRenderedSizes } from "../arcgis.js";
 import {
     buildCalciteAction, buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps,
-    buildCalciteLegendPanel,buildCalciteSelect, buildCalciteCombobox,
+    buildCalciteLegendPanel,
     buildCalciteTable,
     buildCalciteActionBar,
     buildCalciteDropdown,
@@ -45,6 +45,7 @@ import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol.js";
 import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer.js";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol.js";
 import Point from "@arcgis/core/geometry/Point.js";
+import Color from "@arcgis/core/Color.js";
 
 // CUSTOM HIGHLIGHT SETTINGS
 const HL_PARKS = newHighlightSetting("parks", "mediumseagreen");
@@ -169,15 +170,17 @@ export class MapWindow extends HTMLElement {
     private busStopSliderBlock!: HTMLCalciteBlockElement;
     private metroStopSliderBlock!: HTMLCalciteBlockElement;
     private lineSizeSliderBlock!: HTMLCalciteBlockElement;
+    private tractOpacitySliderBlock!: HTMLCalciteBlockElement;
 
     // SLIDER ELEMENTS
     private busStopSizeSlider!: HTMLCalciteSliderElement;
     private metroStopSizeSlider!: HTMLCalciteSliderElement;
     private lineSizeSlider!: HTMLCalciteSliderElement;
-
+    private tractOpacitySlider!: HTMLCalciteSliderElement;
+    
     private radiusGraphic: Graphic | null = null;
-    private circleMeters: number | null = null;
-
+    private circleMeters: number = 805; // approx 1/2 mile
+    private tractOriginalColors: Color[] = [];
     // append all tooltips to this array, append to shadow root at once
     private tooltips: HTMLCalciteTooltipElement[] = []; 
 
@@ -295,59 +298,31 @@ export class MapWindow extends HTMLElement {
                     view.popup.dockEnabled = w >= 980 && h >= 980;
                 });
             }
-            
             view.highlights = HIGHLIGHTS;
 
+            // assign same map view to all actionbar panels
             await this.setPanelViews(view, new Map([
                 [this.layerListPanel, "arcgis-layer-list"],
                 [this.legendPanel, "arcgis-legend"],
                 [this.basemapPanel, "arcgis-basemap-gallery"],
                 [this.printPanel, "arcgis-print"],
             ]));
-            // if (view.popup) {
-            //     // view.popup.dockOptions = {
-            //     //     breakpoint: false,
-            //     //     // breakpoint: {
-            //     //     //     width: 900,
-            //     //     //     height: 980,
-            //     //     // }
-            //     // }
-
-            //     view.watch("size", (view) => {
-            //         const [w, h] = view.size;
-            //         view.popup.dockEnabled = w >= h && h >= 980;
-            //     });
-            // }
-            
-            // ADD LISTENER ON ZOOM AMOUNT, RE RENDER FEATURES AT SPECIFIC POINTS
-            // this.renderOnZoom();
+   
+            // draw circle on screen on click
             view.on("click", async (event) => {
-                console.log("clicked view");
                 const point = event.mapPoint;
 
                 if (this.radiusGraphic) {
                     view.graphics.remove(this.radiusGraphic);
                 }
-                this.circleMeters = 805;
-
-                const circle = new Circle({
-                    center: point,
+                this.radiusGraphic = await drawCircle(event, {
                     radius: this.circleMeters,
-                    radiusUnit: 'meters',
-                });
-                this.radiusGraphic = new Graphic({
-                    geometry: circle,
-                    symbol: new SimpleFillSymbol({
-                        color: [255, 255, 255, 0.05],
-                        outline: {
-                            color: [255, 255, 255, 0.5],
-                            width: 1.5,
-                            style: 'dash',
-                        }
-                    })
+                    fillColor: [255, 255, 255, 0.05],
+                    outlineColor: [255, 255, 255, 0.5],
+                    outlineWidth: 1.5,
+                    outlineStyle: 'dash',
                 })
                 view.graphics.add(this.radiusGraphic);
-
                 // await this.highlightStopsWithinMeters(view, point, this.circleMeters); 
             });
             // open legend when bus stop layer has been created
@@ -426,6 +401,8 @@ export class MapWindow extends HTMLElement {
                     }
                     case LAYER_CENSUS_TRACTS: {
                         this.tractsLayer = layer;
+                        this.tractOriginalColors = (layer.renderer as ClassBreaksRenderer).classBreakInfos
+                            .map(cb => (cb.symbol as SimpleFillSymbol).color.clone());
                         break;
                     }
                 }
@@ -440,20 +417,6 @@ export class MapWindow extends HTMLElement {
             await customElements.whenDefined(v);
             (k.querySelector(v) as any).view = view;
         }
-    }
-    // WATCH VIEW ZOOM, RERENDER FEATURES ACCORDINGLY
-    private renderOnZoom() {
-        this.arcgisMap.view.watch("zoom", (zoom) => {
-            // console.log("zoom: ", zoom);
-            const scale = zoom <= 9 ? 0.5 : zoom <= 11 ? 0.75 : zoom <= 12 ? 1 : zoom < 15 ? 1.25 : zoom < 17 ? 1.5 : 2;
-            (this.busStopsLayer.renderer as any).visualVariables[0].stops = [
-                { value: 1, size: BUS_STOP_SIZE * scale },
-                { value: 2, size: BUS_STOP_SIZE * 1.5 * scale },
-                { value: 3, size: BUS_STOP_SIZE * 2.5 * scale },
-                { value: 4, size: BUS_STOP_SIZE * 3.5 * scale },
-                { value: 5, size: BUS_STOP_SIZE * 4 * scale },
-            ];
-        });
     }
     // BUILD A FEATURE LAYER FROM FeatureLayerMeta
     private async makeFeatureLayer(meta: FeatureLayerMeta): Promise<FeatureLayer> {
@@ -653,32 +616,11 @@ export class MapWindow extends HTMLElement {
         panel.append(
             this.buildLineSizeSlider(),
             this.buildBusStopSizeSlider(),
-            this.buildMetroStopSizeSlider()
+            this.buildMetroStopSizeSlider(),
+            this.buildTractOpacitySlider(),
         );
         this.slidersPanel = panel;
         return panel;
-    }
-    private buildLineSizeSlider(): HTMLCalciteBlockElement {
-        const { block, slider} = buildCalciteSliderBlock({
-            heading: 'Route Line Width',
-            onInput: async () => {
-                this.linesLayer.renderer = updateRenderedSizes(
-                    (this.linesLayer.renderer as ClassBreaksRenderer),
-                    this.lineSizes,
-                    this.lineSizeSlider.value as number,
-                ).clone();
-            },
-            sliderProps: {
-                min: 0.25,   
-                max: 15,
-                step: 0.25,
-                value: 1,
-                snap: true 
-            },
-        });
-        this.lineSizeSliderBlock = block;
-        this.lineSizeSlider = slider;
-        return this.lineSizeSliderBlock;
     }
     private buildBusStopSizeSlider(): HTMLCalciteBlockElement {
         const { block, slider} = buildCalciteSliderBlock({
@@ -724,6 +666,54 @@ export class MapWindow extends HTMLElement {
         this.metroStopSizeSlider = slider;
         return this.metroStopSliderBlock;
     }
+    private buildLineSizeSlider(): HTMLCalciteBlockElement {
+        const { block, slider} = buildCalciteSliderBlock({
+            heading: 'Route Line Width',
+            onInput: async () => {
+                this.linesLayer.renderer = updateRenderedSizes(
+                    (this.linesLayer.renderer as ClassBreaksRenderer),
+                    this.lineSizes,
+                    this.lineSizeSlider.value as number,
+                ).clone();
+            },
+            sliderProps: {
+                min: 0.25,   
+                max: 15,
+                step: 0.25,
+                value: 1,
+                snap: true 
+            },
+        });
+        this.lineSizeSliderBlock = block;
+        this.lineSizeSlider = slider;
+        return this.lineSizeSliderBlock;
+    }
+    private buildTractOpacitySlider(): HTMLCalciteBlockElement {
+        const { block, slider } = buildCalciteSliderBlock({
+            heading: 'Census Tract Fill Opacity',
+            onInput: async () => {
+                console.log("original colors:", this.tractOriginalColors); // should be 5 Color objects
+                const renderer = this.tractsLayer.renderer as ClassBreaksRenderer;
+                const opacity = this.tractOpacitySlider.value as number;
+                console.log(opacity, ', ', opacity * 255);
+                renderer.classBreakInfos.forEach((cb, i) => {
+                    const { r, g, b } = this.tractOriginalColors[i];
+                    cb.symbol.color = new Color([r, g, b, opacity]);
+                })
+                this.tractsLayer.renderer = renderer.clone();
+            },
+            sliderProps: {
+                min: 0,
+                max: 0.65,
+                step: 0.01,
+                value: 0.05,
+                snap: true,
+            }
+        });
+        this.tractOpacitySliderBlock = block;
+        this.tractOpacitySlider = slider;
+        return block;
+    }
     // BUILD A CALCITE SELECT TO FILTER BY BUS ROUTE
     private async buildRoutesFilter(): Promise<HTMLCalciteDropdownElement> {
         const sel = await buildCalciteDropdown({
@@ -736,7 +726,6 @@ export class MapWindow extends HTMLElement {
                 this.showRouteInfo(vals[0]);
                 if (!vals || vals.length > 1) {
                     this.routeInfoPanel.hidden = true;
-                    // this.clearStopsFX();
                 }
             },
             optsProps: {

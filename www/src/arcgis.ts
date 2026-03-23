@@ -5,6 +5,7 @@ import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Polygon from "@arcgis/core/geometry/Polygon.js";
 import Graphic from "@arcgis/core/Graphic";
+import Circle from "@arcgis/core/geometry/Circle";
 import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import { PROJID } from "./data";
@@ -115,3 +116,31 @@ export async function queryLayer(layer: FeatureLayer, query: string): Promise<__
 export function applyFeatureEffect(view: __esri.FeatureLayerView, fx: FeatureEffect): void {
     view.featureEffect = fx;
 } 
+
+export type circleProps = {
+    radius: number,
+    fillColor: __esri.ColorProperties | undefined,
+    outlineColor: __esri.ColorProperties | undefined,
+    outlineWidth: number,
+    outlineStyle: string,
+}
+export async function drawCircle(event: any, props: circleProps): Promise<Graphic> {
+    const point = event.mapPoint;
+
+    const circle = new Circle({
+        center: point,
+        radius: props.radius,
+        radiusUnit: 'meters',
+    });
+    return new Graphic({
+        geometry: circle,
+        symbol: new SimpleFillSymbol({
+            color: props.fillColor,
+            outline: {
+                color: props.outlineColor,
+                width: props.outlineWidth,
+                style: props.outlineStyle as any,
+            }
+        })
+    })
+}
