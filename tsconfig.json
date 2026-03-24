@@ -7,7 +7,24 @@
         "skipLibCheck": true,
         "noImplicitAny": false,
         "rootDir": "./www/src",
-        "outDir": "./www/js"
+        "outDir": "./www/js",
+
+        // added jd 03/24/2026
+        // enable absolute imports
+        "paths": {
+            "@/*": ["./www/src/*"],
+            "@cmp/*": ["./www/src/cmp/*"],
+        },
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "allowUnusedLabels": false,
+        "noUncheckedSideEffectImports": true,
+        "noFallthroughCasesInSwitch": true,
+        "allowUnreachableCode": false,
+
+        // force checking an index before it's accessed
+        "noUncheckedIndexedAccess": true,
+        "noPropertyAccessFromIndexSignature": true,
     },
     "include": ["www/src/**/*"]
 }

@@ -352,9 +352,9 @@ export class MapWindow extends HTMLElement {
     }
     private async buildFeatureLayers(): Promise<FeatureLayer[]> {
         let featureLayers: FeatureLayer[] = [];
-        for (let i = 0; i < this.layers.length; i++) {
+        this.layers.forEach(async (layerMeta, i) => {
             try {
-                const layer = await this.makeFeatureLayer(this.layers[i]);
+                const layer = await this.makeFeatureLayer(layerMeta);
                 featureLayers.push(layer);
                 this.arcgisMap.map?.add(layer, i);
 
@@ -409,7 +409,7 @@ export class MapWindow extends HTMLElement {
             } catch (e) {
                 throw new Error(`failed to build layer ${i + 1}/${this.layers.length}: ${e}`);
             }
-        }
+        })
         return featureLayers;
     }
     private async setPanelViews(view: __esri.MapView, panelEls: Map<HTMLCalcitePanelElement, string>) {
@@ -695,8 +695,10 @@ export class MapWindow extends HTMLElement {
                 const renderer = this.tractsLayer.renderer as ClassBreaksRenderer;
                 const opacity = this.tractOpacitySlider.value as number;
                 renderer.classBreakInfos.forEach((cb, i) => {
-                    const { r, g, b } = this.tractOriginalColors[i];
-                    cb.symbol.color = new Color([r, g, b, opacity]);
+                    if (this.tractOriginalColors[i]) {
+                        const { r, g, b } = this.tractOriginalColors[i];
+                        cb.symbol.color = new Color([r, g, b, opacity]);
+                    }
                 })
                 this.tractsLayer.renderer = renderer.clone();
             },
@@ -721,7 +723,7 @@ export class MapWindow extends HTMLElement {
             icon: "bus",
             onSelChange: (vals: string[]) => {
                 this.filterByRoutes(vals);
-                this.showRouteInfo(vals[0]);
+                this.showRouteInfo(vals[0] ?? '');
                 if (!vals || vals.length > 1) {
                     this.routeInfoPanel.hidden = true;
                 }

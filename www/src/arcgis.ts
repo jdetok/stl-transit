@@ -94,11 +94,15 @@ export function updateRenderedSizes(renderer: Renderer, baseSizes: number[], mul
     switch (renderer.type) {
         case 'unique-value': {
             const sizeVar = (renderer as UniqueValueRenderer).visualVariables![0] as __esri.SizeVariable;
-            sizeVar.stops!.forEach((stop, i) => (stop as __esri.SizeStop).size = baseSizes[i] * mult);
+            sizeVar.stops!.forEach((stop, i) => {
+                if (baseSizes[i]) (stop as __esri.SizeStop).size = baseSizes[i] * mult;
+            });
             break;
         }
         case 'class-breaks': {
-            (renderer as ClassBreaksRenderer).classBreakInfos.forEach((cb, i) => (cb.symbol as SimpleLineSymbol).width = baseSizes[i] * mult);
+            (renderer as ClassBreaksRenderer).classBreakInfos.forEach((cb, i) => {
+                if (baseSizes[i]) (cb.symbol as SimpleLineSymbol).width = baseSizes[i] * mult;
+            });
             break;
         }
     };
