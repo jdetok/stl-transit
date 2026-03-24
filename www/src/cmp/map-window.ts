@@ -2,7 +2,7 @@
 // Interactive map custom element definition
 // Imports generic helpers from calcite.ts and arcgis.ts for buildng specific elements of the map
 import "@arcgis/map-components/dist/components/arcgis-basemap-gallery";
-import "@arcgis/map-components/dist/components/arcgis-map";
+
 import "@arcgis/map-components/dist/components/arcgis-zoom";
 import "@arcgis/map-components/dist/components/arcgis-search";
 import "@arcgis/map-components/dist/components/arcgis-layer-list";
@@ -21,7 +21,7 @@ import Graphic from "@arcgis/core/Graphic";
 import Color from "@arcgis/core/Color.js";
 import { STLCOORDS, PROJID, BASEMAP } from "../data.js";
 import { STYLE, MAP_STYLE } from "./styleshadow.js";
-import { drawCircle, newHighlightSetting, queryLayer, updateRenderedSizes } from "../arcgis.js";
+import { arcgisMapProps, buildArcgisMap, drawCircle, newHighlightSetting, queryLayer, updateRenderedSizes } from "../arcgis.js";
 import {
     buildCalciteAction, buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps,
     buildCalciteLegendPanel, buildCalciteTable, buildCalciteActionBar, buildCalciteDropdown,
@@ -258,83 +258,96 @@ export class MapWindow extends HTMLElement {
             spatialReference: {wkid: PROJID}
         } as __esri.Extent
 
-        this.arcgisMap.addEventListener("arcgisViewReadyChange", async () => {
-            const popupStyle = document.createElement("style");
-            popupStyle.textContent = MAP_STYLE;
-            this.arcgisMap.shadowRoot?.append(popupStyle);
+        const mapProps: arcgisMapProps = {
+            basemap: BASEMAP,
+            extent: {
+                xmin: STLCOORDS.xmin,
+                ymin: STLCOORDS.ymin,
+                xmax: STLCOORDS.xmax,
+                ymax: STLCOORDS.ymax,
+                spatialReference: {wkid: PROJID}
+            } as __esri.Extent,
+            onViewReady: this.onMapViewReady.bind(this),
+        }
+        
+        this.arcgisMap = buildArcgisMap(mapProps);
 
-            // BUILD FEATURE LAYERS
-            this.builtLayers = await this.buildFeatureLayers();
-            console.log(`%clayer metas: ${this.layers.length} | built layers: ${this.builtLayers.length}`,
-                'color: seagreen; font-weight: 600;'
-            );
-
-            // BUILD UTILITY WIDGETS
-            this.arcgisMap.append(this.buildZoom(), this.buildSearch());
-            
-            // SET OBJECT HIGHLIGHT COLORS
-            const view = this.arcgisMap.view as __esri.MapView;
-            view.highlights = HIGHLIGHTS;
-            
-            
-
-            // assign same map view to all actionbar panels
-            await this.setPanelViews(view, new Map([
-                [this.layerListPanel, "arcgis-layer-list"],
-                [this.legendPanel, "arcgis-legend"],
-                [this.basemapPanel, "arcgis-basemap-gallery"],
-                [this.printPanel, "arcgis-print"],
-            ]));
-   
-            // open legend when bus stop layer has been created
-            // this.busStopsLayer.when(async () => {
-            //     console.log("in legend open func: ", this.arcgisMap.offsetWidth);
-            // });
-            const maxW = 980;
-            const maxH = 980;
-            if (view.popup) {
-                view.popup.dockOptions = { breakpoint: false };
-                view.popup.dockEnabled = true;
-                reactiveUtils.watch(
-                    () => view.size,
-                    ([w, h]) => {
-                        if (!w || !h) throw new Error(`width or height is undefined: w: ${w}, h: ${h}`);
-                        if (view.popup) view.popup.dockEnabled = w >= maxW && h >= maxH;
-                    }
-                );
-            }
-            await reactiveUtils.whenOnce(
-                () => this.busStopsLayer.loadStatus === 'loaded').then(() => {
-                    if (!view.size) return;
-                    const [w, h] = view.size;
-                    if (!w || !h) throw new Error(`width or height is undefined: w: ${w}, h: ${h}`);
-                    if (w >= maxW || h >= maxH ) {
-                        console.log(`%copening legend (W:${w}Xh:${h})`, 'color: seagreen;');
-                        this.togglePanel('legend', this.actionBar, { legend: this.legendPanel });
-                    }
-                })
-            
-            // draw circle on screen on click
-            view.on("click", async (event) => {
-                // const point = event.mapPoint;
-
-                if (this.radiusGraphic) {
-                    view.graphics.remove(this.radiusGraphic);
-                }
-                this.radiusGraphic = await drawCircle(event, {
-                    radius: this.circleMeters,
-                    fillColor: [255, 255, 255, 0.05],
-                    outlineColor: [255, 255, 255, 0.5],
-                    outlineWidth: 1.5,
-                    outlineStyle: 'dash',
-                })
-                view.graphics.add(this.radiusGraphic);
-                // await this.highlightStopsWithinMeters(view, point, this.circleMeters); 
-            });
-            
-        }, { once: true });
 
         return this.arcgisMap;
+    }
+    private async onMapViewReady(): Promise<void> {
+        const popupStyle = document.createElement("style");
+        popupStyle.textContent = MAP_STYLE;
+        this.arcgisMap.shadowRoot?.append(popupStyle);
+
+        // BUILD FEATURE LAYERS
+        this.builtLayers = await this.buildFeatureLayers();
+        console.log(`%clayer metas: ${this.layers.length} | built layers: ${this.builtLayers.length}`,
+            'color: seagreen; font-weight: 600;'
+        );
+
+        // BUILD UTILITY WIDGETS
+        this.arcgisMap.append(this.buildZoom(), this.buildSearch());
+        
+        // SET OBJECT HIGHLIGHT COLORS
+        const view = this.arcgisMap.view as __esri.MapView;
+        view.highlights = HIGHLIGHTS;
+        
+        
+
+        // assign same map view to all actionbar panels
+        await this.setPanelViews(view, new Map([
+            [this.layerListPanel, "arcgis-layer-list"],
+            [this.legendPanel, "arcgis-legend"],
+            [this.basemapPanel, "arcgis-basemap-gallery"],
+            [this.printPanel, "arcgis-print"],
+        ]));
+
+        // open legend when bus stop layer has been created
+        // this.busStopsLayer.when(async () => {
+        //     console.log("in legend open func: ", this.arcgisMap.offsetWidth);
+        // });
+        const maxW = 980;
+        const maxH = 980;
+        if (view.popup) {
+            view.popup.dockOptions = { breakpoint: false };
+            view.popup.dockEnabled = true;
+            reactiveUtils.watch(
+                () => view.size,
+                ([w, h]) => {
+                    if (!w || !h) throw new Error(`width or height is undefined: w: ${w}, h: ${h}`);
+                    if (view.popup) view.popup.dockEnabled = w >= maxW && h >= maxH;
+                }
+            );
+        }
+        await reactiveUtils.whenOnce(
+            () => this.busStopsLayer.loadStatus === 'loaded').then(() => {
+                if (!view.size) return;
+                const [w, h] = view.size;
+                if (!w || !h) throw new Error(`width or height is undefined: w: ${w}, h: ${h}`);
+                if (w >= maxW || h >= maxH ) {
+                    console.log(`%copening legend (W:${w}Xh:${h})`, 'color: seagreen;');
+                    this.togglePanel('legend', this.actionBar, { legend: this.legendPanel });
+                }
+            })
+        
+        // draw circle on screen on click
+        view.on("click", async (event) => {
+            // const point = event.mapPoint;
+
+            if (this.radiusGraphic) {
+                view.graphics.remove(this.radiusGraphic);
+            }
+            this.radiusGraphic = await drawCircle(event, {
+                radius: this.circleMeters,
+                fillColor: [255, 255, 255, 0.05],
+                outlineColor: [255, 255, 255, 0.5],
+                outlineWidth: 1.5,
+                outlineStyle: 'dash',
+            })
+            view.graphics.add(this.radiusGraphic);
+            // await this.highlightStopsWithinMeters(view, point, this.circleMeters); 
+        });
     }
     // private async highlightStopsWithinMeters(view: __esri.MapView, point: Point, meters: number, ): Promise<void> {
     //     const layerView = await view.whenLayerView(this.busStopsLayer);

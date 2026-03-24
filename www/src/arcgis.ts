@@ -1,6 +1,6 @@
 // arcgis.ts
 // Helpers for creating ArcGIS features/graphics 
-
+import "@arcgis/map-components/dist/components/arcgis-map";
 import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Polygon from "@arcgis/core/geometry/Polygon.js";
@@ -14,6 +14,22 @@ import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect";
+
+// arcgis compoonent helpers
+
+export type arcgisMapProps = {
+    basemap: string | __esri.Basemap | undefined,
+    extent: __esri.Extent,
+    onViewReady: () => Promise<void>,
+}
+export function buildArcgisMap(props: arcgisMapProps): HTMLArcgisMapElement {
+    const map = Object.assign(document.createElement("arcgis-map"), {
+        basemap: props.basemap,
+        extent: props.extent,
+    });
+    map.addEventListener('arcgisViewReadyChange', props.onViewReady, { once: true });
+    return map;
+}
 
 // HELPER TO CREATE CUSTOM HIGHLIGHT SETTINGS
 export function newHighlightSetting(name: string, color: __esri.ColorProperties): __esri.HighlightOptionsProperties {
