@@ -115,7 +115,7 @@ export const makeLinesLayer = (
     fields: LINES_FIELDS,
     renderer: new ClassBreaksRenderer({
         field: "freq_wk",
-        classBreakInfos: makeChoroplethLevels(LINES_CLASSBREAKS, true),
+        classBreakInfos: makeChoroplethLevels({ levels: LINES_CLASSBREAKS, opac: 0.65, line: true}),
         defaultSymbol: new SimpleLineSymbol({ color: "gray", width: 3 })
     }),
     toGraphics: toPolyline,
@@ -505,7 +505,10 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     fields: TRACTS_FIELDS as __esri.FieldProperties[],
     renderer: new ClassBreaksRenderer({
         field: "popl_dens",
-        classBreakInfos: makeChoroplethLevels(POPLDENS_CHOROPLETH_LEVELS),
+        classBreakInfos: makeChoroplethLevels({
+            levels: POPLDENS_CHOROPLETH_LEVELS,
+            opac: 0.05,
+        }),
     }),
     popupTemplate: {
         title: "{tract_name}",

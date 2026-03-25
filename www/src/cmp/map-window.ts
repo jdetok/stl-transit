@@ -131,6 +131,7 @@ export class MapWindow extends HTMLElement {
     private radiusGraphic: Graphic | null = null;
     private circleMeters: number = 805; // approx 1/2 mile
     private tractOriginalColors: Color[] = [];
+    private currentTractOpacity: number = 0.05;
 
     // append all tooltips to this array, append to shadow root at once
     private tooltips: HTMLCalciteTooltipElement[] = []; 
@@ -598,16 +599,17 @@ export class MapWindow extends HTMLElement {
         this.lineSizeSlider = slider;
         return this.lineSizeSliderBlock;
     }
+    // slider for adjusting the opacity (rgb[a]) of the SimpleFillSymbols representing census tracts
     private buildTractOpacitySlider(): HTMLCalciteBlockElement {
         const { block, slider } = buildCalciteSliderBlock({
             heading: 'Census Tract Fill Opacity',
             onInput: async () => {
                 const renderer = this.tractsLayer.renderer as ClassBreaksRenderer;
-                const opacity = this.tractOpacitySlider.value as number;
+                this.currentTractOpacity = this.tractOpacitySlider.value as number;
                 renderer.classBreakInfos.forEach((cb, i) => {
                     if (this.tractOriginalColors[i]) {
                         const { r, g, b } = this.tractOriginalColors[i];
-                        cb.symbol.color = new Color([r, g, b, opacity]);
+                        cb.symbol.color = new Color([r, g, b, this.currentTractOpacity]);
                     }
                 })
                 this.tractsLayer.renderer = renderer.clone();
@@ -640,7 +642,10 @@ export class MapWindow extends HTMLElement {
                 onSelChange: (val: string) => {
                     const renderer = (this.tractsLayer.renderer as ClassBreaksRenderer);
                     renderer.field = val;
-                    renderer.classBreakInfos = makeChoroplethLevels(this.tractsChoroplethMap.get(val)!);
+                    renderer.classBreakInfos = makeChoroplethLevels({
+                        levels: this.tractsChoroplethMap.get(val),
+                        opac: this.currentTractOpacity
+                    }!);
                     this.tractsLayer.renderer = renderer.clone();
                 }
             }
