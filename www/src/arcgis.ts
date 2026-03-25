@@ -1,10 +1,13 @@
 // arcgis.ts
 // Helpers for creating ArcGIS features/graphics 
-
+import "@arcgis/map-components/dist/components/arcgis-map";
+import "@arcgis/map-components/dist/components/arcgis-zoom";
+import "@arcgis/map-components/dist/components/arcgis-search";
 import Point from "@arcgis/core/geometry/Point";
 import Polyline from "@arcgis/core/geometry/Polyline";
 import Polygon from "@arcgis/core/geometry/Polygon.js";
 import Graphic from "@arcgis/core/Graphic";
+import Circle from "@arcgis/core/geometry/Circle";
 import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
 import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 import { PROJID } from "./data";
@@ -14,6 +17,33 @@ import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import FeatureEffect from "@arcgis/core/layers/support/FeatureEffect";
 
+export type arcgisMapProps = {
+    basemap: string | __esri.Basemap | undefined,
+    extent: __esri.Extent,
+    onViewReady: () => Promise<void>,
+};
+export function buildArcgisMap(props: arcgisMapProps): HTMLArcgisMapElement {
+    const map = Object.assign(document.createElement("arcgis-map"), {
+        basemap: props.basemap,
+        extent: props.extent,
+    });
+    map.addEventListener('arcgisViewReadyChange', props.onViewReady, { once: true });
+    return map;
+};
+
+// GENERAL ARCGIS COMPONENT HELPERS
+export type arcgisElementProps = {
+    elStr: 'arcgis-zoom' | 'arcgis-search'
+    view?: __esri.MapView
+};
+export type arcgisElementReturn = HTMLArcgisZoomElement | HTMLArcgisSearchElement;
+export function buildArcgisElement(props: arcgisElementProps): arcgisElementReturn {
+    const el = document.createElement(props.elStr);
+    if (props.view) {
+        el.view = props.view;
+    }
+    return el;
+}
 // HELPER TO CREATE CUSTOM HIGHLIGHT SETTINGS
 export function newHighlightSetting(name: string, color: __esri.ColorProperties): __esri.HighlightOptionsProperties {
     return {
@@ -93,11 +123,15 @@ export function updateRenderedSizes(renderer: Renderer, baseSizes: number[], mul
     switch (renderer.type) {
         case 'unique-value': {
             const sizeVar = (renderer as UniqueValueRenderer).visualVariables![0] as __esri.SizeVariable;
-            sizeVar.stops!.forEach((stop, i) => (stop as __esri.SizeStop).size = baseSizes[i] * mult);
+            sizeVar.stops!.forEach((stop, i) => {
+                if (baseSizes[i]) (stop as __esri.SizeStop).size = baseSizes[i] * mult;
+            });
             break;
         }
         case 'class-breaks': {
-            (renderer as ClassBreaksRenderer).classBreakInfos.forEach((cb, i) => (cb.symbol as SimpleLineSymbol).width = baseSizes[i] * mult);
+            (renderer as ClassBreaksRenderer).classBreakInfos.forEach((cb, i) => {
+                if (baseSizes[i]) (cb.symbol as SimpleLineSymbol).width = baseSizes[i] * mult;
+            });
             break;
         }
     };
@@ -115,3 +149,28 @@ export async function queryLayer(layer: FeatureLayer, query: string): Promise<__
 export function applyFeatureEffect(view: __esri.FeatureLayerView, fx: FeatureEffect): void {
     view.featureEffect = fx;
 } 
+
+export type circleProps = {
+    radius: number,
+    fillColor: __esri.ColorProperties | undefined,
+    outlineColor: __esri.ColorProperties | undefined,
+    outlineWidth: number,
+    outlineStyle: string,
+}
+export async function drawCircle(point: __esri.Point, props: circleProps): Promise<Graphic> {
+    return new Graphic({
+        geometry: new Circle({
+            center: point,
+            radius: props.radius,
+            radiusUnit: 'meters',
+        }),
+        symbol: new SimpleFillSymbol({
+            color: props.fillColor,
+            outline: {
+                color: props.outlineColor,
+                width: props.outlineWidth,
+                style: props.outlineStyle as any,
+            }
+        })
+    })
+}
