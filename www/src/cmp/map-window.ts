@@ -35,6 +35,11 @@ import {
 
 type mapLayer = { fn?: Function, meta: FeatureLayerMeta, layer: FeatureLayer, i: number}
 type actbarWithTooltips = { bar: HTMLCalciteActionBarElement, tooltips: HTMLCalciteTooltipElement[] };
+type routeLinesData = {
+    type: string,
+    coordinates: any,
+    properties: Record<string, (string | number | boolean)>,
+};
 
 // COMPONENT CLASS 
 export const TAG = "map-window";
@@ -99,7 +104,7 @@ export class MapWindow extends HTMLElement {
     private TOGGLE_ACTIONS: calciteActionProps[] = TOGGLE_ACTIONS;
 
     // ROUTE DROPDOWN
-    private routesData: { type: string, coordinates: any, properties: Record<string, (string | number | boolean)> }[] = [];
+    private routesData: routeLinesData[] = [];
     private routeDropdown!: HTMLCalciteDropdownElement;
 
     // ARRAYS OF FEATURE SIZES FOR SLIDERS
@@ -128,6 +133,10 @@ export class MapWindow extends HTMLElement {
     // CONSTRUCTOR
     public constructor() {
         super();
+
+        const logTimeStr = `${TAG} constructor built after`;
+        console.time(logTimeStr);
+        
         const root = this.attachShadow({ mode: "open" });
 
         // build feature layer metas imported as functions
@@ -152,6 +161,9 @@ export class MapWindow extends HTMLElement {
 
         // reconfigure on window resizes
         window.addEventListener('resize', this.onResize.bind(this));
+
+        // log time to complete constructor
+        console.timeEnd(logTimeStr);
     }
     // build sections requiring async
     async connectedCallback(): Promise<void> {
@@ -193,6 +205,8 @@ export class MapWindow extends HTMLElement {
         }
     }
     private async onMapViewReady(): Promise<void> {
+        const logTimeStr = `time to build arcgis-map`;
+        console.time(logTimeStr);
         this.arcgisMap.shadowRoot?.append(this.addStyling(MAP_STYLE));
 
         // BUILD FEATURE LAYERS
@@ -230,6 +244,7 @@ export class MapWindow extends HTMLElement {
             })
             view.graphics.add(this.radiusGraphic);
         });
+        console.timeEnd(logTimeStr);
     }
     private setDockablePopupsBySize(view: __esri.MapView, maxW: number, maxH: number): void {
         if (view.popup) {
