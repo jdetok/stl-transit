@@ -80,7 +80,6 @@ export const tractsField = (field: string): __esri.FieldInfo => {
         fieldName: field, label: field
     };
 };
-
 export const TRACT_CLASSBREAKS: Map<__esri.FieldInfo, cplethEls[]> = new Map([
     [tractsField('popl_dens'), makeChoroRanges(5, [0, 2500, 5000, 7500, 10000, 100000])],
     [tractsField('pov_dens'), makeChoroRanges(5, [0, 150, 450, 1000, 3000, 40000])],
@@ -90,8 +89,8 @@ export const TRACT_CLASSBREAKS: Map<__esri.FieldInfo, cplethEls[]> = new Map([
 ]);
 const LINES_CLASSBREAKS: cplethEls[] = [
     [0, 19, [62, 225, 67]],
-    [20, 29, [50, 150, 127]], // slateish green
-    [30, 44, [0, 127, 255]], // blue lighter
+    [20, 29, [50, 150, 127]],
+    [30, 44, [0, 127, 255]],
     [45, 59, [255, 200, 127]],
     [60, 60, [255, 100, 100]],
     [61, 720, [255, 70, 10]],

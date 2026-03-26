@@ -105,11 +105,10 @@ export const LINES_FIELDS: __esri.FieldProperties[] = [
     {name: "ObjectID", alias: "ObjectID", type: "oid"},
     {name: "route_desc", alias: "route_desc", type: "string"},
     {name: "route_type", alias: "route_type", type: "string"},
-    {name: "stops_total", alias: "stops_total", type: "integer"},
+    {name: "stops_total", alias: "Total Stops", type: "integer"},
     {name: "freq_wk", alias: "Weekday Frequency (minutes)", type: "integer"},
-    {name: "freq_sa", alias: "freq_sa", type: "integer"},
-    {name: "freq_su", alias: "freq_su", type: "integer"},
-    
+    {name: "freq_sa", alias: "Saturday Frequency (minutes)", type: "integer"},
+    {name: "freq_su", alias: "Sunday Frequency (minutes)", type: "integer"},
 ];
 
 export const LINES_FIELDINFOS = fieldInfos(
