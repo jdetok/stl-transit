@@ -18,10 +18,11 @@ import {
     makeChoroplethLevels, queryLayer, updateRenderedSizes, cplethEls
 } from "../arcgis.js";
 import {
-    buildCalciteAction, buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps,
-    buildCalciteLegendPanel, buildCalciteTable, buildCalciteActionBar, buildCalciteDropdown,
+    buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps,
+    buildCalciteTable, buildCalciteDropdown,
     buildCalciteSelectBlock,
     calciteOptionProps,
+    buildCalciteActionBarWithActions,
  } from "../calcite.js";
 import {
     FeatureLayerMeta, makeBusStopsLayer, makeMetroLinkLayer, makeLinesLayer, makePlacesLayer, LAYER_CENSUS_COUNTIES,
@@ -80,23 +81,6 @@ export class MapWindow extends HTMLElement {
     // HIGHLIGHT SETTING NAMES MAPPED TO HIGHLIGHT HANDLERS
     private highlightHandles: Map<string, __esri.Handle> = new Map();
     
-    // CALCITE PANELS
-    private routeInfoPanel: HTMLCalcitePanelElement = buildCalcitePanel({ heading: 'Route Info', cssClass: 'route-info' }); 
-    private legendPanel: HTMLCalcitePanelElement = buildCalciteLegendPanel('Legend');
-    private layerListPanel: HTMLCalcitePanelElement = buildCalcitePanel({ elementType: "arcgis-layer-list", heading: "Layers"});
-    private basemapPanel: HTMLCalcitePanelElement = buildCalcitePanel({ elementType: "arcgis-basemap-gallery", heading: "Basemaps"});
-    private printPanel: HTMLCalcitePanelElement = buildCalcitePanel({ elementType: "arcgis-print", heading: "Export" });
-    private slidersPanel: HTMLCalcitePanelElement = buildCalcitePanel({ heading: 'Edit Map Appearance', cssClass: 'action-panel' });
-
-    // skip as val if the panel does get the map view assigned to it
-    private actionBarPanels = new Map([
-        [this.layerListPanel, "arcgis-layer-list"],
-        [this.legendPanel, "arcgis-legend"],
-        [this.basemapPanel, "arcgis-basemap-gallery"],
-        [this.printPanel, "arcgis-print"],
-        [this.slidersPanel, "skip"]
-    ]);
-
     // ACTION BARS
     private actionBar!: HTMLCalciteActionBarElement;
     private toggleBar!: HTMLCalciteActionBarElement;
@@ -105,8 +89,22 @@ export class MapWindow extends HTMLElement {
         ['actionBar', this.buildMainActionBar.bind(this)]
     ];
 
-    // ACTIONS FOR TOGGLE BAR
-    private TOGGLE_ACTIONS: calciteActionProps[] = TOGGLE_ACTIONS;
+    // CALCITE PANELS
+    private routeInfoPanel: HTMLCalcitePanelElement = buildCalcitePanel({ heading: 'Route Info', cssClass: 'route-info' }); 
+    private legendPanel: HTMLCalcitePanelElement = buildCalcitePanel({ elementType: 'arcgis-legend', heading: 'Legend'});
+    private layerListPanel: HTMLCalcitePanelElement = buildCalcitePanel({ elementType: 'arcgis-layer-list', heading: 'Layers'});
+    private basemapPanel: HTMLCalcitePanelElement = buildCalcitePanel({ elementType: 'arcgis-basemap-gallery', heading: 'Basemaps'});
+    private printPanel: HTMLCalcitePanelElement = buildCalcitePanel({ elementType: 'arcgis-print', heading: 'Export' });
+    private slidersPanel: HTMLCalcitePanelElement = buildCalcitePanel({ heading: 'Edit Map Appearance', cssClass: 'action-panel' });
+
+    // skip as val if the panel does get the map view assigned to it
+    private actionBarPanels = new Map([
+        [this.layerListPanel, 'arcgis-layer-list'],
+        [this.legendPanel, 'arcgis-legend'],
+        [this.basemapPanel, 'arcgis-basemap-gallery'],
+        [this.printPanel, 'arcgis-print'],
+        [this.slidersPanel, 'skip']
+    ]);
 
     // ROUTE DROPDOWN
     private routesData: routeLinesData[] = [];
@@ -379,44 +377,93 @@ export class MapWindow extends HTMLElement {
             }));
         }
     }
+    // SHOW/HIDE CALCITE PANELS FROM THE ACTION BAR
+    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
+        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
+            a.active = a.dataset['actionId'] === id ? !a.active : false;
+        });
+        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
+            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
+            if (!panel.hidden) panel.closed = false;
+        });
+    }
+    // BUILD CALCITE ACTION BAR, ACTIONS DISPLAY CALCITE PANELS
+    private buildMainActionBar(): actbarWithTooltips {
+        const actProps: calciteActionProps[] = MAIN_ACTIONS.map((a) => ({
+            ...a,
+            tooltipProps: { text: a.text },
+            onClick: async () => this.togglePanel(a.id, actionBar, {
+                layers: this.layerListPanel,
+                legend: this.legendPanel,
+                basemaps: this.basemapPanel,
+                print: this.printPanel,
+                sliders: this.slidersPanel,
+            })
+        }));
+        actProps.push({
+            ...FULLSCREEN,
+            tooltipProps: { text: FULLSCREEN.text },
+            onClick: async () => {
+                if (!document.fullscreenElement) {
+                    this.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+        });
+
+        const {actionBar, tooltips} = buildCalciteActionBarWithActions({
+            layout: 'horizontal',
+            actionsProps: actProps,
+            hideBtn: true,
+         });
+
+        this.actionBar = actionBar;
+
+        // deactivate action when panel is closed
+        const panels: [HTMLCalcitePanelElement, string][] = [
+            [this.legendPanel,   'legend'],
+            [this.layerListPanel,'layers'],
+            [this.basemapPanel,  'basemaps'],
+            [this.printPanel,    'print'],
+            [this.slidersPanel,  'sliders'],
+        ];
+        panels.forEach(([panel, id]) => {
+            panel.addEventListener('calcitePanelClose', () => {
+                const action = actionBar.querySelector(`[data-action-id=${id}]`) as HTMLCalciteActionElement | null;
+                if (action) action.active = false;
+            });
+        })
+
+        return {bar: actionBar, tooltips: tooltips as HTMLCalciteTooltipElement[]};
+    }
     // BUILD CALCITE ACTION BAR WITH TOGGLE BUTTONS FOR HIGHLIGHTING FEATURES
     private buildToggleBar(): actbarWithTooltips {
-        const actionBar = buildCalciteActionBar({ layout: window.innerWidth < 900 ? 'vertical' : 'horizontal', cssClass: 'place_toggles' });
-        
-        let tooltips: HTMLCalciteTooltipElement[] = [];
-
-        for (const a of this.TOGGLE_ACTIONS) {
-            const { action, tooltip } = buildCalciteAction({
-                ...a,
-                tooltipProps: { text: a.text },
-                onClick: async () => { 
-                        this.togglePlacesHighlight(action, a);
-                }
-            })
-            actionBar.append(action);
-            if (tooltip) {
-                tooltips.push(tooltip);
+        const actProps: calciteActionProps[] = TOGGLE_ACTIONS.map((a) => ({
+            ...a,
+            tooltipProps: { text: a.text },
+            onBuilt: (action) => { 
+                action.addEventListener('click', () => this.togglePlacesHighlight(action, a));
             }
-        }
-
-        const clearPlaces = CLEAR_PLACES;
-        const { action: resetPlaces, tooltip: t1 } = buildCalciteAction({
-            ...clearPlaces,
-            tooltipProps: { text: clearPlaces.text },
-            onClick: async () => this.clearHighlighted(actionBar),
-        })
-        const clearBuses = CLEAR_BUSES;
-        const { action: resetBuses, tooltip: t2 } = buildCalciteAction({
-            ...clearBuses,
-            tooltipProps: { text: clearBuses.text },
+        }))
+        actProps.push({
+            ...CLEAR_PLACES,
+            tooltipProps: { text: CLEAR_PLACES.text },
+            onClick: async () => this.clearHighlighted(this.toggleBar),
+        }, {
+            ...CLEAR_BUSES,
+            tooltipProps: { text: CLEAR_BUSES.text },
             onClick: async () => await this.clearStopsFX(),
         })
-        actionBar.append(resetPlaces, resetBuses);
-        if (t1) tooltips.push(t1);
-        if (t2) tooltips.push(t2);
 
+        const { actionBar, tooltips } = buildCalciteActionBarWithActions({
+            layout: window.innerWidth < 900 ? 'vertical' : 'horizontal',
+            cssClass: 'place_toggles',
+            actionsProps: actProps,
+            hideBtn: true,
+        });
         this.toggleBar = actionBar;
-        return { bar: actionBar, tooltips: tooltips };
+        return { bar: actionBar, tooltips: tooltips as HTMLCalciteTooltipElement[] };
     }
     private async togglePlacesHighlight(action: HTMLCalciteActionElement, props: calciteActionProps) {
         if (action.active) {
@@ -426,7 +473,12 @@ export class MapWindow extends HTMLElement {
             return;
         }
         action.active = true;
-        await this.highlightFeatures(this.placesLayer, props.where ?? '1=1', props.id, props.highlightName ?? 'default');
+        await this.highlightFeatures(
+            this.placesLayer,
+            props.where ?? '1=1',
+            props.id,
+            props.highlightName ?? 'default',
+        );
     }
     private async highlightStopsWithinMeters(view: __esri.MapView): Promise<void> {
         if (!this.radiusGraphic) return;
@@ -470,57 +522,6 @@ export class MapWindow extends HTMLElement {
             const layerView = await this.arcgisMap.view.whenLayerView(layer) as __esri.FeatureLayerView;
             layerView.featureEffect = null;
         })
-    }
-    // BUILD CALCITE ACTION BAR, ACTIONS DISPLAY CALCITE PANELS
-    private buildMainActionBar(): actbarWithTooltips {
-        const actionBar = buildCalciteActionBar({ layout: 'horizontal' });
-    
-        let tooltips: HTMLCalciteTooltipElement[] = [];
-
-        for (const a of MAIN_ACTIONS) {
-            const { action, tooltip } = buildCalciteAction({
-                ...a,
-                tooltipProps: { text: a.text },
-                onClick: async () => this.togglePanel(a.id, actionBar, {
-                    layers: this.layerListPanel,
-                    legend: this.legendPanel,
-                    basemaps: this.basemapPanel,
-                    print: this.printPanel,
-                    sliders: this.slidersPanel,
-                })
-            });
-            actionBar.append(action);
-            if (tooltip) {
-                tooltips.push(tooltip);
-            }
-        }
-        // build fs action
-        const { action: fsAction, tooltip: fsTtip } = buildCalciteAction({
-            ...FULLSCREEN,
-            tooltipProps: { text: FULLSCREEN.text },
-            onClick: async () => {
-                if (!document.fullscreenElement) {
-                    this.requestFullscreen();
-                } else {
-                    document.exitFullscreen();
-                }
-            }
-        });
-        actionBar.append(fsAction);
-        if (fsTtip) tooltips.push(fsTtip);
-
-        this.actionBar = actionBar;
-
-        return {bar: actionBar, tooltips};
-    }
-    // SHOW/HIDE CALCITE PANELS FROM THE ACTION BAR
-    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
-        actionBar.querySelectorAll("calcite-action").forEach((a: any) => {
-            a.active = a.dataset['actionId'] === id ? !a.active : false;
-        });
-        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
-            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
-        });
     }
     // this.sliderPanel is pre build with buildCalcitePanel
     // this builds and appends Calcite elements to the sliderPanel
