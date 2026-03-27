@@ -15,7 +15,10 @@ import "@arcgis/map-components/dist/components/arcgis-print";
 
 // HELPER FOR BUIDING GENERIC CALCITE PANEL WITH THE PASSED ELEMENT AS ITS CHILD
 export function buildCalcitePanel(props: {
-    elementType?: string, heading?: string, closable?: boolean, cssClass?: string
+    elementType?: string,
+    heading?: string,
+    closable?: boolean,
+    cssClass?: string,
 }): HTMLCalcitePanelElement {
     const panel = document.createElement("calcite-panel");
     if (props.heading) panel.heading = props.heading;
@@ -28,14 +31,129 @@ export function buildCalcitePanel(props: {
     }
     return panel;
 }
+
+// tooltips
+type tooltipPlacements = "left" | "right" | "auto" | "top" | "auto-start" | "auto-end" | "top-start" |
+    "top-end" | "bottom" | "bottom-start" | "bottom-end" | "right-start" | "right-end" | "left-start" |
+    "left-end" | "leading-start" | "leading" | "leading-end" | "trailing-end" | "trailing" | "trailing-start";
+export type calciteTooltipProps = {
+    text: string,
+    refElId?: string,
+    placement?: tooltipPlacements,
+};
+export function buildCalciteTooltip(props: calciteTooltipProps): HTMLCalciteTooltipElement {
+    const tooltip = document.createElement("calcite-tooltip");
+    tooltip.referenceElement = props.refElId ?? "";
+    tooltip.textContent = props.text;
+    tooltip.placement = props.placement ?? "bottom";
+    tooltip.overlayPositioning = "fixed";
+    return tooltip;
+};
+
+// BUILD A CALCITE ACTION
+export type calciteActionProps = {
+    id: string,
+    icon: string,
+    text: string,
+    where?: string,
+    highlightName?: string,
+    onClick?: () => Promise<void>,
+    onBuilt?: (action: HTMLCalciteActionElement) => void,
+    tooltipProps?: calciteTooltipProps,
+}
+// return action with or without a tooltip. tooltip must be appended to the root as well
+export type calciteActionReturn = {
+    action: HTMLCalciteActionElement,
+    tooltip: HTMLCalciteTooltipElement | null,
+}
+export function buildCalciteAction(props: calciteActionProps): calciteActionReturn { 
+    const btnId = `toggle-action-${props.id}`;
+    const action = Object.assign(document.createElement('calcite-action'), {
+        id: btnId,
+        icon: props.icon,
+        text: props.text,
+    })
+    action.dataset['actionId'] = props.id;
+    if (props.onClick) {
+        action.addEventListener("click", props.onClick);
+    }
+    const tooltip = props.tooltipProps ? buildCalciteTooltip(props.tooltipProps) : null;
+    if (props.tooltipProps && tooltip) {
+        tooltip.referenceElement = btnId;
+    }
+    props.onBuilt?.(action);
+    return { action, tooltip }
+};
+
+// BUILD AN ACTION BAR
+
 export type calciteActionBarProps = {
     layout?: string;
     cssClass?: string;
+    expandable?: boolean;
+    actions?: HTMLCalciteActionElement[];
+    actionsProps?: calciteActionProps[];
+    hideBtn?: calciteActionProps | boolean;
 }
+export type calciteActionBarWithTooltips = {
+    actionBar: HTMLCalciteActionBarElement;
+    tooltips: HTMLCalciteTooltipElement[] | null;
+};
 export function buildCalciteActionBar(props: calciteActionBarProps): HTMLCalciteActionBarElement {
-    const actBar = Object.assign(document.createElement("calcite-action-bar"), { layout: props.layout ?? 'horizontal' });
-    if (props.cssClass) actBar.classList.add(props.cssClass);
-    return actBar;
+    const actionBar = Object.assign(document.createElement("calcite-action-bar"), {
+        layout: props.layout ?? 'horizontal',
+        expandDisabled: !(props.expandable ?? false),
+    });
+    if (props.cssClass) actionBar.classList.add(props.cssClass);
+    return actionBar;
+}
+export function buildCalciteActionBarWithActions(props: calciteActionBarProps): calciteActionBarWithTooltips {
+    const actionBar = Object.assign(document.createElement("calcite-action-bar"), {
+        layout: props.layout ?? 'horizontal',
+        expandDisabled: !(props.expandable ?? false),
+    });
+    if (props.cssClass) actionBar.classList.add(props.cssClass);
+
+    const actions: HTMLCalciteActionElement[] = [];
+    const tooltips: HTMLCalciteTooltipElement[] = [];
+
+    if (props.actionsProps) {
+        props.actionsProps.forEach((p: calciteActionProps) => {
+            const { action, tooltip } = buildCalciteAction(p);
+            actions.push(action);
+            if (tooltip) tooltips.push(tooltip);
+        });
+    }
+
+    if (props.hideBtn) {
+        const defId = 'hide-all';
+        const hideIcon = 'chevrons-right';
+        const showIcon = 'chevrons-left';
+        const hideId = `toggle-action-${defId}`;
+        const defTxt = 'Hide Action Bar';
+        const defaultHideProps: calciteActionProps = {
+            id: defId,
+            icon: hideIcon,
+            text: defTxt,
+            tooltipProps: { text: defTxt, placement: 'auto'},
+            onClick: async () => {
+                const actions = actionBar.querySelectorAll('calcite-action');
+                actionBar.querySelectorAll('calcite-action').forEach((act) => {
+                    if (act.id === hideId) return;
+                    act.hidden = !act.hidden;
+                });
+                const hideBtn = (actionBar.querySelector(`#${hideId}`) as HTMLCalciteActionElement);
+                hideBtn.icon = [...actions].some((a) => a.hidden) ? showIcon : hideIcon;
+            }
+        };
+        const hideProps = typeof props.hideBtn === 'object' ? props.hideBtn : defaultHideProps;
+        const { action: hideAct, tooltip: hideTT } = buildCalciteAction(hideProps);
+        actions.push(hideAct);
+        if (hideTT) tooltips.push(hideTT);
+    }
+
+    actionBar.append(...actions ?? props.actions ?? null);
+    return { actionBar, tooltips };
 }
 export function buildCalciteLegendPanel(heading: string): HTMLCalcitePanelElement {
     const panel = document.createElement("calcite-panel");
@@ -76,7 +194,6 @@ export function buildCalciteTableBlock(
         heading: label,
         label: label,
         collapsible: collapsible,
-        // open: open,
         expanded: open,
         headingLevel: 2
     });
@@ -214,55 +331,6 @@ export function makeRoutesButtons(routeNames: string,
     }
     return routeBtns;
 }
-
-// tooltips
-type tooltipPlacements = "left" | "right" | "auto" | "top" | "auto-start" | "auto-end" | "top-start" |
-    "top-end" | "bottom" | "bottom-start" | "bottom-end" | "right-start" | "right-end" | "left-start" |
-    "left-end" | "leading-start" | "leading" | "leading-end" | "trailing-end" | "trailing" | "trailing-start";
-export type calciteTooltipProps = {
-    text: string,
-    refElId?: string,
-    placement?: tooltipPlacements,
-};
-export function buildCalciteTooltip(props: calciteTooltipProps): HTMLCalciteTooltipElement {
-    const tooltip = document.createElement("calcite-tooltip");
-    tooltip.referenceElement = props.refElId ?? "";
-    tooltip.textContent = props.text;
-    tooltip.placement = props.placement ?? "bottom";
-    tooltip.overlayPositioning = "fixed";
-    return tooltip;
-};
-export type calciteActionProps = {
-    id: string,
-    icon: string,
-    text: string,
-    where?: string,
-    highlightName?: string,
-    onClick?: () => Promise<void>,
-    tooltipProps?: calciteTooltipProps,
-}
-// return action with or without a tooltip. tooltip must be appended to the root as well
-export type calciteActionReturn = {
-    action: HTMLCalciteActionElement,
-    tooltip: HTMLCalciteTooltipElement | null,
-}
-export function buildCalciteAction(props: calciteActionProps): calciteActionReturn { 
-    const btnId = `toggle-action-${props.id}`;
-    const action = Object.assign(document.createElement('calcite-action'), {
-        id: btnId,
-        icon: props.icon,
-        text: props.text,
-    })
-    action.dataset['actionId'] = props.id;
-    if (props.onClick) {
-        action.addEventListener("click", props.onClick);
-    }
-    const tooltip = props.tooltipProps ? buildCalciteTooltip(props.tooltipProps) : null;
-    if (props.tooltipProps && tooltip) {
-        tooltip.referenceElement = btnId;
-    }
-    return { action, tooltip }
-};
 
 // calcite select helpers
 export type calciteOptionProps = {
