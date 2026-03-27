@@ -75,6 +75,7 @@ export class MapWindow extends HTMLElement {
     private get linesLayer(): FeatureLayer { return this.mapLayers.get('lines')!.layer }; 
     private get placesLayer(): FeatureLayer { return this.mapLayers.get('places')!.layer }; 
     private get tractsLayer(): FeatureLayer { return this.mapLayers.get('tracts')!.layer };
+    private get countiesLayer(): FeatureLayer { return this.mapLayers.get('counties')!.layer };
     
     private tractsChoroplethMap: Map<__esri.FieldInfo, cplethEls[]> = TRACT_CLASSBREAKS;
     
@@ -170,6 +171,7 @@ export class MapWindow extends HTMLElement {
     }
     // build sections requiring async
     async connectedCallback(): Promise<void> {
+        await this.highlightStopsWithinPolygon(this.arcgisMap.view);
         await this.buildSlidersPanel();
         this.routeDropdown = await this.buildRoutesDropdown();
         this.shadowRoot?.append(this.routeDropdown);
@@ -236,6 +238,15 @@ export class MapWindow extends HTMLElement {
         view.on('click', async (event: __esri.ViewClickEvent) => {
             this.drawCircleOnStopClick(view, event);
         });
+
+        // highlight stops in county when move to new feature in popup
+        reactiveUtils.watch(
+            () => view.popup?.selectedFeature,
+            async (feature) => {
+                if (!feature?.layer) return;
+                await this.highlightStopsInGeom(view, feature.geometry as __esri.GeometryUnion);   
+            }
+        )
 
         console.timeEnd(logTimeStr);
     }
@@ -492,6 +503,33 @@ export class MapWindow extends HTMLElement {
             includedEffect: "brightness(2)",
             excludedEffect: "brightness(1)",
         });
+    }
+    private async highlightStopsWithinPolygon(view: __esri.MapView): Promise<void> {
+        view.on('click', async (event) => {
+            const clickableLayers = [this.tractsLayer, this.countiesLayer, this.placesLayer];
+            const hitTest = await view.hitTest(event, { include: clickableLayers });
+
+            const topHit = hitTest.results[0];
+            if (!topHit || topHit.type !== 'graphic') return;
+            if (!clickableLayers.includes(topHit.layer as __esri.FeatureLayer)) return;
+            const hitGeom = topHit.graphic.geometry;
+            await this.highlightStopsInGeom(view, hitGeom as __esri.GeometryUnion);
+        })
+    }
+    private async highlightStopsInGeom(view: __esri.MapView, geom: __esri.GeometryUnion) {
+        await Promise.all([this.busStopsLayer, this.metroStopsLayer].map(async (l) => {
+            const layerView = await view.whenLayerView(l) as __esri.FeatureLayerView;
+            layerView.featureEffect = new FeatureEffect({
+                filter: new FeatureFilter({
+                    geometry: geom,
+                    spatialRelationship: 'contains',
+                }),
+                includedEffect: "brightness(3)",
+                excludedEffect: "brightness(1)",
+            });
+            console.log('layerView:', l.title, layerView);
+            console.log('featureEffect set:', layerView.featureEffect);
+        }));
     }
     // HIGHLIGHT SPECIFIC FEATURES BASED ON whereClause
     private async highlightFeatures(
