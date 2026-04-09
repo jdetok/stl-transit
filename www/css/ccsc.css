@@ -6,10 +6,10 @@ body {
 .cont {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto 1fr 2fr;
+    grid-template-rows: auto auto 1fr 1fr 2fr;
     text-align: center;
     margin: 1rem auto;
-    overflow: hidden;
+    overflow: auto;
     padding: .5rem;
     gap: .5rem;
     border: 5px solid black;
@@ -40,6 +40,7 @@ body {
     border-radius: 1rem;
     box-sizing: border-box;
     width: 100%;
+    overflow: auto;
 }
 
 .sect h2 {
