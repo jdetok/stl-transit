@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<!-- page for CSCC poster -->
+
+<html>
+<head>
+    <title>STL Transit Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <script type="module" src="/js/main.js"></script>
+    <link rel="stylesheet" href="/css/ccsc.css" />
+</head>
+
+<body>
+    <div class="cont">
+        <div class="ttl">Utilizing Open Source GIS Technologies with Proprietrary ESRI Tools to Self Host Spatial Data for an Interactive Transit Map</div>
+        <div class="subttl">Justin DeKock | Saint Louis University | M.S. Information Systems | Mentor: Maria Weber</div>
+        <div class="sect">
+            <h2>Open Source Technologies/Projects Utilized:</h2>
+            <ul>
+                <span><b>Hosting/System:</b></span>
+                <li>Docker</li>
+                <li>Postgres/PostGIS</li>
+                <li>NGINX</li>
+            </ul><ul>
+                <span><b>GIS:</b></span>
+                <li>Open Street Map (OSM)</li>
+            </ul><ul>
+                <span><b>Spatial Imports into Postgres</b></span>
+                <li><a target="_blank" href="https://github.com/public-transport/gtfs-via-postgres">gtfs-via-postgres</a>
+                    <ul><li>GTFS data into Postgres</li></ul>
+                </li>
+                <li><a target="_blank" href="https://osmcode.org/osmium-tool/">osmium</a>
+                    <ul><li>Concatenate several OSM export files</li></ul>
+                </li>
+                <li><a target="_blank" href="https://osm2pgsql.org/">osm2pgsql</a>
+                    <ul><li>Import OSM export file into Postgres</li></ul>
+                </li>
+                <li><a target="_blank" href="https://gdal.org/en/stable/programs/ogr2ogr.html">ogr2ogr</a>
+                    <ul><li>Import TIGER data into Postgres</li></ul>
+                </li>
+            </ul>
+        </div>
+        <div class="sect">test2</div>
+        <div class="sect">test3</div>
+        <div class="ss"><img src="/img/ccsc.png" alt="Map Screenshot" loading="lazy"></div>
+    </div>
+</body>
+
+</html>
