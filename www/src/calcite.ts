@@ -1,26 +1,15 @@
 // calcite.ts
 // Helper factories for building calcite elements, imported in map-window custom element
-import "@esri/calcite-components/dist/components/calcite-table-header";
-import "@arcgis/map-components/dist/components/arcgis-basemap-gallery";
-import "@esri/calcite-components/dist/components/calcite-table-cell";
-import "@esri/calcite-components/dist/components/calcite-table-row";
-import "@arcgis/map-components/dist/components/arcgis-layer-list";
-import "@esri/calcite-components/dist/components/calcite-slider";
-import "@esri/calcite-components/dist/components/calcite-select";
-import "@esri/calcite-components/dist/components/calcite-option";
-import "@esri/calcite-components/dist/components/calcite-button";
-import "@esri/calcite-components/dist/components/calcite-table";
-import "@esri/calcite-components/dist/components/calcite-label";
-import "@arcgis/map-components/dist/components/arcgis-legend";
-import "@arcgis/map-components/dist/components/arcgis-print";
 
-// HELPER FOR BUIDING GENERIC CALCITE PANEL WITH THE PASSED ELEMENT AS ITS CHILD
-export function buildCalcitePanel(props: {
+export type calcitePanelProps = {
     elementType?: string,
     heading?: string,
     closable?: boolean,
     cssClass?: string,
-}): HTMLCalcitePanelElement {
+};
+
+// HELPER FOR BUIDING GENERIC CALCITE PANEL WITH THE PASSED ELEMENT AS ITS CHILD
+export function buildCalcitePanel(props: calcitePanelProps): HTMLCalcitePanelElement {
     const panel = document.createElement("calcite-panel");
     if (props.heading) panel.heading = props.heading;
     panel.hidden = true;
@@ -200,7 +189,7 @@ export function buildCalciteTableBlock(
     });
 
     if (infoContent) {
-        const notice = buildCalciteNotice(label, infoContent);
+        const notice = buildCalciteNotice({ label, content: infoContent });
         block.append(notice.btn, notice.notice);
     }
 
@@ -261,10 +250,10 @@ export function buildCalciteTable(props: calciteTableProps): HTMLCalciteTableEle
 
 // calcite notice with info button
 // closable block for medium amounts of text, naturally expands its container
-export function buildCalciteNotice(label: string, content: string): {
+export function buildCalciteNotice(props: { label: string, content: string }): {
     notice: HTMLCalciteNoticeElement, btn: HTMLCalciteActionElement
 } {
-    const actId = `popover-trigger-${label.replace(/\s+/g, '-')}`;
+    const actId = `popover-trigger-${props.label.replace(/\s+/g, '-')}`;
     const btn = Object.assign(document.createElement('calcite-action'), {
         slot: 'control',
         icon: 'information',
@@ -289,7 +278,7 @@ export function buildCalciteNotice(label: string, content: string): {
     
     notice.appendChild(Object.assign(document.createElement('div'), {
         slot: 'message',
-        innerText: content,
+        innerText: props.content,
     }));
 
     return {notice: notice, btn: btn};
@@ -298,15 +287,15 @@ export function buildCalciteNotice(label: string, content: string): {
 
 
 // build a single calcite button
-function buildCalciteButton(txt: string, appearance?: string, scale?: string, icon?: string): HTMLCalciteButtonElement {
+export function buildCalciteButton(props: { txt: string, appearance?: string, scale?: string, icon?: string }): HTMLCalciteButtonElement {
     const btn = Object.assign(document.createElement("calcite-button"), {
-        textContent: txt.trim(),
-        appearance: appearance?.trim() ?? "outline",
-        scale: scale?.trim() ?? "s",
+        textContent: props.txt.trim(),
+        appearance: props.appearance?.trim() ?? "outline",
+        scale: props.scale?.trim() ?? "s",
     });
     btn.setAttribute("appearance", "outline");
     btn.setAttribute("scale", "s");
-    if (icon) btn.iconStart = icon;
+    if (props.icon) btn.iconStart = props.icon;
     return btn;
 }
 export function makeRoutesButtons(routeNames: string,
@@ -317,12 +306,12 @@ export function makeRoutesButtons(routeNames: string,
     if (routeNames) {
         routeNames.split(", ").forEach((route: string) => {
             if (route.includes("No bus stop")) return;
-            const btn = buildCalciteButton(route);
+            const btn = buildCalciteButton({ txt: route });
             btn.addEventListener("click", () => onRouteClick(route.trim()));
             routeBtns.push(btn);
         });
         if (routeBtns.length > 1) {
-            const allBtn = buildCalciteButton("Highlight Each");
+            const allBtn = buildCalciteButton({ txt: "Highlight Each" });
             allBtn.addEventListener("click", () => {
                 const routes = routeNames.split(", ").map(r => r.trim());
                 onRoutesClick(routes);
@@ -441,7 +430,7 @@ export async function buildCalciteDropdown(props: calciteDropdownProps, clearBtn
     });
     if (props.cssClass) down.classList.add(props.cssClass);
 
-    const btn = Object.assign(buildCalciteButton(props.heading), { slot: 'trigger' });
+    const btn = Object.assign(buildCalciteButton({txt: props.heading}), { slot: 'trigger' });
     if (props.icon) btn.iconStart = props.icon;
     const dropGroup = Object.assign(document.createElement('calcite-dropdown-group'), {
         groupTitle: props.heading,
@@ -479,7 +468,7 @@ export async function buildCalciteDropdown(props: calciteDropdownProps, clearBtn
     });
 
     if (clearBtn) {
-        const clearBtn = buildCalciteButton('')
+        const clearBtn = buildCalciteButton({ txt: '' });
         clearBtn.slot = 'trigger';
         clearBtn.iconStart = 'reset';
         clearBtn.addEventListener('click', () => {
