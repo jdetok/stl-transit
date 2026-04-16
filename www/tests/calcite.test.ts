@@ -11,13 +11,6 @@ beforeEach(() => {
     }
 });
 
-describe('buildCalcitePanel()', () => {
-    it('returns a calcite-panel element', () => {
-        const el = buildCalcitePanel({heading: 'test', closable: true});
-        expect(el.tagName.toLowerCase()).toBe('calcite-panel');
-    });
-});
-
 describe('ensure factories return expected element', () => {
     const factories: Record<string, { fn: Function, props?: any }> = {
         'calcite-panel': { fn: buildCalcitePanel, props: { heading: 'test', closable: true } },
@@ -39,4 +32,23 @@ describe('ensure factories return expected element', () => {
             expect(el.tagName.toLowerCase()).toBe(tag);
         });
     }
+});
+
+describe('buildCalcitePanel() edge cases', () => {
+    it('appends a child element to the panel if elementType is passed', () => {
+        const panel = buildCalcitePanel({ elementType: 'div' });
+        expect(panel.children.length).toBe(1);
+    });
+    it('appends no children to the panel when elementType is not passed', () => {
+        const panel = buildCalcitePanel({});
+        expect(panel.children.length).toBe(0);
+    });
+    it('adds a css class if cssClass is passed', () => {
+        const panel = buildCalcitePanel({ cssClass: 'test' });
+        expect(panel.classList.length).toBe(1);
+    });
+    it('classList is empty if cssClass is not passed', () => {
+        const panel = buildCalcitePanel({});
+        expect(panel.classList.length).toBe(0);
+    });
 });

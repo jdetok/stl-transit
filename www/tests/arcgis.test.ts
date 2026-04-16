@@ -1,9 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
     toPoint, toPolygon, toPolyline,
-    makeChoroplethLevels, newHighlightSetting, updateRenderedSizes,
-    tractFieldFromInfos
+    makeChoroplethLevels, makeChoroplethRanges,
+    newHighlightSetting, updateRenderedSizes,
+    tractFieldFromInfos, choropleth,
+    queryLayer
 } from '../src/arcgis';
+import { PROJID } from '../src/data';
 
 const mockPointFeature = (id: number, lon: number, lat: number, extras = {}) => ({
     geometry: { coordinates: [lon, lat] },
@@ -152,4 +155,48 @@ describe('tractFieldFromInfos()', () => {
         const result = tractFieldFromInfos(finfos, name);
         expect(result.fieldName).toBe(name);
     });
+});
+
+describe('makeChoroplethRanges()', () => {
+    const cpleth: choropleth = {
+        lvl1: [94, 150, 98],
+        lvl2: [17, 200, 152],
+        lvl3: [0, 210, 255],
+        lvl4: [44, 60, 255],
+        lvl5: [50, 1, 63],
+    } as const;
+
+    it('throws if length of ranges is not numRanges+1', () => {
+        expect(() => makeChoroplethRanges(5, [0, 1, 2, 3], cpleth)).toThrow();
+    });
+
+    it('builds choropleth ranges properly', () => {
+        const ranges = [0, 2500, 5000, 7500, 10000, 100000];
+        const result = makeChoroplethRanges(5, ranges, cpleth);
+        result.forEach((r, i) => {
+            expect(r[0]).toBe(ranges[i]);
+            expect(r[1]).toBe(ranges[i+1]);
+        });
+    });
+});
+
+describe('queryLayer', () => {
+    const mockQuery = '1=1';
+    const mockErr = 'failed';
+    it('calls queryFeatures with correct params', async () => {
+        const mockFeatureSet = { features: [] };
+        const mockLayer = { queryFeatures: vi.fn().mockResolvedValue(mockFeatureSet) } as any;
+        const result = await queryLayer(mockLayer, mockQuery);
+        expect(mockLayer.queryFeatures).toHaveBeenCalledWith({
+            where: mockQuery,
+            returnGeometry: true,
+            outSpatialReference: { wkid: PROJID },
+        });
+        expect(result).toBe(mockFeatureSet);
+    });
+
+    it('propagates errors from queryFeatures', async () => {
+        const mockLayer = { queryFeatures: vi.fn().mockRejectedValue(new Error(mockErr)) } as any;
+        await expect(queryLayer(mockLayer, mockQuery)).rejects.toThrow(mockErr);
+    })
 });

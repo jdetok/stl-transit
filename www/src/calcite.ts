@@ -14,7 +14,7 @@ export function buildCalcitePanel(props: calcitePanelProps): HTMLCalcitePanelEle
     if (props.heading) panel.heading = props.heading;
     panel.hidden = true;
     panel.closable = props.closable ?? true;
-    if (props.cssClass) panel.classList.add(props.cssClass)
+    if (props.cssClass) panel.classList.add(props.cssClass);
     if (props.elementType) {
         const content = document.createElement(props.elementType) as any;
         panel.appendChild(content);
