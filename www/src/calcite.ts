@@ -1,15 +1,16 @@
 // calcite.ts
 // Helper factories for building calcite elements, imported in map-window custom element
-import "@esri/calcite-components/dist/components/calcite-table";
 import "@esri/calcite-components/dist/components/calcite-table-header";
+import "@arcgis/map-components/dist/components/arcgis-basemap-gallery";
+import "@esri/calcite-components/dist/components/calcite-table-cell";
 import "@esri/calcite-components/dist/components/calcite-table-row";
+import "@arcgis/map-components/dist/components/arcgis-layer-list";
 import "@esri/calcite-components/dist/components/calcite-slider";
 import "@esri/calcite-components/dist/components/calcite-select";
 import "@esri/calcite-components/dist/components/calcite-option";
+import "@esri/calcite-components/dist/components/calcite-button";
+import "@esri/calcite-components/dist/components/calcite-table";
 import "@esri/calcite-components/dist/components/calcite-label";
-import "@esri/calcite-components/dist/components/calcite-table-cell";
-import "@arcgis/map-components/dist/components/arcgis-basemap-gallery";
-import "@arcgis/map-components/dist/components/arcgis-layer-list";
 import "@arcgis/map-components/dist/components/arcgis-legend";
 import "@arcgis/map-components/dist/components/arcgis-print";
 

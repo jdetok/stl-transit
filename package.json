@@ -8,7 +8,7 @@
         "build": "vite build",
         "typecheck": "tsc --noEmit",
         "test": "vitest",
-        "test:coverage": "vitest run --coverage",
+        "cvg": "vitest run --coverage",
         "test:ui": "vitest --ui"
     },
     "repository": {

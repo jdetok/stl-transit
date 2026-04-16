@@ -3,7 +3,6 @@ tmp/
 google_transit/
 .env
 node_modules/
-package-lock.json
 www/js/**/*.js*
 www/js/**/*.css*
 data/*json

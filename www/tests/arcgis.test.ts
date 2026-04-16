@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
     toPoint, toPolygon, toPolyline,
-    makeChoroplethLevels, newHighlightSetting, updateRenderedSizes
+    makeChoroplethLevels, newHighlightSetting, updateRenderedSizes,
+    tractFieldFromInfos
 } from '../src/arcgis';
 
 const mockPointFeature = (id: number, lon: number, lat: number, extras = {}) => ({
@@ -132,7 +133,7 @@ describe('updateRenderedSizes()', () => {
         expect(stops[1].size).toBe(40);
     });
 
-    it('updats class-breaks renderer symbol widths', () => {
+    it('updates class-breaks renderer symbol widths', () => {
         const classBreakInfos = [
             { symbol: { width: 1 } },
             { symbol: { width: 2 } },
@@ -141,5 +142,14 @@ describe('updateRenderedSizes()', () => {
         updateRenderedSizes(renderer, [1, 2], 3);
         expect(classBreakInfos[0].symbol.width).toBe(3);
         expect(classBreakInfos[1].symbol.width).toBe(6);
+    });
+});
+
+describe('tractFieldFromInfos()', () => {
+    it('returns a single __esri.FieldInfo from an array of them by fieldName', () => {
+        const name = 'test';
+        const finfos = [{ fieldName: name, label: name }] as __esri.FieldInfo[];
+        const result = tractFieldFromInfos(finfos, name);
+        expect(result.fieldName).toBe(name);
     });
 });
