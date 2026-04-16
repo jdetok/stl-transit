@@ -8,8 +8,8 @@ export default defineConfig({
         css: false,
         coverage: {
             provider: 'v8',
-            include: ['src/**/*.ts'],
-            exclude: ['src/**/*.d.ts'],
+            include: ['www/src/**/*.ts'],
+            exclude: ['www/src/**/*.d.ts'],
         },
     },
 })
