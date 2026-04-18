@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import {
-    buildCalciteAction, buildCalciteActionBar, buildCalciteActionBarWithActions, buildCalciteButton, buildCalciteDropdown, buildCalciteNotice,
+    buildCalciteAction, buildCalciteActionBar, buildCalciteActionBarWithActions, buildCalciteButton, buildCalciteDropdown,
     buildCalcitePanel, buildCalciteSelect, buildCalciteSelectBlock, buildCalciteTable,
-    buildCalciteTableBlock, buildCalciteTooltip, calciteActionBarProps, calciteActionBarWithTooltips, calciteActionProps,
+    buildCalciteTooltip, calciteActionBarProps, calciteActionBarWithTooltips, calciteActionProps,
     defaultHideBtnId,
     hideActionBar,
 } from '../src/calcite';
@@ -131,37 +131,37 @@ describe('buildCalciteActionBarWithActions()', () => {
 
         describe('hides all actions in actionBar except the hide button', () => {
             let actions: HTMLCalciteActionElement[];
-            let hiddenActsBefore: HTMLCalciteActionElement[];
-            let hiddenActsAfterOne: HTMLCalciteActionElement[];
-            let hiddenActsAfterTwo: HTMLCalciteActionElement[];
+            let hiddenBefore: HTMLCalciteActionElement[];
+            let hiddenAfterOne: HTMLCalciteActionElement[];
+            let hiddenAfterTwo: HTMLCalciteActionElement[];
 
             const filterHidden = () => actions.filter((a) => a.hidden);
 
             beforeAll(async () => {
                 const result = buildCalciteActionBarWithActions({ ...props, hideBtn: true, actionsProps: mockActionProps });
                 actions = Array.from(result.actionBar.querySelectorAll('calcite-action'));
-                hiddenActsBefore = filterHidden();
+                hiddenBefore = filterHidden();
 
                 // hide all actions
                 await hideActionBar(result.actionBar);
-                hiddenActsAfterOne = filterHidden();
+                hiddenAfterOne = filterHidden();
 
                 // re show all actions
                 await hideActionBar(result.actionBar);
-                hiddenActsAfterTwo = filterHidden();
+                hiddenAfterTwo = filterHidden();
             });
 
             it('no actions hidden before calling hideActionBar', () => {
-                expect(hiddenActsBefore.length).toBe(0);
+                expect(hiddenBefore.length).toBe(0);
             });
 
             // after call, there all actions should be hidden except for the hideBtn itself
             it('all actions except hideBtn are hidden after calling hideActionBar once', () => {
-                expect(hiddenActsAfterOne.length).toBe(actions.length - 1);
+                expect(hiddenAfterOne.length).toBe(actions.length - 1);
             });
 
             it('no actions hidden after calling hideActionBar twice', () => {
-                expect(hiddenActsAfterTwo.length).toBe(0);
+                expect(hiddenAfterTwo.length).toBe(0);
             });
         });
     });
