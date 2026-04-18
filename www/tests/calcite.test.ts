@@ -3,6 +3,7 @@ import {
     buildCalciteAction, buildCalciteActionBar, buildCalciteActionBarWithActions, buildCalciteButton, buildCalciteDropdown, buildCalciteNotice,
     buildCalcitePanel, buildCalciteSelect, buildCalciteSelectBlock, buildCalciteTable,
     buildCalciteTableBlock, buildCalciteTooltip, calciteActionBarProps, calciteActionProps,
+    defaultHideBtnId,
 } from '../src/calcite';
 
 beforeEach(() => {
@@ -81,7 +82,8 @@ describe('buildCalciteAction()', () => {
 describe('buildCalciteActionBarWithActions()', () => {
     const actionsWith = 3;
     const actionsWithout = 2;
-    const mockProp = { id: 't', icon: 't', text: 't' };
+    const mockPropId = 't';
+    const mockProp = { id: mockPropId, icon: 't', text: 't' };
     const mockActionProps: calciteActionProps[] = Array(actionsWith).fill({ ...mockProp, tooltipProps: { text: 't' } });
     mockActionProps.push(...Array(actionsWithout).fill(mockProp));
     const props = {
@@ -90,13 +92,38 @@ describe('buildCalciteActionBarWithActions()', () => {
         text: 'test',
     } as calciteActionBarProps;
 
-    it('returns appropiate number of tooltips when "actionsProps" prop is passed', () => {
-        const result = buildCalciteActionBarWithActions({ ...props, actionsProps: mockActionProps });
-        expect(result.tooltips).not.toBeNull();
-        expect(result.tooltips?.length).toBe(actionsWith);
+    describe('test tooltip behavior', () => {
+        it('returns appropiate number of tooltips when "actionsProps" prop is passed', () => {
+            const result = buildCalciteActionBarWithActions({ ...props, actionsProps: mockActionProps });
+            expect(result.tooltips).not.toBeNull();
+            expect(result.tooltips?.length).toBe(actionsWith);
+        });
+
+        it('tooltips array is null when "actionsProps" is not passed', () => {
+            const result = buildCalciteActionBarWithActions(props);
+            expect(result.tooltips).toBeNull();
+        });
     });
-    it('tooltips array is null when "actionsProps" is not passed', () => {
-        const result = buildCalciteActionBarWithActions(props);
-        expect(result.tooltips).toBeNull();
+    
+    describe('test hide button behavior', () => {
+        it('appends a hide button with custom properties if actionProps are passed as hideBtn', () => {
+            const result = buildCalciteActionBarWithActions({ ...props, hideBtn: mockProp });
+            expect(result.actionBar.querySelector(mockPropId)).toBeDefined();
+        });
+
+        it('appends a hide button with default properties if true is passed as hideBtn', () => {
+            const result = buildCalciteActionBarWithActions({ ...props, hideBtn: true });
+            expect(result.actionBar.querySelector(defaultHideBtnId)).toBeDefined();
+        });
+
+        it('does not append a hide button if hideBtn is not passed', () => {
+            const result = buildCalciteActionBarWithActions(props);
+            expect(result.actionBar.querySelector(defaultHideBtnId)).toBeNull();
+        });
+
+        it('does not append a hide button if false is passed as hideBtn', () => {
+            const result = buildCalciteActionBarWithActions({ ...props, hideBtn: false });
+            expect(result.actionBar.querySelector(defaultHideBtnId)).toBeNull();
+        });
     });
 });
