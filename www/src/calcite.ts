@@ -143,7 +143,7 @@ export function buildCalciteActionBarWithActions(props: calciteActionBarProps): 
     }
 
     actionBar.append(...actions ?? props.actions ?? null);
-    return { actionBar, tooltips };
+    return { actionBar, tooltips: tooltips.length > 0 ? tooltips : null };
 }
 export function buildCalciteLegendPanel(heading: string): HTMLCalcitePanelElement {
     const panel = document.createElement("calcite-panel");
