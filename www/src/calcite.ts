@@ -1,6 +1,6 @@
 // calcite.ts
 // Helper factories for building calcite elements, imported in map-window custom element
-
+export type actbarWithTooltips = { bar: HTMLCalciteActionBarElement, tooltips: HTMLCalciteTooltipElement[] };
 export type calcitePanelProps = {
     elementType?: string,
     heading?: string,
@@ -149,6 +149,36 @@ export async function hideActionBar(
     });
     const hideBtn = (actionBar.querySelector(`#${defaultHideBtnId}`) as HTMLCalciteActionElement);
     hideBtn.icon = [...actions].some((a) => a.hidden) ? icons.show : icons.hide;
+}
+
+export type actBarsProps = {
+    cssClass?: string;
+    meta: Array<[string, () => actbarWithTooltips]>;
+    parent: HTMLElement & { tooltips: HTMLCalciteTooltipElement[] };
+};
+export function initActionBars(props: actBarsProps): HTMLDivElement {
+    const container = document.createElement('div');
+    if (props.cssClass) container.classList.add(props.cssClass);
+    for (const [bar, fn] of props.meta) {
+        const actBar = fn();
+        props.parent[bar] = actBar.bar;
+        container.appendChild(props.parent[bar]);
+        props.parent.tooltips.push(...actBar.tooltips);
+    }
+    return container;
+}
+// to be passed as a click listener for calcite actions in an action bar. opens a calcite panel on click
+export function toggleActionPanel(
+    id: string, actionBar: HTMLCalciteActionBarElement,
+    panels: Record<string, HTMLElement>
+): void {
+    actionBar.querySelectorAll("calcite-action").forEach((a: HTMLCalciteActionElement) => {
+        a.active = a.dataset['actionId'] === id ? !a.active : false;
+    });
+    Object.entries(panels).forEach(([key, panel]: [string, any]) => {
+        panel.hidden = key !== id || !(actionBar.querySelector(`[data-action-id="${id}"]`) as any).active;
+        if (!panel.hidden) panel.closed = false;
+    });
 }
 
 export function buildCalciteLegendPanel(heading: string): HTMLCalcitePanelElement {

@@ -23,6 +23,8 @@ import {
     buildCalciteSelectBlock,
     calciteOptionProps,
     buildCalciteActionBarWithActions,
+    actbarWithTooltips,
+    initActionBars, toggleActionPanel
  } from "../calcite.js";
 import {
     FeatureLayerMeta, makeBusStopsLayer, makeMetroLinkLayer, makeLinesLayer, makePlacesLayer, LAYER_CENSUS_COUNTIES,
@@ -36,7 +38,7 @@ import {
 } from "../data.js";
 
 type mapLayer = { fn?: Function, meta: FeatureLayerMeta, layer: FeatureLayer, i: number}
-type actbarWithTooltips = { bar: HTMLCalciteActionBarElement, tooltips: HTMLCalciteTooltipElement[] };
+
 type routeLinesData = {
     type: string,
     coordinates: any,
@@ -150,7 +152,12 @@ export class MapWindow extends HTMLElement {
         this.initLayerMetas();
         
         // build all action bars in a container
-        this.actionBarContainer = this.initActionBars(this.actBarMetas);
+        // this.actionBarContainer = this.initActionBars(this.actBarMetas);
+        this.actionBarContainer = initActionBars({
+            meta: this.actBarMetas,
+            cssClass: this.actionBarClass,
+            parent: this as any,
+        });
         this.buildRouteInfoPanel();
     
         // build and append all elements to shadow dom
@@ -190,18 +197,6 @@ export class MapWindow extends HTMLElement {
                 )
             }
         }
-    }
-    // set the action bar keys (have to be defined in this) with their associated function
-    private initActionBars(meta: Array<[string, () => actbarWithTooltips]>): HTMLDivElement {
-        const container = document.createElement('div');
-        container.classList.add(this.actionBarClass);
-        for (const [bar, fn] of meta) {
-            const actBar = fn();
-            this[bar] = actBar.bar;
-            container.appendChild(this[bar]);
-            this.tooltips.push(...actBar.tooltips);
-        }
-        return container;
     }
     private onResize(): void {
         const isWide = this.offsetWidth >= MEDIAQ_MAXW;
@@ -293,7 +288,7 @@ export class MapWindow extends HTMLElement {
             if (!w || !h) throw new Error(`width or height is undefined: w: ${w}, h: ${h}`);
             if (w >= maxW || h >= maxH ) {
                 console.log(`%copening legend (W:${w}Xh:${h})`, 'color: seagreen;');
-                this.togglePanel('legend', this.actionBar, { legend: this.legendPanel });
+                toggleActionPanel('legend', this.actionBar, { legend: this.legendPanel });
             }
         })
     }
@@ -390,22 +385,12 @@ export class MapWindow extends HTMLElement {
             }));
         }
     }
-    // SHOW/HIDE CALCITE PANELS FROM THE ACTION BAR
-    private togglePanel(id: string, actionBar: any, panels: Record<string, HTMLElement>): void {
-        actionBar.querySelectorAll("calcite-action").forEach((a: HTMLCalciteActionElement) => {
-            a.active = a.dataset['actionId'] === id ? !a.active : false;
-        });
-        Object.entries(panels).forEach(([key, panel]: [string, any]) => {
-            panel.hidden = key !== id || !actionBar.querySelector(`[data-action-id="${id}"]`).active;
-            if (!panel.hidden) panel.closed = false;
-        });
-    }
     // BUILD CALCITE ACTION BAR, ACTIONS DISPLAY CALCITE PANELS
     private buildMainActionBar(): actbarWithTooltips {
         const actProps: calciteActionProps[] = MAIN_ACTIONS.map((a) => ({
             ...a,
             tooltipProps: { text: a.text },
-            onClick: async () => this.togglePanel(a.id, actionBar, {
+            onClick: async () => toggleActionPanel(a.id, actionBar, {
                 layers: this.layerListPanel,
                 legend: this.legendPanel,
                 basemaps: this.basemapPanel,
