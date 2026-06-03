@@ -21,7 +21,7 @@ import {
     buildCalcitePanel, buildCalciteSliderBlock, buildCalciteTableBlock, calciteActionProps,
     buildCalciteTable, buildCalciteDropdown,
     buildCalciteSelectBlock,
-    calciteOptionProps,
+    calciteOptionProps, buildCalciteBlock,
     buildCalciteActionBarWithActions,
     actbarWithTooltips,
     initActionBars, toggleActionPanel
@@ -124,6 +124,7 @@ export class MapWindow extends HTMLElement {
     private metroStopSliderBlock!: HTMLCalciteBlockElement;
     private lineSizeSliderBlock!: HTMLCalciteBlockElement;
     private tractChoroSelBlock!: HTMLCalciteBlockElement;
+    private tractLegend: HTMLArcgisLegendElement | null = null;
 
     // SLIDER ELEMENTS
     private busStopSizeSlider!: HTMLCalciteSliderElement;
@@ -152,7 +153,6 @@ export class MapWindow extends HTMLElement {
         this.initLayerMetas();
         
         // build all action bars in a container
-        // this.actionBarContainer = this.initActionBars(this.actBarMetas);
         this.actionBarContainer = initActionBars({
             meta: this.actBarMetas,
             cssClass: this.actionBarClass,
@@ -179,7 +179,6 @@ export class MapWindow extends HTMLElement {
     // build sections requiring async
     async connectedCallback(): Promise<void> {
         await this.highlightStopsWithinPolygon(this.arcgisMap.view);
-        await this.buildSlidersPanel();
         this.routeDropdown = await this.buildRoutesDropdown();
         this.shadowRoot?.append(this.routeDropdown);
     }
@@ -224,7 +223,7 @@ export class MapWindow extends HTMLElement {
             buildArcgisElement({ elStr: 'arcgis-zoom' }),
             buildArcgisElement({ elStr: 'arcgis-search', view: view })
         );
-        
+        await this.buildSlidersPanel();
         await this.setPanelViews(view, new Map([...this.actionBarPanels].filter(([, v]) => v !== 'skip')));
     
         this.setDockablePopupsBySize(view, MEDIAQ_MAXW, MEDIAQ_MAXH);
@@ -666,6 +665,7 @@ export class MapWindow extends HTMLElement {
                         value: fieldName,
                     })) as calciteOptionProps[],
                 },
+                // make new legend for the new tracts layer in a block in same panel
                 onSelChange: (val: string) => {
                     const renderer = (this.tractsLayer.renderer as ClassBreaksRenderer);
                     renderer.field = val;
@@ -674,9 +674,19 @@ export class MapWindow extends HTMLElement {
                         opac: this.currentTractOpacity
                     }!);
                     this.tractsLayer.renderer = renderer.clone();
+                    this.buildTractLegend()
                 }
             }
         });
+    }
+    private buildTractLegend(): HTMLArcgisLegendElement {
+        if (!this.tractLegend) {
+            this.tractLegend = document.createElement('arcgis-legend');
+            this.tractLegend.referenceElement = this.arcgisMap;
+            this.slidersPanel.append(this.tractLegend);
+        }
+        this.tractLegend.layerInfos = [{ layer: this.tractsLayer }];
+        return this.tractLegend;
     }
     // BUILD A CALCITE SELECT TO FILTER BY BUS ROUTE
     private async buildRoutesDropdown(): Promise<HTMLCalciteDropdownElement> {

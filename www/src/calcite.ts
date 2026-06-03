@@ -22,6 +22,19 @@ export function buildCalcitePanel(props: calcitePanelProps): HTMLCalcitePanelEle
     return panel;
 }
 
+// HELPER FOR BUIDING GENERIC CALCITE PANEL WITH THE PASSED ELEMENT AS ITS CHILD
+export function buildCalciteBlock(props: calcitePanelProps): HTMLCalciteBlockElement {
+    const block = document.createElement("calcite-block");
+    if (props.heading) block.heading = props.heading;
+    block.hidden = true;
+    if (props.cssClass) block.classList.add(props.cssClass);
+    if (props.elementType) {
+        const content = document.createElement(props.elementType) as any;
+        block.appendChild(content);
+    }
+    return block;
+}
+
 // tooltips
 type tooltipPlacements = "left" | "right" | "auto" | "top" | "auto-start" | "auto-end" | "top-start" |
     "top-end" | "bottom" | "bottom-start" | "bottom-end" | "right-start" | "right-end" | "left-start" |
