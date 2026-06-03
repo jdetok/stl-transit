@@ -1,0 +1,7 @@
+* {
+    --bdr-rad: .5rem;
+}
+
+body {
+    background-color: (17, 68, 115, 0.3);
+}

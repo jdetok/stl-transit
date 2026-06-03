@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "jsx": "react-jsx",
+        "strict": true,
+        "skipLibCheck": true,
+        "noImplicitAny": false,
+        "rootDir": ".",
+        "outDir": "./dist",
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "allowUnusedLabels": false,
+        "noUncheckedSideEffectImports": true,
+        "noFallthroughCasesInSwitch": true,
+        "allowUnreachableCode": false,
+        "noUncheckedIndexedAccess": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "paths": {
+            "@/*": ["./src/*"],
+            "@cmp/*": ["./src/cmp/*"],
+        },
+    },
+    "include": ["./src", "./tests"],
+    "exclude": ["./node_modules"]
+}
