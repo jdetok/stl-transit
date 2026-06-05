@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => {
             port: 9888,
             strictPort: true,
             proxy: {
-                '/api': {
-                    target: 'http://localhost:8999',
+                '/layers/lines': {
+                    target: 'http://localhost:9999',
                     changeOrigin: true,
                 },
             }

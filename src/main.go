@@ -20,7 +20,7 @@ func main() {
 	defer zapLog.Sync()
 
 	a := &app{
-		addr: ":9999",
+		addr: fmt.Sprintf(":%s", os.Getenv("API_PORT")),
 		lg:   zapLog,
 	}
 

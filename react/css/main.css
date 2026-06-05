@@ -1,7 +1,33 @@
 * {
     --bdr-rad: .5rem;
+    --cmp-bdr: 4px solid black;
+    --cmp-pdg: 0.8rem;
+    font-family: sans-serif;
 }
 
 body {
-    background-color: (17, 68, 115, 0.3);
+    background-color: rgba(17, 68, 115, 0.3);
+}
+
+.hdr {
+    margin: 0 auto;
+}
+
+.hdr > h1 {
+    text-align: center;
+}
+
+/* main map element */
+.map-div {
+    border: var(--cmp-bdr);
+    border-radius: var(--bdr-rad);
+    margin: 0 auto;
+    height: 90vh;
+    overflow: hidden;
+}
+
+/* actual arcgis-map component inside MapDiv */
+arcgis-map {
+    border-radius: var(--bdr-rad);
+    overflow: hidden;
 }

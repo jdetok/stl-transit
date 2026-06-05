@@ -21,6 +21,15 @@
         "paths": {
             "@/*": ["./src/*"],
             "@cmp/*": ["./src/cmp/*"],
+            "@esri/calcite-components/dist/components/calcite-icon/interfaces": [
+                "./node_modules/@esri/calcite-components/dist/components/calcite-icon/interfaces.d.ts"
+            ],
+            "@esri/calcite-components/dist/components/calcite-button/interfaces": [
+                "./node_modules/@esri/calcite-components/dist/components/calcite-button/interfaces.d.ts"
+            ],
+            "@esri/calcite-components/dist/components/interfaces": [
+                "./node_modules/@esri/calcite-components/dist/components/interfaces.d.ts"
+            ]
         },
     },
     "include": ["./src", "./tests"],

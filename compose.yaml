@@ -30,6 +30,8 @@ services:
         env_file:
             - .env
         restart: unless-stopped
+        ports:
+            - "9999:9999"
         volumes: 
             - ./data/persist.json:/app/data/persist.json
             - ./data/cycle_osm.geojson:/app/data/cycle_osm.geojson

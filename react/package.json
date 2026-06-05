@@ -16,8 +16,9 @@
         "url": "git+https://github.com/jdetok/stlmetromap.git"
     },
     "dependencies": {
-        "@arcgis/core": "^4.34.8",
-        "@arcgis/map-components": "^4.34.9",
+        "@arcgis/core": "^5.0.19",
+        "@arcgis/map-components": "^5.0.0",
+        "@arcgis/map-components-react": "^5.0.19",
         "react": "^19.0.0",
         "react-dom": "^19.0.0"
     },
@@ -29,13 +30,13 @@
         "@types/react": "^19.0.0",
         "@types/react-dom": "^19.0.0",
         "@vitejs/plugin-react": "^4.3.4",
-        "concurrently": "^9.2.1",
-        "jsdom": "^26.1.0",
-        "tsx": "^4.21.0",
-        "msw": "^2.13.3",
-        "typescript": "^5.8.3",
         "@vitest/ui": "^4.1.4",
+        "concurrently": "^9.2.1",
         "happy-dom": "^20.9.0",
+        "jsdom": "^26.1.0",
+        "msw": "^2.13.3",
+        "tsx": "^4.21.0",
+        "typescript": "^5.8.3",
         "vite": "^7.3.1",
         "vitest": "^4.1.4"
     }

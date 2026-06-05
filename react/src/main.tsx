@@ -1,3 +1,8 @@
+/// <reference types="@arcgis/map-components/types/react" />
+/// <reference types="@esri/calcite-components/types/react" />
+// / <reference types="@esri/calcite-components/types/components" />
+/// <reference types="@esri/calcite-components/types/components" />
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "@/cmp/App";

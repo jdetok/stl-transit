@@ -41,7 +41,9 @@ func mountStatic(mux *http.ServeMux) {
 
 func mountLayers(mux *http.ServeMux, prefix string, layers gis.FeatureLayers) {
 	for name, data := range layers {
-		mux.HandleFunc(fmt.Sprintf("/%s/%s", prefix, name), func(w http.ResponseWriter, r *http.Request) {
+		endpoint := fmt.Sprintf("/%s/%s", prefix, name)
+		fmt.Println("Mounting ", endpoint)
+		mux.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
 			data.Features.WriteJSONResp(w, r)
 		})
 	}
