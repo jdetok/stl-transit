@@ -4,6 +4,8 @@ import { FieldProperties } from "@arcgis/core/layers/support/Field";
 import { newHighlightSetting, fieldInfos } from "@/utils";
 import { CollectionProperties } from "@/types";
 
+export const BASE = 'http://localhost:9999';
+
 export const BASEMAP = 'dark-gray';
 export const WKID = 4326;
 export const EXTENT = {
@@ -88,7 +90,7 @@ export const STOP_FIELDS: FieldProperties[] = [
 ];
 
 export const STOP_FIELDINFOS = fieldInfos(
-    STOP_FIELDS, ['ObjectID', 'stop_id', 'stop_name', 'route_ids', 'route_count']
+    STOP_FIELDS, ['ObjectID', 'stop_id', 'stop_name', 'route_ids', 'route_count', 'route_names']
 )
 
 export const TRACTS_FIELDS: FieldProperties[] = [

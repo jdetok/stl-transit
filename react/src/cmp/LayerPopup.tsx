@@ -15,7 +15,7 @@ export default function LayerPopup({
 }: layerPopupProps) {
     const routeNames = attrs?.[routeField];
     return (
-        <table>
+        <table className="popup">
             <tbody>
                 {routeNames && (
                     <tr>

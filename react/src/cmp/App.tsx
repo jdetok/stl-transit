@@ -3,14 +3,22 @@ import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
 import { useCallback, useState } from "react";
 import MapView from "@arcgis/core/views/MapView";
-import { watch } from "@arcgis/core/core/reactiveUtils";
-import { cleanupPopupRoots, makeFeatureLayer } from "@/utils";
+import { makeFeatureLayer } from "@/utils";
 import { FeatureLayerMeta, mapLayer } from "@/types";
-import { makeLinesLayer } from "@/layers";
-// import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
+import {
+    LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS, LAYER_CYCLING, LAYER_AMTRAK,
+    makePlacesLayer, makeLinesLayer, makeMetroStopsLayer, makeBusStopsLayer, 
+} from "@/layers";
 
 const mapLayers: Map<string, mapLayer> = new Map([
-    ['lines', { fn: makeLinesLayer, meta: {} as FeatureLayerMeta }],
+    ['counties', { meta: { ...LAYER_CENSUS_COUNTIES }, i: 0 },],
+    ['tracts', { meta: { ...LAYER_CENSUS_TRACTS }, i: 1 }],
+    ['amtrak', { meta: { ...LAYER_AMTRAK }, i: 2 }],
+    ['cycling', { meta: { ...LAYER_CYCLING }, i: 3 }],
+    ['places', { fn: makePlacesLayer, meta: {} as FeatureLayerMeta, i: 4 }],
+    ['lines', { fn: makeLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
+    ['metro', { fn: makeMetroStopsLayer, meta: {} as FeatureLayerMeta, i: 6 }],
+    ['bus', { fn: makeBusStopsLayer, meta: {} as FeatureLayerMeta, i: 7 }],
 ]);
 
 export default function App() {
@@ -20,9 +28,9 @@ export default function App() {
         console.log('view')
         view.highlights = HIGHLIGHTS;
 
-        watch(() => view.popup?.visible, visible => { if (!visible) cleanupPopupRoots() });
+        const layers = [...mapLayers.entries()];
 
-        await Promise.all([...mapLayers.entries()].map(async ([k, v]) => {
+        await Promise.all(layers.map(async ([k, v]) => {
             try {
                 if (v.fn) v.meta = v.fn(
                     (route: string | string[]) => { console.log(route) },
@@ -39,6 +47,14 @@ export default function App() {
                 console.error('error building FeatureLayer:', err);
             }
         }));
+
+        layers.sort(([, v1], [_, v2]) => v1.i - v2.i).forEach(([k, v]) => {
+            if (v.layer) {
+                view.map?.add(v.layer);
+            } else {
+                console.warn('missing layer:', k);
+            }
+        });
         
         setView(view);
     }, []);

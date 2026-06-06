@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
             port: 9888,
             strictPort: true,
             proxy: {
-                '/layers/lines': {
+                '/layers': {
                     target: 'http://localhost:9999',
                     changeOrigin: true,
                 },

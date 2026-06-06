@@ -13,6 +13,7 @@ import { HighlightOptionsProperties } from "@arcgis/core/views/support/Highlight
 import { ClassBreakInfoProperties } from "@arcgis/core/renderers/support/ClassBreakInfo";
 import { type ReactElement } from 'react'
 import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
@@ -32,29 +33,44 @@ export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
 }
 
 export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureLayer> => {
+    const m = { ...meta };
+    let data: any;
+    let res: Response;
     try {
-        if (meta.dataUrl) {
-            const res = await fetch(meta.dataUrl);
-            const data = await res.json();
-            console.log(data); // no longer visible if this is removed - timing issue to fix
-            meta.source = buildGraphics(meta, data);
+        if (m.dataUrl) {
+            res = await fetch(m.dataUrl);
+            console.log(res.body);
         } else {
-            throw new Error(`no data source for ${meta.title} layer`);
+            throw new Error(`no data source for ${m.title} layer`);
         }
     } catch (e) {
-        throw new Error(`failed to create feature layer: ${e}`);
+        throw new Error(`failed to fetch ${m.dataUrl}: ${e}`);
     }
+
+    try {
+        data = await res.json();
+        console.log(data); // no longer visible if this is removed - timing issue to fix
+    } catch (e) {
+        throw new Error(`failed to get json from ${m.dataUrl}: ${e}`);
+    }
+
+    try {
+        m.source = buildGraphics(m, data);
+    } catch (e) {
+        throw new Error(`failed to build graphics for ${m.dataUrl}: ${e}`);
+    }
+
     return new FeatureLayer({
-        title: meta.title,
-        source: meta.source,
+        title: m.title,
+        source: m.source,
         objectIdField: "ObjectID",
-        geometryType: meta.geometryType,
+        geometryType: m.geometryType,
         spatialReference: { wkid: WKID },
-        renderer: meta.renderer,
-        popupTemplate: meta.popupTemplate,
-        fields: meta.fields,
+        renderer: m.renderer,
+        popupTemplate: m.popupTemplate,
+        fields: m.fields,
         outFields: ["*"],
-        legendEnabled: meta.legendEnabled ?? true,
+        legendEnabled: m.legendEnabled ?? true,
     });
 }
 
@@ -159,15 +175,16 @@ export function newHighlightSetting(name: string, color: ColorProperties): Highl
     }
 }
 
-const popupRoots = new Map<HTMLElement, ReturnType<typeof createRoot>>();
+// const popupRoots = new Map<HTMLElement, ReturnType<typeof createRoot>>();
 export const makePopupContent = (e: ReactElement): HTMLElement => {
     const div = document.createElement('div');
-    const root = createRoot(div);
-    popupRoots.set(div, root);
-    root.render(e);
+    flushSync(() => createRoot(div).render(e));
+    // const root = createRoot(div);
+    // popupRoots.set(div, root);
+    // root.render(e);
     return div;
 }
-export const cleanupPopupRoots = () => {
-    popupRoots.forEach(root => root.unmount());
-    popupRoots.clear();
-}
+// export const cleanupPopupRoots = () => {
+//     popupRoots.forEach(root => root.unmount());
+//     popupRoots.clear();
+// }

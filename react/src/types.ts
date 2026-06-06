@@ -42,7 +42,7 @@ export type mapLayer = {
     fn?: Function;
     meta: FeatureLayerMeta;
     layer?: FeatureLayer;
-    i?: number;
+    i: number;
 }
 
 export type IconName = 'legend' | 'sliders' | 'layers' | 'basemap' | 'print' | 'bus' | 'reset' |
