@@ -1,10 +1,9 @@
 services:
-    postgis: 
-        container_name: pgis
-        image: transit-postgis
+    pgis: 
         build:
             context: .
             dockerfile: ./db/Dockerfile
+        restart: unless-stopped
         env_file:
             - .env
         ports: 
@@ -18,35 +17,44 @@ services:
             - /etc/timezone:/etc/timezone:ro
             - /etc/localtime:/etc/localtime:ro
         command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf" ]
+        healthcheck:
+            test: ["CMD", "pg_isready", "-h", "localhost", "-U", "gis"]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+            start_period: 10s
     api:
-        container_name: transit-api
-        depends_on:
-            postgis:
-                condition: service_healthy
-        image: transit-go-api
         build:
             context: .
             dockerfile: Dockerfile
+        restart: unless-stopped
+        depends_on:
+            pgis:
+                condition: service_healthy
         env_file:
             - .env
-        restart: unless-stopped
         ports:
             - "9999:9999"
         volumes: 
             - ./data/persist.json:/app/data/persist.json
             - ./data/cycle_osm.geojson:/app/data/cycle_osm.geojson
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9999/health"]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+            start_period: 10s
     
     proxy:
-        container_name: transit-proxy
-        depends_on:
-            postgis:
-                condition: service_healthy
-            api:
-                condition: service_healthy
-        image: transit-nginx-proxy
         build: 
             context: .
             dockerfile: ./nginx/Dockerfile
+        restart: unless-stopped
+        depends_on:
+            pgis:
+                condition: service_healthy
+            api:
+                condition: service_healthy
         ports: 
             - "3333:80"
         volumes:
@@ -56,5 +64,23 @@ services:
             - ./www/js:/var/www/js:ro
             - ./www/css:/var/www/css:ro
             - ./www/img:/var/www/img:ro
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost/proxy-health"]
+            interval: 10s
+            timeout: 3s
+            retries: 5
+            start_period: 5s
+    react:
+        build:
+            context: .
+            dockerfile: react/Dockerfile
+        restart: unless-stopped
+        env_file:
+            - .env
+        volumes: 
+            - ./react:/react
+            - /react/node_modules
+        command: "node_modules/.bin/vite"
+        
 volumes: 
     postgis_data:

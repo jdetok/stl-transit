@@ -1,16 +1,15 @@
 import "@arcgis/map-components/components/arcgis-map";
 import "@arcgis/map-components/components/arcgis-zoom";
 import "@arcgis/map-components/components/arcgis-search";
+import "@arcgis/map-components/components/arcgis-legend";
 import Extent from "@arcgis/core/geometry/Extent";
 import type { ArcgisMap } from '@arcgis/map-components/components/arcgis-map';
 import { useEffect, useRef } from "react";
 import MapView from "@arcgis/core/views/MapView";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 
 type mapProps = {
     basemap: string;
     extent: Extent;
-    // layers?: FeatureLayer[];
     onViewReady: (view: MapView) => void;
 }
 
@@ -32,15 +31,17 @@ export default function MapDiv({ basemap, extent, onViewReady }: mapProps) {
             el.addEventListener('arcgisViewReadyChange', handler);
         }
 
-        // el.addEventListener('arcgisViewReadyChange', handler);
         return () => el.removeEventListener('arcgisViewReadyChange', handler);
     }, [onViewReady]);
+
+
 
     return (
         <div className="map-div">
             <arcgis-map ref={mapRef} basemap={basemap} extent={extent}>
                 <arcgis-zoom slot='top-left'></arcgis-zoom>
                 <arcgis-search slot='top-right'></arcgis-search>
+                <arcgis-legend slot='bottom-right' legendStyle='classic' hidden={false}></arcgis-legend>
             </arcgis-map>
         </div>
     )

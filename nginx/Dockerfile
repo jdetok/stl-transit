@@ -19,11 +19,7 @@ RUN apk add --no-cache curl \
  && mkdir -p /etc/nginx /var/www \
  && touch /var/log/nginx/nginx.log /var/log/nginx/err.log
 
-# COPY www /var/www
 COPY --from=tsbuild /app/www/js /var/www/js
 
 RUN touch /var/log/nginx/nginx.log /var/log/nginx/err.log \
  && chown -R nginx:nginx /var/log/nginx /var/www
-
-HEALTHCHECK --interval=5s --timeout=3s --start-period=2s --retries=10 \
-  CMD ["curl", "-f", "http://localhost/proxy-health"]
