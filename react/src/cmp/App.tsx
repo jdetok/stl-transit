@@ -3,7 +3,7 @@ import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
 import { useCallback, useState } from 'react';
 import MapView from '@arcgis/core/views/MapView';
-import { makeFeatureLayer } from '@/utils';
+import { makeFeatureLayer, mapFullscreen } from '@/utils';
 import { FeatureLayerMeta, mapLayer } from '@/types';
 import {
     makeCyclingLayer, makePlacesLayer, makeLinesLayer, makeMetroStopsLayer,
@@ -19,6 +19,7 @@ const actionBars: actionBarProps[] = [{
     actions: [
         { text: 'Legend', label: 'Legend', scale: 's', icon: 'legend', panelKey: PANEL_CSS_CLASSES['legend']},
         { text: 'Layers', label: 'Layers', scale: 's', icon: 'layers', panelKey: PANEL_CSS_CLASSES['layerlist']},
+        { text: 'Fullscreen', label: 'Fullscreen', scale: 's', icon: 'extent', onClick: mapFullscreen},
     ],
 }, {
     layout: 'vertical', cssClass: 'actbar2', expandable: false,

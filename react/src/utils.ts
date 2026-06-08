@@ -14,6 +14,7 @@ import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBr
 import { type ReactElement } from 'react'
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { ArcgisMap } from '@arcgis/map-components/components/arcgis-map';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
@@ -188,3 +189,13 @@ export const makePopupContent = (e: ReactElement): HTMLElement => {
 //     popupRoots.forEach(root => root.unmount());
 //     popupRoots.clear();
 // }
+
+export const mapFullscreen = async () => { 
+    const refEl = document.querySelector('arcgis-map');
+    if (!refEl) return;
+    if (!document.fullscreenElement) {
+        refEl.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+};
