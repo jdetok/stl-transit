@@ -1,20 +1,44 @@
-import { BASEMAP, EXTENT, HIGHLIGHTS } from "@/consts";
+import { BASEMAP, EXTENT, HIGHLIGHTS } from '@/consts';
 import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
-import { useCallback, useState } from "react";
-import MapView from "@arcgis/core/views/MapView";
-import { makeFeatureLayer } from "@/utils";
-import { FeatureLayerMeta, mapLayer } from "@/types";
+import { useCallback, useState } from 'react';
+import MapView from '@arcgis/core/views/MapView';
+import { makeFeatureLayer } from '@/utils';
+import { FeatureLayerMeta, mapLayer } from '@/types';
 import {
-    LAYER_CENSUS_COUNTIES, LAYER_CENSUS_TRACTS, LAYER_CYCLING, LAYER_AMTRAK,
-    makePlacesLayer, makeLinesLayer, makeMetroStopsLayer, makeBusStopsLayer, 
-} from "@/layers";
+    makeCyclingLayer, makePlacesLayer, makeLinesLayer, makeMetroStopsLayer,
+    makeBusStopsLayer, makeAmtrakLayer, makeCountiesLayer, makeTractsLayer, 
+} from '@/layers';
+import { actionBarProps } from './calcite/ActionBar';
+import { panelProps } from './calcite/Panel';
+
+const phFn = () => console.log('test');
+
+const actionBars: actionBarProps[] = [{
+    layout: 'horizontal', cssClass: 'actbar1', expandable: true,
+    actions: [
+        {text: 'Legend', label: 'Legend', scale: 's', icon: 'legend', onClick: phFn},
+        {text: 'Test1', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
+        {text: 'Test2', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
+    ],
+}, {
+    layout: 'vertical', cssClass: 'actbar2', expandable: false,
+    actions: [
+        {text: 'Legend', label: 'Legend', scale: 's', icon: 'legend', onClick: phFn},
+        {text: 'Test1', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
+        {text: 'Test2', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
+    ],
+}];
+
+const panels: panelProps[] = [
+    { childType: 'legend', heading: 'Legend', closable: true },
+];
 
 const mapLayers: Map<string, mapLayer> = new Map([
-    ['counties', { meta: { ...LAYER_CENSUS_COUNTIES }, i: 0 },],
-    ['tracts', { meta: { ...LAYER_CENSUS_TRACTS }, i: 1 }],
-    ['amtrak', { meta: { ...LAYER_AMTRAK }, i: 2 }],
-    ['cycling', { meta: { ...LAYER_CYCLING }, i: 3 }],
+    ['counties', { fn: makeCountiesLayer, meta: {} as FeatureLayerMeta, i: 0 },],
+    ['tracts', { fn: makeTractsLayer, meta: {} as FeatureLayerMeta, i: 1 },],
+    ['amtrak', { fn: makeAmtrakLayer, meta: {} as FeatureLayerMeta, i: 2 }],
+    ['cycling', { fn: makeCyclingLayer, meta: {} as FeatureLayerMeta, i: 3 }],
     ['places', { fn: makePlacesLayer, meta: {} as FeatureLayerMeta, i: 4 }],
     ['lines', { fn: makeLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
     ['metro', { fn: makeMetroStopsLayer, meta: {} as FeatureLayerMeta, i: 6 }],
@@ -60,12 +84,14 @@ export default function App() {
     }, []);
 
     return (
-        <main className="app">
-            <Hdr ttl="St. Louis Transit Map" />
+        <main className='app'>
+            <Hdr ttl='St. Louis Transit Map' />
             <MapDiv
                 basemap={BASEMAP}
                 extent={EXTENT}
                 onViewReady={onViewReady}
+                actionBars={actionBars}
+                panels={panels}
             />
         </main>
     )

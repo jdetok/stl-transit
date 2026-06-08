@@ -14,6 +14,7 @@ import {
     STOP_FIELDS, BUS_LAYER_TTL, BUS_LAYER_URL, PLACE_FIELDINFOS, PLACE_FIELDS, AMTRAK_FIELDINFOS, AMTRAK_FIELDS,
     COUNTIES_FIELDINFOS, COUNTIES_FIELDS, COUNTIES_LAYER_TTL, COUNTIES_LAYER_URL, TRACTS_FIELDS,
     TRACTS_LAYER_TTL, TRACTS_LAYER_URL, CYCLE_LAYER_TTL, CYCLE_LAYER_URL, CYCLING_FIELDS,
+    CYCLING_FIELDINFOS,
 
 } from '@/consts';
 import {
@@ -203,7 +204,6 @@ export const makeBusStopsLayer = (
         visualVariables: [
             new SizeVariable({
                 field: "route_count",
-                // legendOptions: { showLegend: false },
                 stops: [
                     { value: 1, size: BUS_STOP_SIZE },
                     { value: 2, size: BUS_STOP_SIZE * 1.5 },
@@ -360,7 +360,10 @@ export const makePlacesLayer = (
     toGraphics: toPolygon,
 });
 
-export const LAYER_AMTRAK: FeatureLayerMeta = {
+export const makeAmtrakLayer = (
+    onRouteClick: (route: string) => void,
+    onRoutesClick: (route: string | string[]) => void
+): FeatureLayerMeta => ({
     title: AMTRAK_LAYER_TTL,
     dataUrl: AMTRAK_LAYER_URL,
     legendEnabled: false,
@@ -380,17 +383,24 @@ export const LAYER_AMTRAK: FeatureLayerMeta = {
     }),
     popupTemplate: {
         title: `Amtrak Stop: {name}`,
-        content: [
-            {
-                type: "fields",
-                fieldInfos: AMTRAK_FIELDINFOS
-            },
-        ],
+        content: (feature: any) => makePopupContent(
+            <LayerPopup 
+                attrs={feature.graphic?.attributes ?? feature.attributes}
+                fieldInfos={AMTRAK_FIELDINFOS}
+                routeField="bus_near"
+                routeLabel="MetroBus Routes Served"
+                onRouteClick={onRouteClick}
+                onRoutesClick={onRoutesClick}
+            />
+        ),
     },
     toGraphics: toPoint,
-};
+});
 
-export const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
+export const makeCountiesLayer = (
+    onRouteClick: (route: string) => void,
+    onRoutesClick: (route: string | string[]) => void
+): FeatureLayerMeta => ({
     title: COUNTIES_LAYER_TTL,
     dataUrl: COUNTIES_LAYER_URL,
     geometryType: "polygon",
@@ -407,17 +417,24 @@ export const LAYER_CENSUS_COUNTIES: FeatureLayerMeta = {
     }),
     popupTemplate: {
         title: "{county_name}",
-        content: [
-            {
-                type: "fields",
-                fieldInfos: COUNTIES_FIELDINFOS,
-            },
-        ],
+        content: (feature: any) => makePopupContent(
+            <LayerPopup 
+                attrs={feature.graphic?.attributes ?? feature.attributes}
+                fieldInfos={COUNTIES_FIELDINFOS}
+                routeField="bus_near"
+                routeLabel="MetroBus Routes Served"
+                onRouteClick={onRouteClick}
+                onRoutesClick={onRoutesClick}
+            />
+        ),
     },
     toGraphics: toPolygon,
-};
+});
 
-export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
+export const makeTractsLayer = (
+    onRouteClick: (route: string) => void,
+    onRoutesClick: (route: string | string[]) => void
+): FeatureLayerMeta => ({
     title: TRACTS_LAYER_TTL,
     dataUrl: TRACTS_LAYER_URL,
     geometryType: "polygon",
@@ -431,18 +448,24 @@ export const LAYER_CENSUS_TRACTS: FeatureLayerMeta = {
     }),
     popupTemplate: {
         title: "{tract_name}",
-        content: [
-            {
-                type: "fields",
-                fieldInfos:
-                    TRACTS_FIELDINFOS,
-            },
-        ],
+        content: (feature: any) => makePopupContent(
+            <LayerPopup 
+                attrs={feature.graphic?.attributes ?? feature.attributes}
+                fieldInfos={COUNTIES_FIELDINFOS}
+                routeField="bus_near"
+                routeLabel="MetroBus Routes Served"
+                onRouteClick={onRouteClick}
+                onRoutesClick={onRoutesClick}
+            />
+        ),
     },
-    toGraphics: toPolygon
-};
+    toGraphics: toPolygon,
+});
 
-export const LAYER_CYCLING: FeatureLayerMeta = {
+export const makeCyclingLayer = (
+    onRouteClick: (route: string) => void,
+    onRoutesClick: (route: string | string[]) => void
+): FeatureLayerMeta => ({
     title: CYCLE_LAYER_TTL,
     dataUrl: CYCLE_LAYER_URL,
     geometryType: "polyline",
@@ -475,12 +498,16 @@ export const LAYER_CYCLING: FeatureLayerMeta = {
     }),
     popupTemplate: {
         title: "{name}",
-        content: [
-            {
-                type: "fields",
-                fieldInfos: [{ fieldName: "surface", label: "Surface: " }],
-            },
-        ],
+         content: (feature: any) => makePopupContent(
+            <LayerPopup 
+                attrs={feature.graphic?.attributes ?? feature.attributes}
+                fieldInfos={CYCLING_FIELDINFOS}
+                routeField="bus_near"
+                routeLabel="MetroBus Routes Served"
+                onRouteClick={onRouteClick}
+                onRoutesClick={onRoutesClick}
+            />
+        ),
     },
     toGraphics: toPolyline,
-};
+});
