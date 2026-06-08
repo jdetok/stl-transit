@@ -3,11 +3,14 @@ import { ReactNode } from "react";
 export type panelChildTypes = 'legend' | 'div';
 
 export type panelProps = {
-    childType: panelChildTypes,
-    heading?: string,
-    closable?: boolean,
-    cssClass?: string,
-    slot?: string,
+    key: string;
+    childType: panelChildTypes;
+    heading?: string;
+    closable?: boolean;
+    cssClass?: string;
+    slot?: string;
+    isOpen?: boolean;
+    onClose?: () => void;
 };
 
 const panelChildMap: Record<panelChildTypes, ReactNode> = {
@@ -15,10 +18,11 @@ const panelChildMap: Record<panelChildTypes, ReactNode> = {
     div: <div />,
 };
 
-export default function Panel({ childType, heading, closable, cssClass, slot }: panelProps) {
+export default function Panel({ key, childType, heading, isOpen, closable, cssClass, slot, onClose }: panelProps) {
     return (
-        <calcite-panel className={cssClass} slot={slot} heading={heading} closable={closable}>
-            {panelChildMap[childType]}
-        </calcite-panel>
+        <calcite-panel key={key} className={cssClass} slot={slot}
+            heading={heading} closable={closable} closed={!isOpen}
+            oncalcitePanelClose={onClose}
+        >{panelChildMap[childType]}</calcite-panel>
     );
 }

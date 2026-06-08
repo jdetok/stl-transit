@@ -7,6 +7,7 @@ export type actionProps = {
     label?: string;
     scale?: Scale,
     icon?: IconName;
+    panelKey?: string;
     onClick?: MouseEventHandler;
 };
 
@@ -15,9 +16,10 @@ export type actionBarProps = {
     cssClass?: string;
     expandable?: boolean;
     actions?: actionProps[];
+    onActionClick?: (panelKey?: string) => void;
 };
 
-export default function ActionBar({ cssClass, layout, expandable, actions }: actionBarProps) {
+export default function ActionBar({ cssClass, layout, expandable, actions, onActionClick }: actionBarProps) {
     return (
         <calcite-action-bar
             className={cssClass}
@@ -30,6 +32,10 @@ export default function ActionBar({ cssClass, layout, expandable, actions }: act
                 text={action.text}
                 icon={action.icon}
                 label={action.label}
+                onClick={(e) => {
+                    action.onClick?.(e);
+                    onActionClick?.(action.panelKey)
+                }}
             />
         ))}</calcite-action-bar>
     );

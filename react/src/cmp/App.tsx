@@ -1,4 +1,4 @@
-import { BASEMAP, EXTENT, HIGHLIGHTS } from '@/consts';
+import { BASEMAP, EXTENT, HIGHLIGHTS, PANEL_CSS_CLASSES } from '@/consts';
 import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
 import { useCallback, useState } from 'react';
@@ -17,7 +17,7 @@ const phFn = () => console.log('test');
 const actionBars: actionBarProps[] = [{
     layout: 'horizontal', cssClass: 'actbar1', expandable: true,
     actions: [
-        {text: 'Legend', label: 'Legend', scale: 's', icon: 'legend', onClick: phFn},
+        { text: 'Legend', label: 'Legend', scale: 's', icon: 'legend', panelKey: PANEL_CSS_CLASSES['legend']},
         {text: 'Test1', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
         {text: 'Test2', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
     ],
@@ -30,8 +30,9 @@ const actionBars: actionBarProps[] = [{
     ],
 }];
 
+// isOpen should only be set on a maximum of one item (open by default)
 const panels: panelProps[] = [
-    { childType: 'legend', heading: 'Legend', closable: true },
+    { key: PANEL_CSS_CLASSES['legend']!, childType: 'legend', heading: 'Legend', closable: true, isOpen: true },
 ];
 
 const mapLayers: Map<string, mapLayer> = new Map([

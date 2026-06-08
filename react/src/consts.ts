@@ -31,6 +31,11 @@ export const BUS_LAYER_URL = "/layers/metrobus";
 export const CYCLE_LAYER_TTL = "Bicycle/Walking Paths";
 export const CYCLE_LAYER_URL = "/layers/cycle";
 
+export const PANEL_CSS_CLASSES: Record<string, string> = {
+    legend: 'panel-legend',
+    
+};
+
 // CUSTOM HIGHLIGHT SETTINGS
 const HL_PARKS = newHighlightSetting("parks", "mediumseagreen");
 const HL_SCHOOLS = newHighlightSetting("schools", "khaki");
