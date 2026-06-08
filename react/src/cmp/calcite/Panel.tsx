@@ -1,6 +1,6 @@
-import "@arcgis/map-components/components/arcgis-legend";
-import "@arcgis/map-components/components/arcgis-layer-list";
-import { ReactNode } from "react";
+import '@arcgis/map-components/components/arcgis-legend';
+import '@arcgis/map-components/components/arcgis-layer-list';
+import { ReactNode } from 'react';
 
 export type panelChildTypes = 'legend' | 'layerlist' | 'div';
 
