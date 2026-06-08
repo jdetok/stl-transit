@@ -1,4 +1,4 @@
-import CalciteButton from "@/cmp/CalciteBtn";
+import Button from '@/cmp/calcite/Button';
 import type { ReactElement } from 'react'
 
 type routeBtnsProps = {
@@ -15,10 +15,10 @@ export function RouteBtns({ routeNames, onRouteClick, onRoutesClick }: routeBtns
     return (
         <div className='route-btns'>
             {routes.map((route, i) => (
-                <CalciteButton key={`route-${i}`} txt={route} onClick={() => onRouteClick(route.trim())} />
+                <Button key={`route-${i}`} txt={route} onClick={() => onRouteClick(route.trim())} />
             ))}
             {routes.length > 1 && (
-                <CalciteButton txt="Highlight Each" onClick={() => onRoutesClick(routes)} />
+                <Button txt='Highlight Each' onClick={() => onRoutesClick(routes)} />
             )}
         </div>
     );
@@ -30,14 +30,14 @@ export function makeRoutesButtons(routeNames: string,
 ): ReactElement[] {
     let routeBtns: ReactElement[] = [];
     if (routeNames) {
-        routeNames.split(", ").forEach((route: string) => {
-            if (route.includes("No bus stop")) return;
-            const btn = (<CalciteButton txt={route} onClick={() => onRouteClick(route.trim())} />);
+        routeNames.split(', ').forEach((route: string) => {
+            if (route.includes('No bus stop')) return;
+            const btn = (<Button txt={route} onClick={() => onRouteClick(route.trim())} />);
             routeBtns.push(btn);
         });
         if (routeBtns.length > 1) {
-            const routes = routeNames.split(", ").map(r => r.trim());
-            const allBtn = (<CalciteButton txt="Highlight Each" onClick={() => onRoutesClick(routes)} />);
+            const routes = routeNames.split(', ').map(r => r.trim());
+            const allBtn = (<Button txt='Highlight Each' onClick={() => onRoutesClick(routes)} />);
             routeBtns.push(allBtn)
         }
     }

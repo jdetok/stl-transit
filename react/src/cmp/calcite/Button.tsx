@@ -1,8 +1,8 @@
 import type { IconName } from '@esri/calcite-components/dist/components/calcite-icon/interfaces';
-import type { Appearance, Scale } from "@esri/calcite-components/dist/components/interfaces";
+import type { Appearance, Scale } from '@esri/calcite-components/dist/components/interfaces';
 import { MouseEventHandler } from 'react';
 
-export type calciteBtnProps = {
+export type buttonProps = {
     txt: string,
     appearance?: Appearance;
     scale?: Scale,
@@ -10,7 +10,7 @@ export type calciteBtnProps = {
     onClick?: MouseEventHandler;
 };
 
-export default function CalciteButton({ txt, appearance, scale, icon, onClick }: calciteBtnProps) {
+export default function Button({ txt, appearance, scale, icon, onClick }: buttonProps) {
     return (
         <calcite-button
             appearance={appearance ?? 'outline'}

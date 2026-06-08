@@ -1,13 +1,12 @@
-import "@arcgis/map-components/components/arcgis-map";
-import "@arcgis/map-components/components/arcgis-zoom";
-import "@arcgis/map-components/components/arcgis-search";
-import "@arcgis/map-components/components/arcgis-legend";
-import Extent from "@arcgis/core/geometry/Extent";
+import '@arcgis/map-components/components/arcgis-map';
+import '@arcgis/map-components/components/arcgis-zoom';
+import '@arcgis/map-components/components/arcgis-search';
+import Extent from '@arcgis/core/geometry/Extent';
 import type { ArcgisMap } from '@arcgis/map-components/components/arcgis-map';
-import { useEffect, useRef, useState } from "react";
-import MapView from "@arcgis/core/views/MapView";
-import ActionBar, { actionBarProps } from "./calcite/ActionBar";
-import Panel, { panelProps } from "./calcite/Panel";
+import { useEffect, useRef, useState } from 'react';
+import MapView from '@arcgis/core/views/MapView';
+import ActionBar, { actionBarProps } from './calcite/ActionBar';
+import Panel, { panelProps } from './calcite/Panel';
 
 type mapProps = {
     basemap: string;
@@ -47,7 +46,7 @@ export default function MapDiv({ basemap, extent, onViewReady, actionBars, panel
     }, [onViewReady]);
 
     return (
-        <arcgis-map className="map-div" ref={mapRef} basemap={basemap} extent={extent}>
+        <arcgis-map className='map-div' ref={mapRef} basemap={basemap} extent={extent}>
             <arcgis-zoom slot='top-left'></arcgis-zoom>
             <arcgis-search slot='top-right'></arcgis-search>
             {actionBars?.map((bar, i) => (

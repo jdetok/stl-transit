@@ -1,5 +1,5 @@
-import { RouteBtns } from "@/calcite";
-import FieldInfo from "@arcgis/core/popup/FieldInfo";
+import { RouteBtns } from '@/calcite';
+import FieldInfo from '@arcgis/core/popup/FieldInfo';
 
 type layerPopupProps = {
     attrs: Record<string, any>;
@@ -15,7 +15,7 @@ export default function LayerPopup({
 }: layerPopupProps) {
     const routeNames = attrs?.[routeField];
     return (
-        <table className="popup">
+        <table className='popup'>
             <tbody>
                 {routeNames && (
                     <tr>

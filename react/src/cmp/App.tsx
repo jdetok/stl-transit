@@ -18,21 +18,19 @@ const actionBars: actionBarProps[] = [{
     layout: 'horizontal', cssClass: 'actbar1', expandable: true,
     actions: [
         { text: 'Legend', label: 'Legend', scale: 's', icon: 'legend', panelKey: PANEL_CSS_CLASSES['legend']},
-        {text: 'Test1', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
-        {text: 'Test2', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
+        { text: 'Layers', label: 'Layers', scale: 's', icon: 'layers', panelKey: PANEL_CSS_CLASSES['layerlist']},
     ],
 }, {
     layout: 'vertical', cssClass: 'actbar2', expandable: false,
     actions: [
         {text: 'Legend', label: 'Legend', scale: 's', icon: 'legend', onClick: phFn},
-        {text: 'Test1', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
-        {text: 'Test2', label: 'Test1', scale: 's', icon: 'legend', onClick: phFn},
     ],
 }];
 
 // isOpen should only be set on a maximum of one item (open by default)
 const panels: panelProps[] = [
     { key: PANEL_CSS_CLASSES['legend']!, childType: 'legend', heading: 'Legend', closable: true, isOpen: true },
+    { key: PANEL_CSS_CLASSES['layerlist']!, childType: 'layerlist', heading: 'Layers', closable: true },
 ];
 
 const mapLayers: Map<string, mapLayer> = new Map([

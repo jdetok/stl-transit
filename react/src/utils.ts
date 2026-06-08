@@ -1,26 +1,26 @@
-import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties } from "@/types";
-import { WKID } from "@/consts";
-import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
-import Graphic from "@arcgis/core/Graphic";
-import Polygon from "@arcgis/core/geometry/Polygon";
-import Point from "@arcgis/core/geometry/Point";
-import Polyline from "@arcgis/core/geometry/Polyline";
-import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
-import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
-import FieldInfo from "@arcgis/core/popup/FieldInfo";
-import { FieldProperties } from "@arcgis/core/layers/support/Field";
-import { HighlightOptionsProperties } from "@arcgis/core/views/support/HighlightOptions";
-import { ClassBreakInfoProperties } from "@arcgis/core/renderers/support/ClassBreakInfo";
+import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties } from '@/types';
+import { WKID } from '@/consts';
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import Graphic from '@arcgis/core/Graphic';
+import Polygon from '@arcgis/core/geometry/Polygon';
+import Point from '@arcgis/core/geometry/Point';
+import Polyline from '@arcgis/core/geometry/Polyline';
+import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
+import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
+import FieldInfo from '@arcgis/core/popup/FieldInfo';
+import { FieldProperties } from '@arcgis/core/layers/support/Field';
+import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
+import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBreakInfo';
 import { type ReactElement } from 'react'
-import { createRoot } from "react-dom/client";
-import { flushSync } from "react-dom";
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
         return meta.toGraphics(data);
     } else {
         if (!data?.features?.length) {
-            throw new Error(`layer "${meta.title}" expected data.features[]`);
+            throw new Error(`layer '${meta.title}' expected data.features[]`);
         }
         return data.features.map((f: any) => new Graphic({
             geometry: new Polygon({
@@ -63,13 +63,13 @@ export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureL
     return new FeatureLayer({
         title: m.title,
         source: m.source,
-        objectIdField: "ObjectID",
+        objectIdField: 'ObjectID',
         geometryType: m.geometryType,
         spatialReference: { wkid: WKID },
         renderer: m.renderer,
         popupTemplate: m.popupTemplate,
         fields: m.fields,
-        outFields: ["*"],
+        outFields: ['*'],
         legendEnabled: m.legendEnabled ?? true,
     });
 }
@@ -113,7 +113,7 @@ export const toPolygon = (data: any): Graphic[] => {
     return data.features.map((f: any) => { 
         return new Graphic({
             geometry: new Polygon({
-                rings: (f.geometry.type === "MultiPolygon") ? f.geometry.coordinates.flat(1) : f.geometry.coordinates,
+                rings: (f.geometry.type === 'MultiPolygon') ? f.geometry.coordinates.flat(1) : f.geometry.coordinates,
                 spatialReference: { wkid: WKID },
             }),
             attributes: f.properties,
@@ -133,7 +133,7 @@ export const toPoint = (data: any): Graphic[] => {
             attributes: {
                 ...f.properties,
                 ObjectID: f.properties.id,
-                route_count: f.properties.route_names ? f.properties.route_names.split(", ").length : 1,
+                route_count: f.properties.route_names ? f.properties.route_names.split(', ').length : 1,
             },
         })
     })
@@ -148,7 +148,7 @@ export const toPolyline = (data: any): Graphic[] => {
             attributes: {
                 ...f.properties,
                 ObjectID: f.properties.id,
-                route_count: f.properties.route_names ? f.properties.route_names.split(", ").length : 1,
+                route_count: f.properties.route_names ? f.properties.route_names.split(', ').length : 1,
             },
         })
     })
@@ -170,7 +170,7 @@ export const tractFieldFromInfos = (globalFieldInfos: FieldInfo[], field: string
 export function newHighlightSetting(name: string, color: ColorProperties): HighlightOptionsProperties {
     return {
         name: name, color: color,
-        fillOpacity: 0.05, shadowColor: "black",
+        fillOpacity: 0.05, shadowColor: 'black',
         shadowOpacity: 0.4, shadowDifference: 0.2,
     }
 }

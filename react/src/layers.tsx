@@ -1,13 +1,13 @@
-import SizeVariable from "@arcgis/core/renderers/visualVariables/SizeVariable.js";
-import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
-import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
-import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
-import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
-import SimpleLineSymbol from "@arcgis/core/symbols/SimpleLineSymbol";
-import SimpleRenderer from "@arcgis/core/renderers/SimpleRenderer";
-import FieldInfo from "@arcgis/core/popup/FieldInfo";
-import { UniqueValueProperties } from "@arcgis/core/renderers/support/UniqueValue";
-import { FieldProperties } from "@arcgis/core/layers/support/Field";
+import SizeVariable from '@arcgis/core/renderers/visualVariables/SizeVariable.js';
+import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer';
+import ClassBreaksRenderer from '@arcgis/core/renderers/ClassBreaksRenderer';
+import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol.js';
+import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
+import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
+import SimpleRenderer from '@arcgis/core/renderers/SimpleRenderer';
+import FieldInfo from '@arcgis/core/popup/FieldInfo';
+import { UniqueValueProperties } from '@arcgis/core/renderers/support/UniqueValue';
+import { FieldProperties } from '@arcgis/core/layers/support/Field';
 import { choropleth, cplethEls, FeatureLayerMeta } from '@/types';
 import {
     TRACTS_FIELDINFOS, LINES_FIELDINFOS, LINES_FIELDS, ML_LAYER_TTL, ML_LAYER_URL, STOP_FIELDINFOS,
@@ -22,7 +22,7 @@ import {
     toPoint, toPolygon, toPolyline,
     makePopupContent,
 } from '@/utils';
-import LayerPopup from "./cmp/LayerPopup";
+import LayerPopup from './cmp/LayerPopup';
 
 export const BUS_STOP_SIZE = 4;
 const BUS_STOP_Y_COLOR = [0, 255, 255, 0.5];
@@ -34,8 +34,8 @@ const CYCLE_LAYER_GRAVEL_COLOR = [180, 80, 170, 0.6];
 const CYCLE_LAYER_ASPHALT_COLOR = [208, 148, 75, 0.6];
 const CYCLE_LAYER_OTHER_COLOR = [75, 108, 208, 0.6];
 const CYCLE_LAYER_SIZE = .8;
-const AMTRAK_LAYER_TTL = "Amtrak";
-const AMTRAK_LAYER_URL = "/layers/amtrak";
+const AMTRAK_LAYER_TTL = 'Amtrak';
+const AMTRAK_LAYER_URL = '/layers/amtrak';
 const AMTRAK_COLOR = [245, 245, 245, 0.6];
 const AMTRAK_SIZE = 18;
 const GROCERY_INNER_COLOR = [0, 0, 255, 0.5];
@@ -85,24 +85,24 @@ export const makeLinesLayer = (
     onRouteClick: (route: string) => void,
     onRoutesClick: (route: string | string[]) => void
 ): FeatureLayerMeta => ({
-    title: "Metro Transit Lines",
-    dataUrl: "/layers/lines",
-    geometryType: "polyline",
+    title: 'Metro Transit Lines',
+    dataUrl: '/layers/lines',
+    geometryType: 'polyline',
     fields: LINES_FIELDS,
     renderer: new ClassBreaksRenderer({
-        field: "freq_wk",
+        field: 'freq_wk',
         classBreakInfos: makeChoroplethLevels({ levels: LINES_CLASSBREAKS, opac: 0.65, line: true}),
-        defaultSymbol: new SimpleLineSymbol({ color: "gray", width: 3 })
+        defaultSymbol: new SimpleLineSymbol({ color: 'gray', width: 3 })
     }),
     toGraphics: toPolyline,
     popupTemplate: {
-        title: "{route_desc}",
+        title: '{route_desc}',
         content: (feature: any) => makePopupContent(
             <LayerPopup 
                 attrs={feature.graphic?.attributes}
                 fieldInfos={LINES_FIELDINFOS}
-                routeField="route_desc"
-                routeLabel="Routes Served"
+                routeField='route_desc'
+                routeLabel='Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />
@@ -116,59 +116,59 @@ export const makeMetroStopsLayer = (
 ): FeatureLayerMeta => ({
     title: ML_LAYER_TTL,
     dataUrl: ML_LAYER_URL,
-    geometryType: "point",
+    geometryType: 'point',
     fields: STOP_FIELDS,
     renderer: new UniqueValueRenderer({
         visualVariables: [
             new SizeVariable({
-                field: "route_count",
+                field: 'route_count',
                 stops: [
                     { value: 1, size: ML_STOP_SIZE },
                     { value: 2, size: ML_STOP_SIZE * 1.2 },
                 ]
             }),
         ],
-        field: "route_ids",
+        field: 'route_ids',
         uniqueValueInfos: [
             {
-                value: "MLR",
-                label: "Red Line",
+                value: 'MLR',
+                label: 'Red Line',
                 symbol: new SimpleMarkerSymbol({
-                    style: "circle",
+                    style: 'circle',
                     color: RAIL_INNER_COLOR,
                     size: ML_STOP_SIZE,
                     outline: new SimpleLineSymbol({
                         color: 'red',
                         width: 1,
-                        style: "solid",
+                        style: 'solid',
                     })
                 }),
             },
             {
-                value: "MLB",
-                label: "Blue Line",
+                value: 'MLB',
+                label: 'Blue Line',
                 symbol: new SimpleMarkerSymbol({
-                    style: "circle",
+                    style: 'circle',
                     color: RAIL_INNER_COLOR,
                     size: ML_STOP_SIZE,
                     outline: new SimpleLineSymbol({
                         color: 'blue',
                         width: 1,
-                        style: "solid",
+                        style: 'solid',
                     })
                 }),
             },
             {
-                value: "MLB, MLR",
-                label: "Blue/Red Lines",
+                value: 'MLB, MLR',
+                label: 'Blue/Red Lines',
                 symbol: new SimpleMarkerSymbol({
-                    style: "circle",
+                    style: 'circle',
                     color: RAIL_INNER_COLOR,
                     size: ML_STOP_SIZE,
                     outline: new SimpleLineSymbol({
                         color: 'purple',
                         width: 1,
-                        style: "solid",
+                        style: 'solid',
                     })
                 }),
             },
@@ -176,13 +176,13 @@ export const makeMetroStopsLayer = (
     }),
     popupTemplate: {
         title: `Light Rail Stop: {stop_name}`,
-        outFields: ["*"],
+        outFields: ['*'],
         content: (feature: any) => makePopupContent(
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
                 fieldInfos={STOP_FIELDINFOS}
-                routeField="route_names"
-                routeLabel="MetroLink Routes Served"
+                routeField='route_names'
+                routeLabel='MetroLink Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />
@@ -196,14 +196,14 @@ export const makeBusStopsLayer = (
 ): FeatureLayerMeta => ({
     title: BUS_LAYER_TTL,
     dataUrl: BUS_LAYER_URL,
-    geometryType: "point",
+    geometryType: 'point',
     fields: STOP_FIELDS,
-    outFields: ["*"],
+    outFields: ['*'],
     renderer: new UniqueValueRenderer({
-        field: "wheelchair_access",
+        field: 'wheelchair_access',
         visualVariables: [
             new SizeVariable({
-                field: "route_count",
+                field: 'route_count',
                 stops: [
                     { value: 1, size: BUS_STOP_SIZE },
                     { value: 2, size: BUS_STOP_SIZE * 1.5 },
@@ -213,39 +213,39 @@ export const makeBusStopsLayer = (
                 ]
             }),
         ],
-        defaultLabel: "NA",
+        defaultLabel: 'NA',
         defaultSymbol: new SimpleMarkerSymbol({
-            style: "circle",
+            style: 'circle',
             color: BUS_STOP_NA_COLOR,
         }),
         uniqueValueInfos: [
             {
-                value: "true",
+                value: 'true',
                 symbol: new SimpleMarkerSymbol({
-                    style: "circle",
+                    style: 'circle',
                     color: BUS_STOP_Y_COLOR,
                 }),
-                label: "Wheelchair Accessible",
+                label: 'Wheelchair Accessible',
             },
             {
-                value: "false",
+                value: 'false',
                 symbol: new SimpleMarkerSymbol({
-                    style: "circle",
+                    style: 'circle',
                     color: BUS_STOP_NO_COLOR,
                 }),
-                label: "Not Wheelchair Accessible",
+                label: 'Not Wheelchair Accessible',
             },
         ],
     }),
     popupTemplate: {
         title: `MetroBus ({route_ids}) Stop: {stop_name}`,
-        outFields: ["*"],
+        outFields: ['*'],
         content: (feature: any) => makePopupContent(
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
                 fieldInfos={STOP_FIELDINFOS}
-                routeField="route_names"
-                routeLabel="MetroBus Routes Served"
+                routeField='route_names'
+                routeLabel='MetroBus Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />
@@ -260,85 +260,85 @@ export const makePlacesLayer = (
 ): FeatureLayerMeta => ({
     title: 'Places',
     dataUrl: '/layers/places',
-    geometryType: "polygon",
+    geometryType: 'polygon',
     fields: PLACE_FIELDS,
     renderer: new UniqueValueRenderer({
-        field: "type",
+        field: 'type',
         uniqueValueInfos: [
             {
-                value: "park",
-                label: "Parks",
+                value: 'park',
+                label: 'Parks',
                 symbol: new SimpleFillSymbol({
                     color: PARKS_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 1 }),
                 }),
             },
             {
-                value: "grocery",
-                label: "Grocery",
+                value: 'grocery',
+                label: 'Grocery',
                 symbol: new SimpleFillSymbol({
                     color: GROCERY_INNER_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 0.5 }),
                 }),
             },
             {
-                value: "social_facility",
-                label: "Social Facility",
+                value: 'social_facility',
+                label: 'Social Facility',
                 symbol: new SimpleFillSymbol({
                     color: SOCIAL_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 0.5 }),
                 }),
             },
             {
-                value: "university",
-                label: "College/University",
+                value: 'university',
+                label: 'College/University',
                 symbol: new SimpleFillSymbol({
                     color: UNI_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 0.5 }),
                 }),
             },
             {
-                value: "church",
-                label: "Place of Worship",
+                value: 'church',
+                label: 'Place of Worship',
                 symbol: new SimpleFillSymbol({
                     color: CHURCH_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 0.5 }),
                 }),
             },
             {
-                value: "medical",
-                label: "Medical Facility",
+                value: 'medical',
+                label: 'Medical Facility',
                 symbol: new SimpleFillSymbol({
                     color: MED_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 0.5 }),
                 }),
             },
             {
-                value: "entertainment",
-                label: "Enterntainment/Fun",
+                value: 'entertainment',
+                label: 'Enterntainment/Fun',
                 symbol: new SimpleFillSymbol({
                     color: FUN_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 0.5 }),
                 }),
             },
             {
-                value: "school",
-                label: "School",
+                value: 'school',
+                label: 'School',
                 symbol: new SimpleFillSymbol({
                     color: SCHOOL_COLOR,
-                    style: "diagonal-cross",
+                    style: 'diagonal-cross',
                     outline: new SimpleLineSymbol({ color: 'black', width: 1 }),
                 }),
             },
             ],
-        defaultLabel: "Other", 
+        defaultLabel: 'Other', 
         defaultSymbol: new SimpleFillSymbol({
             color: [128, 128, 128, 0.3],
             outline: new SimpleLineSymbol({ color: 'grey', width: 0.5 }),
@@ -350,8 +350,8 @@ export const makePlacesLayer = (
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
                 fieldInfos={PLACE_FIELDINFOS}
-                routeField="bus_near"
-                routeLabel="MetroBus Routes Served"
+                routeField='bus_near'
+                routeLabel='MetroBus Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />
@@ -367,17 +367,17 @@ export const makeAmtrakLayer = (
     title: AMTRAK_LAYER_TTL,
     dataUrl: AMTRAK_LAYER_URL,
     legendEnabled: false,
-    geometryType: "point",
+    geometryType: 'point',
     fields: AMTRAK_FIELDS,
     renderer: new SimpleRenderer({
         symbol: new SimpleMarkerSymbol({
-            style: "circle",
+            style: 'circle',
             color: RAIL_INNER_COLOR,
             size: AMTRAK_SIZE,
             outline: new SimpleLineSymbol({
                 color: AMTRAK_COLOR,
                 width: 1,
-                style: "solid",
+                style: 'solid',
             }),
         }),
     }),
@@ -387,8 +387,8 @@ export const makeAmtrakLayer = (
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
                 fieldInfos={AMTRAK_FIELDINFOS}
-                routeField="bus_near"
-                routeLabel="MetroBus Routes Served"
+                routeField='bus_near'
+                routeLabel='MetroBus Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />
@@ -403,7 +403,7 @@ export const makeCountiesLayer = (
 ): FeatureLayerMeta => ({
     title: COUNTIES_LAYER_TTL,
     dataUrl: COUNTIES_LAYER_URL,
-    geometryType: "polygon",
+    geometryType: 'polygon',
     fields: COUNTIES_FIELDS as FieldProperties[],
     renderer: new SimpleRenderer({
         symbol: new SimpleFillSymbol({
@@ -411,18 +411,18 @@ export const makeCountiesLayer = (
             outline: new SimpleLineSymbol({
                 color: COUNTIES_OUTLINE_COLOR,
                 width: COUNTIES_OUTLINE_SIZE,
-                style: "solid",
+                style: 'solid',
             }),
         }),
     }),
     popupTemplate: {
-        title: "{county_name}",
+        title: '{county_name}',
         content: (feature: any) => makePopupContent(
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
                 fieldInfos={COUNTIES_FIELDINFOS}
-                routeField="bus_near"
-                routeLabel="MetroBus Routes Served"
+                routeField='bus_near'
+                routeLabel='MetroBus Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />
@@ -437,23 +437,23 @@ export const makeTractsLayer = (
 ): FeatureLayerMeta => ({
     title: TRACTS_LAYER_TTL,
     dataUrl: TRACTS_LAYER_URL,
-    geometryType: "polygon",
+    geometryType: 'polygon',
     fields: TRACTS_FIELDS as FieldProperties[],
     renderer: new ClassBreaksRenderer({
-        field: "popl_dens",
+        field: 'popl_dens',
         classBreakInfos: makeChoroplethLevels({
             levels: TRACT_CLASSBREAKS.get(tractsField('popl_dens')),
             opac: 0.05,
         }),
     }),
     popupTemplate: {
-        title: "{tract_name}",
+        title: '{tract_name}',
         content: (feature: any) => makePopupContent(
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
                 fieldInfos={COUNTIES_FIELDINFOS}
-                routeField="bus_near"
-                routeLabel="MetroBus Routes Served"
+                routeField='bus_near'
+                routeLabel='MetroBus Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />
@@ -468,16 +468,16 @@ export const makeCyclingLayer = (
 ): FeatureLayerMeta => ({
     title: CYCLE_LAYER_TTL,
     dataUrl: CYCLE_LAYER_URL,
-    geometryType: "polyline",
+    geometryType: 'polyline',
     fields: CYCLING_FIELDS as FieldProperties[],
     renderer: new UniqueValueRenderer({
-        field: "surface",
+        field: 'surface',
         defaultSymbol: new SimpleLineSymbol({ color: CYCLE_LAYER_OTHER_COLOR, width: CYCLE_LAYER_SIZE }),
-        defaultLabel: "Path Type Unknown",
+        defaultLabel: 'Path Type Unknown',
         uniqueValueGroups: [{
             classes: [{
-                label: "Paved Path",
-                values: ["paved", "concrete", "asphalt"] as UniqueValueProperties[],
+                label: 'Paved Path',
+                values: ['paved', 'concrete', 'asphalt'] as UniqueValueProperties[],
                 symbol: new SimpleLineSymbol({
                     color: CYCLE_LAYER_ASPHALT_COLOR,
                     width: CYCLE_LAYER_SIZE,
@@ -486,8 +486,8 @@ export const makeCyclingLayer = (
             }],
         }, {
             classes: [{
-                label: "Unpaved Path",
-                values: ["unpaved", "dirt", "gravel", "fine_gravel", "crushed_limestone"] as UniqueValueProperties[],
+                label: 'Unpaved Path',
+                values: ['unpaved', 'dirt', 'gravel', 'fine_gravel', 'crushed_limestone'] as UniqueValueProperties[],
                 symbol: new SimpleLineSymbol({
                     color: CYCLE_LAYER_GRAVEL_COLOR,
                     width: CYCLE_LAYER_SIZE,
@@ -497,13 +497,13 @@ export const makeCyclingLayer = (
         }],        
     }),
     popupTemplate: {
-        title: "{name}",
+        title: '{name}',
          content: (feature: any) => makePopupContent(
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
                 fieldInfos={CYCLING_FIELDINFOS}
-                routeField="bus_near"
-                routeLabel="MetroBus Routes Served"
+                routeField='bus_near'
+                routeLabel='MetroBus Routes Served'
                 onRouteClick={onRouteClick}
                 onRoutesClick={onRoutesClick}
             />

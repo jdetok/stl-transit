@@ -1,5 +1,5 @@
 import type { IconName } from '@esri/calcite-components/dist/components/calcite-icon/interfaces';
-import type { Scale } from "@esri/calcite-components/dist/components/interfaces";
+import type { Scale } from '@esri/calcite-components/dist/components/interfaces';
 import { MouseEventHandler } from 'react';
 
 export type actionProps = {
@@ -12,7 +12,7 @@ export type actionProps = {
 };
 
 export type actionBarProps = {
-    layout?: "horizontal" | "vertical" | "grid";
+    layout?: 'horizontal' | 'vertical' | 'grid';
     cssClass?: string;
     expandable?: boolean;
     actions?: actionProps[];

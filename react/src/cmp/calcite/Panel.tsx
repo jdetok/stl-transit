@@ -1,6 +1,8 @@
+import "@arcgis/map-components/components/arcgis-legend";
+import "@arcgis/map-components/components/arcgis-layer-list";
 import { ReactNode } from "react";
 
-export type panelChildTypes = 'legend' | 'div';
+export type panelChildTypes = 'legend' | 'layerlist' | 'div';
 
 export type panelProps = {
     key: string;
@@ -15,6 +17,7 @@ export type panelProps = {
 
 const panelChildMap: Record<panelChildTypes, ReactNode> = {
     legend: <arcgis-legend legendStyle='classic' />,
+    layerlist: <arcgis-layer-list />,
     div: <div />,
 };
 
