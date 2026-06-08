@@ -64,7 +64,6 @@ export default function App() {
             }
             try {
                 v.layer = await makeFeatureLayer(v.meta);
-                view.map?.add(v.layer);
                 console.log('added layer:', k);
             } catch (err) {
                 console.error('error building FeatureLayer:', err);
