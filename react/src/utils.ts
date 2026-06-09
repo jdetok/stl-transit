@@ -1,5 +1,5 @@
-import { TRACTS_FIELDINFOS, WKID, CHOROPLETH } from '@/consts';
-import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties } from '@/types';
+import { TRACTS_FIELDINFOS, WKID, CHOROPLETH, HIGHLIGHTS } from '@/consts';
+import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties, mapLayer } from '@/types';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import Graphic from '@arcgis/core/Graphic';
 import Polygon from '@arcgis/core/geometry/Polygon';
@@ -284,5 +284,30 @@ export const highlightPlaces = ({ bar, placesLayer, layerView, activeHighlight }
                 }
                 : undefined
         }))
+    }
+}
+
+export const buildFeatureLayer = async ([k, v]) => {
+    try {
+        if (v.fn) v.meta = v.fn(
+            (route: string | string[]) => { console.log(route) },
+            (routes: string | string[]) => { console.log(routes) }
+        )
+    } catch (err) {
+        console.error('error building FeatureLayerMeta:', err);
+    }
+    try {
+        v.layer = await makeFeatureLayer(v.meta);
+        console.log('added layer:', k);
+    } catch (err) {
+        console.error('error building FeatureLayer:', err);
+    }
+};
+
+export const addLayer = (view: MapView) => ([k, v]: [string, mapLayer]) => {
+    if (v.layer) {
+        view.map?.add(v.layer);
+    } else {
+        console.warn('missing layer:', k);
     }
 }
