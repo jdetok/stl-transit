@@ -17,7 +17,7 @@ type mapProps = {
     view?: MapView | null;
 };
 
-export default function MapDiv({ basemap, extent, onViewReady, actionBars, panels, view }: mapProps) {
+export default function MapDiv({ basemap, extent, onViewReady, actionBars, panels }: mapProps) {
     const mapRef = useRef<ArcgisMap>(null);
     const [openPanelKey, setOpenPanelKey] = useState<string | null>(
         () => panels?.find(p => p.isOpen)?.id ?? null
