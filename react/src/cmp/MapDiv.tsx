@@ -14,12 +14,13 @@ type mapProps = {
     onViewReady: (view: MapView) => void;
     actionBars?: actionBarProps[];
     panels?: panelProps[];
+    view?: MapView | null;
 };
 
-export default function MapDiv({ basemap, extent, onViewReady, actionBars, panels }: mapProps) {
+export default function MapDiv({ basemap, extent, onViewReady, actionBars, panels, view }: mapProps) {
     const mapRef = useRef<ArcgisMap>(null);
     const [openPanelKey, setOpenPanelKey] = useState<string | null>(
-        () => panels?.find(p => p.isOpen)?.key ?? null
+        () => panels?.find(p => p.isOpen)?.id ?? null
     );
 
     const handlePrimaryActionClick = (panelKey?: string) => { 
@@ -52,9 +53,9 @@ export default function MapDiv({ basemap, extent, onViewReady, actionBars, panel
             {actionBars?.map((bar, i) => (
                 <ActionBar key={i} {...bar} onActionClick={handlePrimaryActionClick}/>
             ))}
-            {panels?.map((panel) => (
-                <Panel {...panel} key={panel.key}
-                    isOpen={openPanelKey === panel.key}
+            {panels?.map((panel, i) => (
+                <Panel {...panel} key={`${panel.id}-${i}`}
+                    isOpen={openPanelKey === panel.id}
                     onClose={() => setOpenPanelKey(null)}
                 />
             ))}

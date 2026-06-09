@@ -1,9 +1,11 @@
 import '@arcgis/map-components/components/arcgis-legend';
 import '@arcgis/map-components/components/arcgis-layer-list';
-import { ReactNode } from 'react';
+import '@arcgis/map-components/components/arcgis-basemap-gallery';
+import '@arcgis/map-components/components/arcgis-print';
+import { Fragment, ReactNode } from 'react';
 
 type containerTypes = 'panel' | 'block';
-type containerChildTypes = 'legend' | 'layerlist' | 'div';
+type containerChildTypes = 'legend' | 'layerlist' | 'basemaps' | 'print' | 'div';
 type containerChildMap = Record<containerChildTypes, ReactNode>;
 export type panelChildTypes = containerChildTypes | 'blocks'; 
 export type blockChildTypes = 'slider' | 'dropdown' | 'div';
@@ -16,6 +18,8 @@ const blockChildrenTypes: blockChildMap = {
 const containerChildrenTypes: containerChildMap = {
     legend: <arcgis-legend legendStyle='classic' />,
     layerlist: <arcgis-layer-list />,
+    basemaps: <arcgis-basemap-gallery />, 
+    print: <arcgis-print />,
     div: <div />,
 };
 
@@ -32,22 +36,28 @@ export type containerProps = {
     children?: ReactNode;
 };
 
-export type blockProps = Omit<containerProps & { childType: blockChildTypes }, 'containerType'>;
-export type panelProps = Omit<containerProps & { blocks?: containerProps[] }, 'containerType'>;
+export type blockProps = Omit<containerProps & { childType: blockChildTypes }, 'containerType' | 'key'> & { id?: string };
+export type panelProps = Omit<containerProps & {
+    blocks?: blockProps[],
+    blockComponents?: ReactNode[],
+}, 'containerType' | 'key'> & { id?: string };
 
-export const Panel = ({ key, childType, heading, isOpen, closable, cssClass, slot, onClose }: panelProps) => {
+export const Panel = ({ id, childType, heading, isOpen, closable, cssClass, slot, onClose, blockComponents }: panelProps) => {
+    const child = childType === 'blocks'
+        ? blockComponents?.map((b, i) => <Fragment key={i}>{b}</Fragment>)
+        : containerChildrenTypes[childType]
     return (
-        <calcite-panel key={key} className={cssClass} slot={slot}
+        <calcite-panel key={id} className={cssClass} slot={slot}
             heading={heading} closable={closable} closed={!isOpen}
             oncalcitePanelClose={onClose}
-        >{containerChildrenTypes[childType]}</calcite-panel>
+        >{child}</calcite-panel>
     );
 }
 
-export const Block = ({ key, heading, cssClass, slot, children }: blockProps) => {
+export const Block = ({ id, childType, heading, cssClass, slot, children }: blockProps) => {
     return (
-        <calcite-block key={key} className={cssClass} slot={slot} heading={heading}>
-            {children}
+        <calcite-block key={id} className={cssClass} slot={slot} heading={heading} collapsible expanded>
+            {children ?? blockChildrenTypes[childType as blockChildTypes]}
         </calcite-block>
     )
 }

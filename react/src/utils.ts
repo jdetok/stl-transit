@@ -39,7 +39,7 @@ export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureL
     try {
         if (m.dataUrl) {
             res = await fetch(m.dataUrl);
-            console.log(res.body);
+            // console.log(res.body);
         } else {
             throw new Error(`no data source for ${m.title} layer`);
         }
@@ -49,7 +49,7 @@ export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureL
 
     try {
         data = await res.json();
-        console.log(data); // no longer visible if this is removed - timing issue to fix
+        // console.log(data); // no longer visible if this is removed - timing issue to fix
     } catch (e) {
         throw new Error(`failed to get json from ${m.dataUrl}: ${e}`);
     }

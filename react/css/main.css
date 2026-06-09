@@ -12,6 +12,16 @@
     --panel-beside-actbar: calc(var(--map-inner-right) + 42px);
     --legend-right: 27px;
     --legend-bottom: 40px;
+    --set-calcite-color: rgba(191, 191, 191, 0.758);
+    --set-calcite-border-color: rgba(5, 5, 5, 0.758);
+}
+
+:root {
+    --calcite-color-background: var(--set-calcite-color);
+    --calcite-color-foreground-1: var(--set-calcite-color);
+    --calcite-color-border-1: var(--set-calcite-border-color);
+    --calcite-color-border-2: var(--set-calcite-border-color);
+    --calcite-color-border-3: var(--set-calcite-border-color);
 }
 
 body {
@@ -49,4 +59,8 @@ calcite-panel {
     bottom: var(--panel-above-actbar);
     height: var(--panel-height);
     width: fit-content;
+}
+
+calcite-block {
+    width: 100%;
 }

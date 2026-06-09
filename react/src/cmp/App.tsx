@@ -12,7 +12,7 @@ import MapView from '@arcgis/core/views/MapView';
 import { makeFeatureLayer } from '@/utils';
 
 export default function App() {
-    const [_, setView] = useState<MapView | null>(null);
+    const [view, setView] = useState<MapView | null>(null);
 
     const onViewReady = useCallback(async (view: MapView) => {
         console.log('view')
@@ -52,6 +52,7 @@ export default function App() {
         <main className='app'>
             <Hdr ttl='St. Louis Transit Map' />
             <MapDiv
+                view={view}
                 basemap={BASEMAP}
                 extent={EXTENT}
                 onViewReady={onViewReady}
