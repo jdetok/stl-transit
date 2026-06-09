@@ -21,8 +21,10 @@ import {
     tractFieldFromInfos, makeChoroplethLevels, makeChoroplethRanges,
     toPoint, toPolygon, toPolyline,
     makePopupContent,
+    tractsField,
 } from '@/utils';
 import LayerPopup from './cmp/LayerPopup';
+import { TRACT_CLASSBREAKS } from './data';
 
 export const BUS_STOP_SIZE = 4;
 const BUS_STOP_Y_COLOR = [0, 255, 255, 0.5];
@@ -49,29 +51,7 @@ const MED_COLOR = [255, 25, 25, 0.3];
 const COUNTIES_OUTLINE_COLOR = [0, 0, 0, 0.5];
 const COUNTIES_OUTLINE_SIZE = 1.5;
 const COUNTIES_INNER_COLOR = [255, 255, 255, 0];
-const CHOROPLETH: choropleth = {
-    lvl1: [94, 150, 98],
-    lvl2: [17, 200, 152],
-    lvl3: [0, 210, 255],
-    lvl4: [44, 60, 255],
-    lvl5: [50, 1, 63],
-} as const;
 
-// pass only the breaks (6 for 5 levels)
-export const makeChoroRanges = (numRanges: number, ranges: number[]): cplethEls[] => {
-    return makeChoroplethRanges(numRanges, ranges, CHOROPLETH);
-}
-// helper to access individual tracts fields by their fieldName, enabling dynamic selector
-export const tractsField = (field: string): FieldInfo => {
-    return tractFieldFromInfos(TRACTS_FIELDINFOS, field);
-};
-export const TRACT_CLASSBREAKS: Map<FieldInfo, cplethEls[]> = new Map([
-    [tractsField('popl_dens'), makeChoroRanges(5, [0, 2500, 5000, 7500, 10000, 100000])],
-    [tractsField('pov_dens'), makeChoroRanges(5, [0, 150, 450, 1000, 3000, 40000])],
-    [tractsField('med_inc'), makeChoroRanges(5, [0, 30000, 45000, 70000, 100000, 400000])],
-    [tractsField('med_age'), makeChoroRanges(5, [0, 30, 35, 45, 60, 100])],
-    [tractsField('med_rent'), makeChoroRanges(5, [0, 700, 950, 1350, 2000, 5000])],
-]);
 const LINES_CLASSBREAKS: cplethEls[] = [
     [0, 19, [62, 225, 67]],
     [20, 29, [50, 150, 127]],

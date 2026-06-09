@@ -1,5 +1,5 @@
+import { TRACTS_FIELDINFOS, WKID, CHOROPLETH } from '@/consts';
 import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties } from '@/types';
-import { WKID } from '@/consts';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import Graphic from '@arcgis/core/Graphic';
 import Polygon from '@arcgis/core/geometry/Polygon';
@@ -14,7 +14,6 @@ import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBr
 import { type ReactElement } from 'react'
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import { ArcgisMap } from '@arcgis/map-components/components/arcgis-map';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
@@ -155,6 +154,12 @@ export const toPolyline = (data: any): Graphic[] => {
     })
 };
 
+
+// pass only the breaks (6 for 5 levels)
+export const makeChoroRanges = (numRanges: number, ranges: number[]): cplethEls[] => {
+    return makeChoroplethRanges(numRanges, ranges, CHOROPLETH);
+}
+
 export const fieldInfos = (fields: FieldProperties[], exclude: string[]): FieldInfo[] => {
     return [...fields].filter((f) => !exclude.includes(f.name!)).map(({ name, alias }) => ({
         fieldName: name,
@@ -168,6 +173,10 @@ export const tractFieldFromInfos = (globalFieldInfos: FieldInfo[], field: string
     };
 }
 
+export const tractsField = (field: string): FieldInfo => {
+    return tractFieldFromInfos(TRACTS_FIELDINFOS, field);
+};
+
 export function newHighlightSetting(name: string, color: ColorProperties): HighlightOptionsProperties {
     return {
         name: name, color: color,
@@ -176,19 +185,11 @@ export function newHighlightSetting(name: string, color: ColorProperties): Highl
     }
 }
 
-// const popupRoots = new Map<HTMLElement, ReturnType<typeof createRoot>>();
 export const makePopupContent = (e: ReactElement): HTMLElement => {
     const div = document.createElement('div');
     flushSync(() => createRoot(div).render(e));
-    // const root = createRoot(div);
-    // popupRoots.set(div, root);
-    // root.render(e);
     return div;
 }
-// export const cleanupPopupRoots = () => {
-//     popupRoots.forEach(root => root.unmount());
-//     popupRoots.clear();
-// }
 
 export const mapFullscreen = async () => { 
     const refEl = document.querySelector('arcgis-map');

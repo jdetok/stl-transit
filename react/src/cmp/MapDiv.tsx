@@ -1,12 +1,12 @@
+import MapView from '@arcgis/core/views/MapView';
+import Extent from '@arcgis/core/geometry/Extent';
+import { useEffect, useRef, useState } from 'react';
 import '@arcgis/map-components/components/arcgis-map';
 import '@arcgis/map-components/components/arcgis-zoom';
 import '@arcgis/map-components/components/arcgis-search';
-import Extent from '@arcgis/core/geometry/Extent';
-import type { ArcgisMap } from '@arcgis/map-components/components/arcgis-map';
-import { useEffect, useRef, useState } from 'react';
-import MapView from '@arcgis/core/views/MapView';
 import ActionBar, { actionBarProps } from './calcite/ActionBar';
-import Panel, { panelProps } from './calcite/Panel';
+import { Panel, type panelProps } from './calcite/Container';
+import type { ArcgisMap } from '@arcgis/map-components/components/arcgis-map';
 
 type mapProps = {
     basemap: string;

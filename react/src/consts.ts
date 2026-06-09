@@ -2,7 +2,14 @@ import Extent from '@arcgis/core/geometry/Extent';
 import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
 import { newHighlightSetting, fieldInfos } from '@/utils';
-import { CollectionProperties } from '@/types';
+import { choropleth, CollectionProperties } from '@/types';
+export const CHOROPLETH: choropleth = {
+    lvl1: [94, 150, 98],
+    lvl2: [17, 200, 152],
+    lvl3: [0, 210, 255],
+    lvl4: [44, 60, 255],
+    lvl5: [50, 1, 63],
+} as const;
 
 export const BASE = 'http://localhost:9999';
 
@@ -15,6 +22,11 @@ export const EXTENT = {
     ymax: 38.75,
     spatialReference: {wkid: WKID},
 } as Extent;
+
+export const PANEL_CSS_CLASSES: Record<string, string> = {
+    legend: 'panel-legend',
+    layerlist: 'panel-layerlist',
+};
 
 export const TRACTS_LAYER_TTL = 'US Census Tracts';
 export const TRACTS_LAYER_URL = '/layers/tracts';
@@ -30,11 +42,6 @@ export const BUS_LAYER_URL = '/layers/metrobus';
 
 export const CYCLE_LAYER_TTL = 'Bicycle/Walking Paths';
 export const CYCLE_LAYER_URL = '/layers/cycle';
-
-export const PANEL_CSS_CLASSES: Record<string, string> = {
-    legend: 'panel-legend',
-    layerlist: 'panel-layerlist',
-};
 
 // CUSTOM HIGHLIGHT SETTINGS
 const HL_PARKS = newHighlightSetting('parks', 'mediumseagreen');
