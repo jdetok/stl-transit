@@ -1,4 +1,3 @@
-// import { BASEMAP, EXTENT, HIGHLIGHTS, PANEL_CSS_CLASSES } from '@/consts';
 import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
 import { viewReady } from '@/viewReady';
@@ -12,7 +11,6 @@ export default function App() {
     const [view, setView] = useState<MapView | null>(null);
     const [builtActionBars, setBuiltActionBars] = useState<actionBarProps[]>(actionBars);
     const activeHighlight = useRef<{ remove: () => void } | null>(null);
-
     const onViewReady = useCallback(viewReady({ setView, setBuiltActionBars, activeHighlight }), []);
 
     return (

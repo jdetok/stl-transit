@@ -1,25 +1,25 @@
-import { TRACTS_FIELDINFOS, WKID, CHOROPLETH, HIGHLIGHTS } from '@/consts';
-import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties, mapLayer } from '@/types';
-import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
-import Graphic from '@arcgis/core/Graphic';
-import Polygon from '@arcgis/core/geometry/Polygon';
-import Point from '@arcgis/core/geometry/Point';
-import Polyline from '@arcgis/core/geometry/Polyline';
-import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
-import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
-import FieldInfo from '@arcgis/core/popup/FieldInfo';
-import { FieldProperties } from '@arcgis/core/layers/support/Field';
-import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
-import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBreakInfo';
-import { RefObject, type ReactElement } from 'react'
-import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
-import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
-import FeatureLayerView from '@arcgis/core/views/layers/FeatureLayerView';
-import FeatureEffect from '@arcgis/core/layers/support/FeatureEffect';
-import FeatureFilter from '@arcgis/core/layers/support/FeatureFilter';
+import Graphic from '@arcgis/core/Graphic';
+import { createRoot } from 'react-dom/client';
+import Point from '@arcgis/core/geometry/Point';
+import Polygon from '@arcgis/core/geometry/Polygon';
+import { RefObject, type ReactElement } from 'react';
+import FieldInfo from '@arcgis/core/popup/FieldInfo';
+import Polyline from '@arcgis/core/geometry/Polyline';
 import MapView from '@arcgis/core/views/MapView';
 import { actionBarProps } from './cmp/calcite/ActionBar';
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
+import { TRACTS_FIELDINFOS, WKID, CHOROPLETH } from '@/consts';
+import { FieldProperties } from '@arcgis/core/layers/support/Field';
+import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
+import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
+import FeatureEffect from '@arcgis/core/layers/support/FeatureEffect';
+import FeatureFilter from '@arcgis/core/layers/support/FeatureFilter';
+import FeatureLayerView from '@arcgis/core/views/layers/FeatureLayerView';
+import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
+import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBreakInfo';
+import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties, mapLayer } from '@/types';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
@@ -45,7 +45,6 @@ export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureL
     try {
         if (m.dataUrl) {
             res = await fetch(m.dataUrl);
-            // console.log(res.body);
         } else {
             throw new Error(`no data source for ${m.title} layer`);
         }
@@ -55,7 +54,6 @@ export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureL
 
     try {
         data = await res.json();
-        // console.log(data); // no longer visible if this is removed - timing issue to fix
     } catch (e) {
         throw new Error(`failed to get json from ${m.dataUrl}: ${e}`);
     }

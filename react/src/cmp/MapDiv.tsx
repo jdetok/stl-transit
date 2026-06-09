@@ -28,17 +28,23 @@ export default function MapDiv({ basemap, extent, onViewReady, actionBars, panel
         setOpenPanelKey(prev => prev === panelKey ? null : panelKey)
     };
 
+    const hasRun = useRef(false);
     useEffect(() => {
+        if (hasRun.current) return;
         const el = mapRef.current;
         if (!el) return;
 
         const handler = (e: Event) => {
             const view = (e.target as ArcgisMap).view as MapView;
-            if (view) onViewReady(view);
+            if (view) {
+                onViewReady(view);
+                hasRun.current = true;
+            } 
         };
 
         if (el.view) {
             onViewReady(el.view as MapView);
+            hasRun.current = true;
         } else {
             el.addEventListener('arcgisViewReadyChange', handler);
         }
