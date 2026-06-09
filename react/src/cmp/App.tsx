@@ -6,16 +6,19 @@ import {
 import { actionBars, panels, mapLayers } from '@/data';
 import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import MapView from '@arcgis/core/views/MapView';
 
-import { makeFeatureLayer } from '@/utils';
+import { highlightPlaces, makeFeatureLayer } from '@/utils';
+import { actionBarProps } from './calcite/ActionBar';
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 
 export default function App() {
     const [view, setView] = useState<MapView | null>(null);
+    const [builtActionBars, setBuiltActionBars] = useState<actionBarProps[]>(actionBars);
+    const activeHighlight = useRef<{ remove: () => void } | null>(null);
 
     const onViewReady = useCallback(async (view: MapView) => {
-        console.log('view')
         view.highlights = HIGHLIGHTS;
 
         const layers = [...mapLayers.entries()];
@@ -44,7 +47,12 @@ export default function App() {
                 console.warn('missing layer:', k);
             }
         });
-        
+
+        const placesLayer = mapLayers.get('places')?.layer as FeatureLayer | undefined;
+        const layerView = await view?.whenLayerView(placesLayer!);
+        const newActBars = actionBars.map((bar) => highlightPlaces({ bar, placesLayer, layerView, activeHighlight }));
+
+        setBuiltActionBars(newActBars);
         setView(view);
     }, []);
 
@@ -56,7 +64,7 @@ export default function App() {
                 basemap={BASEMAP}
                 extent={EXTENT}
                 onViewReady={onViewReady}
-                actionBars={actionBars}
+                actionBars={builtActionBars}
                 panels={panels}
             />
         </main>

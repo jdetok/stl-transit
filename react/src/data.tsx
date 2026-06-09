@@ -1,6 +1,6 @@
 import { actionBarProps } from "./cmp/calcite/ActionBar";
 import { PANEL_CSS_CLASSES } from "./consts";
-import { makeChoroRanges, mapFullscreen, tractsField } from "./utils";
+import { makeChoroRanges, mapFullscreen, newHighlightSetting, tractsField } from "./utils";
 import FieldInfo from "@arcgis/core/popup/FieldInfo";
 import { cplethEls, FeatureLayerMeta, mapLayer } from "./types";
 import { makeAmtrakLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer, makeLinesLayer, makeMetroStopsLayer, makePlacesLayer, makeTractsLayer } from './layers';
@@ -15,6 +15,12 @@ export const TRACT_CLASSBREAKS: Map<FieldInfo, cplethEls[]> = new Map([
     [tractsField('med_rent'), makeChoroRanges(5, [0, 700, 950, 1350, 2000, 5000])],
 ]);
 
+const HL_PARKS = newHighlightSetting("parks", "mediumseagreen");
+const HL_SCHOOLS = newHighlightSetting("schools", "khaki");
+const HL_CHURCH = newHighlightSetting("church", "violet");
+const HL_MED = newHighlightSetting("med", "mediumvioletred");
+const HL_GROCERY = newHighlightSetting("grocery", "white");
+
 export const actionBars: actionBarProps[] = [{
     layout: 'horizontal', cssClass: 'actbar1', expandable: true,
     actions: [
@@ -28,7 +34,28 @@ export const actionBars: actionBarProps[] = [{
 }, {
     layout: 'vertical', cssClass: 'actbar2', expandable: false,
     actions: [
-        {text: 'Legend', label: 'Legend', scale: 's', icon: 'legend'},
+        {
+            id: "parks", icon: "tree", text: "Highlight Parks",
+            where: `type = 'park'`, highlightName: HL_PARKS.name!,
+        }, {
+            id: "medical", icon: "medical", text: "Highlight Hospitals",
+            where: `type = 'medical'`, highlightName: HL_MED.name!,
+        }, {
+            id: "university", icon: "mooc", text: "Highlight Universities",
+            where: `type = 'university'`, highlightName: HL_SCHOOLS.name!,
+        }, {
+            id: "school", icon: "education", text: "Highlight Schools",
+            where: `type = 'school'`, highlightName: HL_SCHOOLS.name!,
+        }, {
+            id: "grocery", icon: "shopping-cart", text: "Highlight Grocery Stores",
+            where: `type = 'grocery'`, highlightName: HL_GROCERY.name!,
+        }, {
+            id: "church", icon: "organization", text: "Highlight Places of Worship",
+            where: `type = 'church'`, highlightName: HL_CHURCH.name!,
+        }, {
+            id: "social_facility", icon: "home", text: "Highlight Community Centers",
+            where: `type = 'social_facility'`, highlightName: HL_MED.name!,
+        },
     ],
 }];
 

@@ -11,9 +11,15 @@ import FieldInfo from '@arcgis/core/popup/FieldInfo';
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
 import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
 import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBreakInfo';
-import { type ReactElement } from 'react'
+import { RefObject, type ReactElement } from 'react'
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
+import FeatureLayerView from '@arcgis/core/views/layers/FeatureLayerView';
+import FeatureEffect from '@arcgis/core/layers/support/FeatureEffect';
+import FeatureFilter from '@arcgis/core/layers/support/FeatureFilter';
+import MapView from '@arcgis/core/views/MapView';
+import { actionBarProps } from './cmp/calcite/ActionBar';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
@@ -200,3 +206,83 @@ export const mapFullscreen = async () => {
         document.exitFullscreen();
     }
 };
+
+export const queryFeatureLayer = async (layer: FeatureLayer, query: string, returnGeometry?: boolean, returnCentroid?: boolean): Promise<FeatureSet> => {
+    return await layer.queryFeatures({
+        where: query,
+        returnGeometry: returnGeometry,
+        returnCentroid: returnCentroid,
+    });
+}
+
+export const applyFeatureFx = (view: FeatureLayerView, fx: FeatureEffect) => view.featureEffect = fx;
+
+export const applyRoutesFilter = async (mapView: MapView, linesLayer: FeatureLayer, stopLayers: FeatureLayer[], routeNames: string | string[]) => { 
+    const routes = Array.isArray(routeNames) ? routeNames : [routeNames];
+
+    // stops layers use route_names field, lines layer uses route_desc field. build separate queries for each
+    let whereStop: string;
+    let whereLine: string;
+    if (routeNames.length > 1) {
+        whereStop = (routes as string[]).map(r => `route_names like '%${r}%'`).join(" or ");
+        if (routes.some(r => r.includes("MetroLink"))) {
+            // lines layer stores metro routes as "MetroLink Red Line" rather than "MLR-MetroLink Red Line"
+            whereLine = (routes as string[]).map(r => `route_desc like '%${r.substring(4)}%'`).join(" or ");
+        } else {
+            whereLine = (routes as string[]).map(r => `route_desc like '%${r}%'`).join(" or ");
+        }
+    } else {
+        whereStop = `route_names like '%${routeNames[0]}%'`;
+        whereLine = `route_desc like '%${routeNames[0]}%'`;
+    }
+
+    const layers = [linesLayer, ...stopLayers];
+
+    // add the feature effect for each layer
+    layers.forEach(async (layer: FeatureLayer, i: number) => {
+        const layerView = await mapView.whenLayerView(layer) as FeatureLayerView;
+
+        layerView.featureEffect = new FeatureEffect({
+            filter: new FeatureFilter({ where: i < (layers.length - 1) ? whereStop : whereLine }),
+            includedEffect: "bloom(1, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
+        });
+    })
+
+    // query just the lines and move the map there
+    const res = await queryFeatureLayer(linesLayer, whereLine);
+    if (res.features.length) {
+        await mapView.goTo(res.features, { duration: 600 });
+    }
+};
+
+export const highlightPlaces = ({ bar, placesLayer, layerView, activeHighlight }: {
+    bar: actionBarProps,
+    placesLayer: FeatureLayer | undefined,
+    layerView: FeatureLayerView | undefined,
+    activeHighlight: RefObject<{ remove: () => void; } | null>
+}) => {
+    if ( bar.cssClass !== 'actbar2' || !placesLayer || !layerView ) return bar;
+    return {
+        ...bar,
+        actions: bar.actions?.map((action) => ({
+            ...action,
+            onClick: action.where
+                ? async () => {
+                    if (!placesLayer) {
+                        console.warn('palces layer not ready');
+                        return;
+                    }
+                    try {
+                        const result = await queryFeatureLayer(placesLayer, action.where!);
+                                    
+                        activeHighlight.current?.remove();
+                        activeHighlight.current = layerView?.highlight(result.features);
+                        console.log(`Query results for [${action.id}]:`, result);
+                    } catch (err) {
+                        console.error(`Query failed for action ${action.id}:`, err);
+                    }
+                }
+                : undefined
+        }))
+    }
+}

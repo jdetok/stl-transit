@@ -4,11 +4,14 @@ import { MouseEventHandler } from 'react';
 
 export type actionProps = {
     text: string,
+    id?: string,
     label?: string;
     scale?: Scale,
     icon?: IconName;
     panelKey?: string;
     onClick?: MouseEventHandler;
+    where?: string;
+    highlightName?: string;
 };
 
 export type actionBarProps = {

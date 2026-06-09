@@ -22,6 +22,9 @@
     --calcite-color-border-1: var(--set-calcite-border-color);
     --calcite-color-border-2: var(--set-calcite-border-color);
     --calcite-color-border-3: var(--set-calcite-border-color);
+    --calcite-corner-radius-sharp: 0.4rem;
+    --calcite-border-width-lg: 6px;
+    --calcite-border-width-md: 3px;
 }
 
 body {
