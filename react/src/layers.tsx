@@ -1,3 +1,4 @@
+import { UniqueValueProperties } from '@arcgis/core/renderers/support/UniqueValue';
 import SizeVariable from '@arcgis/core/renderers/visualVariables/SizeVariable.js';
 import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer';
 import ClassBreaksRenderer from '@arcgis/core/renderers/ClassBreaksRenderer';
@@ -5,26 +6,16 @@ import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol.js';
 import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
 import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
 import SimpleRenderer from '@arcgis/core/renderers/SimpleRenderer';
-import FieldInfo from '@arcgis/core/popup/FieldInfo';
-import { UniqueValueProperties } from '@arcgis/core/renderers/support/UniqueValue';
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
-import { choropleth, cplethEls, FeatureLayerMeta } from '@/types';
-import {
-    TRACTS_FIELDINFOS, LINES_FIELDINFOS, LINES_FIELDS, ML_LAYER_TTL, ML_LAYER_URL, STOP_FIELDINFOS,
-    STOP_FIELDS, BUS_LAYER_TTL, BUS_LAYER_URL, PLACE_FIELDINFOS, PLACE_FIELDS, AMTRAK_FIELDINFOS, AMTRAK_FIELDS,
-    COUNTIES_FIELDINFOS, COUNTIES_FIELDS, COUNTIES_LAYER_TTL, COUNTIES_LAYER_URL, TRACTS_FIELDS,
-    TRACTS_LAYER_TTL, TRACTS_LAYER_URL, CYCLE_LAYER_TTL, CYCLE_LAYER_URL, CYCLING_FIELDS,
-    CYCLING_FIELDINFOS,
-
-} from '@/consts';
-import {
-    tractFieldFromInfos, makeChoroplethLevels, makeChoroplethRanges,
-    toPoint, toPolygon, toPolyline,
-    makePopupContent,
-    tractsField,
-} from '@/utils';
+import { cplethEls, FeatureLayerMeta } from '@/types';
 import LayerPopup from './cmp/LayerPopup';
 import { TRACT_CLASSBREAKS } from './data';
+import { LINES_FIELDINFOS, LINES_FIELDS, ML_LAYER_TTL, ML_LAYER_URL, STOP_FIELDINFOS,
+    STOP_FIELDS, BUS_LAYER_TTL, BUS_LAYER_URL, PLACE_FIELDINFOS, PLACE_FIELDS, AMTRAK_FIELDINFOS, AMTRAK_FIELDS,
+    COUNTIES_FIELDINFOS, COUNTIES_FIELDS, COUNTIES_LAYER_TTL, COUNTIES_LAYER_URL, TRACTS_FIELDS,
+    TRACTS_LAYER_TTL, TRACTS_LAYER_URL, CYCLE_LAYER_TTL, CYCLE_LAYER_URL, CYCLING_FIELDS, CYCLING_FIELDINFOS,
+} from '@/consts';
+import { makeChoroplethLevels, toPoint, toPolygon, toPolyline, makePopupContent, tractsField } from '@/utils';
 
 export const BUS_STOP_SIZE = 4;
 const BUS_STOP_Y_COLOR = [0, 255, 255, 0.5];

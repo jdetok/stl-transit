@@ -158,7 +158,6 @@ export const toPolyline = (data: any): Graphic[] => {
     })
 };
 
-
 // pass only the breaks (6 for 5 levels)
 export const makeChoroRanges = (numRanges: number, ranges: number[]): cplethEls[] => {
     return makeChoroplethRanges(numRanges, ranges, CHOROPLETH);
@@ -224,7 +223,6 @@ export const applyRoutesFilter = async (mapView: MapView, linesLayer: FeatureLay
     if (routeNames.length > 1) {
         whereStop = (routes as string[]).map(r => `route_names like '%${r}%'`).join(" or ");
         if (routes.some(r => r.includes("MetroLink"))) {
-            // lines layer stores metro routes as "MetroLink Red Line" rather than "MLR-MetroLink Red Line"
             whereLine = (routes as string[]).map(r => `route_desc like '%${r.substring(4)}%'`).join(" or ");
         } else {
             whereLine = (routes as string[]).map(r => `route_desc like '%${r}%'`).join(" or ");
@@ -236,15 +234,14 @@ export const applyRoutesFilter = async (mapView: MapView, linesLayer: FeatureLay
 
     const layers = [linesLayer, ...stopLayers];
 
-    // add the feature effect for each layer
-    layers.forEach(async (layer: FeatureLayer, i: number) => {
+    await Promise.all(layers.map(async (layer: FeatureLayer, i: number) => {
         const layerView = await mapView.whenLayerView(layer) as FeatureLayerView;
-
         layerView.featureEffect = new FeatureEffect({
-            filter: new FeatureFilter({ where: i < (layers.length - 1) ? whereStop : whereLine }),
+            filter: new FeatureFilter({ where: i === 0 ? whereLine : whereStop }),
             includedEffect: "bloom(1, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
+            excludedEffect: "opacity(75%)",
         });
-    })
+    })); 
 
     // query just the lines and move the map there
     const res = await queryFeatureLayer(linesLayer, whereLine);
@@ -285,12 +282,13 @@ export const highlightPlaces = ({ bar, placesLayer, layerView, activeHighlight }
     }
 }
 
-export const buildFeatureLayer = async ([k, v]) => {
+export const buildFeatureLayer = async (
+    [k, v],
+    onRouteClick: (route: string | string[]) => void,
+    onRoutesClick: (routes: string | string[]) => void
+) => {
     try {
-        if (v.fn) v.meta = v.fn(
-            (route: string | string[]) => { console.log(route) },
-            (routes: string | string[]) => { console.log(routes) }
-        )
+        if (v.fn) v.meta = v.fn(onRouteClick, onRoutesClick);
     } catch (err) {
         console.error('error building FeatureLayerMeta:', err);
     }

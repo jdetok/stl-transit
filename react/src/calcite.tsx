@@ -1,5 +1,4 @@
 import Button from '@/cmp/calcite/Button';
-import type { ReactElement } from 'react'
 
 type routeBtnsProps = {
     routeNames: string;
@@ -22,24 +21,4 @@ export function RouteBtns({ routeNames, onRouteClick, onRoutesClick }: routeBtns
             )}
         </div>
     );
-}
-
-export function makeRoutesButtons(routeNames: string,
-    onRouteClick: (route: string) => void,
-    onRoutesClick: (route: string | string[]) => void
-): ReactElement[] {
-    let routeBtns: ReactElement[] = [];
-    if (routeNames) {
-        routeNames.split(', ').forEach((route: string) => {
-            if (route.includes('No bus stop')) return;
-            const btn = (<Button txt={route} onClick={() => onRouteClick(route.trim())} />);
-            routeBtns.push(btn);
-        });
-        if (routeBtns.length > 1) {
-            const routes = routeNames.split(', ').map(r => r.trim());
-            const allBtn = (<Button txt='Highlight Each' onClick={() => onRoutesClick(routes)} />);
-            routeBtns.push(allBtn)
-        }
-    }
-    return routeBtns;
 }
