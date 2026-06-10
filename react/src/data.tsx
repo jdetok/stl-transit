@@ -1,9 +1,12 @@
 import { actionBarProps } from "./cmp/calcite/ActionBar";
-import { PANEL_CSS_CLASSES } from "./consts";
-import { makeChoroRanges, mapFullscreen, newHighlightSetting, tractsField } from "./utils";
+import { PANEL_CSS_CLASSES, HL_CHURCH, HL_GROCERY, HL_MED, HL_PARKS, HL_SCHOOLS } from "./consts";
+import { makeChoroRanges, mapFullscreen, tractsField } from "./utils";
 import FieldInfo from "@arcgis/core/popup/FieldInfo";
 import { cplethEls, FeatureLayerMeta, mapLayer } from "./types";
-import { makeAmtrakLayer, makeBusLinesLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer, makeLinesLayer, makeMetroLinesLayer, makeMetroStopsLayer, makePlacesLayer, makeTractsLayer } from './layers';
+import {
+    makeAmtrakLayer, makeBusLinesLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer,
+    makeMetroLinesLayer, makeMetroStopsLayer, makePlacesLayer, makeTractsLayer
+} from './layers';
 import { panelProps } from "./cmp/calcite/Container";
 import SliderBlock from "@/cmp/calcite/SliderBlock";
 import SelectBlock from "./cmp/calcite/SelectBlock";
@@ -17,11 +20,39 @@ export const TRACT_CLASSBREAKS: Map<FieldInfo, cplethEls[]> = new Map([
     [tractsField('med_rent'), makeChoroRanges(5, [0, 700, 950, 1350, 2000, 5000])],
 ]);
 
-const HL_PARKS = newHighlightSetting("parks", "mediumseagreen");
-const HL_SCHOOLS = newHighlightSetting("schools", "khaki");
-const HL_CHURCH = newHighlightSetting("church", "violet");
-const HL_MED = newHighlightSetting("med", "mediumvioletred");
-const HL_GROCERY = newHighlightSetting("grocery", "white");
+// isOpen should only be set on a maximum of one item (open by default)
+export const panels: panelProps[] = [
+    { id: PANEL_CSS_CLASSES['legend']!, childType: 'legend', heading: 'Legend', closable: true, isOpen: true },
+    { id: PANEL_CSS_CLASSES['layerlist']!, childType: 'layerlist', heading: 'Layers', closable: true },
+    { id: PANEL_CSS_CLASSES['basemaps']!, childType: 'basemaps', heading: 'Basemaps', closable: true },
+    { id: PANEL_CSS_CLASSES['print']!, childType: 'print', heading: 'Export', closable: true },
+    { id: PANEL_CSS_CLASSES['modifiers']!, childType: 'blocks',
+        heading: 'Appearance Modifiers', closable: true, useGrid2v: true,
+        blockComponents: [
+            <SelectBlock id='select-0' heading='Tract Opacity Field' />,
+            <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01} />,
+            <SliderBlock id='slider-1' heading='MetroBus Stop Size' min={0} max={3} value={1} step={0.1} />,
+            <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0} max={3} value={1} step={0.1} />,
+            <SliderBlock id='slider-3' heading='MetroBus Line Size' min={0} max={15} value={1} step={0.25} />,
+            <SliderBlock id='slider-4' heading='MetroLink Line Size' min={0} max={15} value={1} step={0.25} />,
+        ]
+    },
+    { id: PANEL_CSS_CLASSES['routes']!, childType: 'blocks', heading: 'Bus Routes', closable: true, blockComponents: [
+        <DropdownBlock id='dropdown-0' heading='Bus Routes' />,
+    ]},
+];
+
+export const mapLayers: Map<string, mapLayer> = new Map([
+    ['counties', { fn: makeCountiesLayer, meta: {} as FeatureLayerMeta, i: 0 },],
+    ['tracts', { fn: makeTractsLayer, meta: {} as FeatureLayerMeta, i: 1 },],
+    ['amtrak', { fn: makeAmtrakLayer, meta: {} as FeatureLayerMeta, i: 2 }],
+    ['cycling', { fn: makeCyclingLayer, meta: {} as FeatureLayerMeta, i: 3 }],
+    ['places', { fn: makePlacesLayer, meta: {} as FeatureLayerMeta, i: 4 }],
+    ['metrolines', { fn: makeMetroLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
+    ['buslines', { fn: makeBusLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
+    ['metro', { fn: makeMetroStopsLayer, meta: {} as FeatureLayerMeta, i: 7 }],
+    ['bus', { fn: makeBusStopsLayer, meta: {} as FeatureLayerMeta, i: 8 }],
+]);
 
 export const actionBars: actionBarProps[] = [{
     layout: 'horizontal', cssClass: 'actbar1', expandable: true,
@@ -65,37 +96,3 @@ export const actionBars: actionBarProps[] = [{
         },
     ],
 }];
-
-// isOpen should only be set on a maximum of one item (open by default)
-export const panels: panelProps[] = [
-    { id: PANEL_CSS_CLASSES['legend']!, childType: 'legend', heading: 'Legend', closable: true, isOpen: true },
-    { id: PANEL_CSS_CLASSES['layerlist']!, childType: 'layerlist', heading: 'Layers', closable: true },
-    { id: PANEL_CSS_CLASSES['basemaps']!, childType: 'basemaps', heading: 'Basemaps', closable: true },
-    { id: PANEL_CSS_CLASSES['print']!, childType: 'print', heading: 'Export', closable: true },
-    { id: PANEL_CSS_CLASSES['modifiers']!, childType: 'blocks',
-        heading: 'Appearance Modifiers', closable: true, useGrid2v: true,
-        blockComponents: [
-            <SelectBlock id='select-0' heading='Tract Opacity Field' />,
-            <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01} />,
-            <SliderBlock id='slider-1' heading='MetroBus Stop Size' min={0} max={3} value={1} step={0.1} />,
-            <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0} max={3} value={1} step={0.1} />,
-            <SliderBlock id='slider-3' heading='MetroBus Line Size' min={0} max={15} value={1} step={0.25} />,
-            <SliderBlock id='slider-4' heading='MetroLink Line Size' min={0} max={15} value={1} step={0.25} />,
-        ]
-    },
-    { id: PANEL_CSS_CLASSES['routes']!, childType: 'blocks', heading: 'Bus Routes', closable: true, blockComponents: [
-        <DropdownBlock id='dropdown-0' heading='Bus Routes' />,
-    ]},
-];
-
-export const mapLayers: Map<string, mapLayer> = new Map([
-    ['counties', { fn: makeCountiesLayer, meta: {} as FeatureLayerMeta, i: 0 },],
-    ['tracts', { fn: makeTractsLayer, meta: {} as FeatureLayerMeta, i: 1 },],
-    ['amtrak', { fn: makeAmtrakLayer, meta: {} as FeatureLayerMeta, i: 2 }],
-    ['cycling', { fn: makeCyclingLayer, meta: {} as FeatureLayerMeta, i: 3 }],
-    ['places', { fn: makePlacesLayer, meta: {} as FeatureLayerMeta, i: 4 }],
-    ['metrolines', { fn: makeMetroLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
-    ['buslines', { fn: makeBusLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
-    ['metro', { fn: makeMetroStopsLayer, meta: {} as FeatureLayerMeta, i: 7 }],
-    ['bus', { fn: makeBusStopsLayer, meta: {} as FeatureLayerMeta, i: 8 }],
-]);

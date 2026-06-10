@@ -48,11 +48,12 @@ export const CYCLE_LAYER_TTL = 'Bicycle/Walking Paths';
 export const CYCLE_LAYER_URL = '/layers/cycle';
 
 // CUSTOM HIGHLIGHT SETTINGS
-const HL_PARKS = newHighlightSetting('parks', 'mediumseagreen');
-const HL_SCHOOLS = newHighlightSetting('schools', 'khaki');
-const HL_CHURCH = newHighlightSetting('church', 'violet');
-const HL_MED = newHighlightSetting('med', 'mediumvioletred');
-const HL_GROCERY = newHighlightSetting('grocery', 'white');
+export const HL_PARKS = newHighlightSetting('parks', 'mediumseagreen');
+export const HL_SCHOOLS = newHighlightSetting('schools', 'khaki');
+export const HL_CHURCH = newHighlightSetting('church', 'violet');
+export const HL_MED = newHighlightSetting('med', 'mediumvioletred');
+export const HL_GROCERY = newHighlightSetting('grocery', 'white');
+
 export const HIGHLIGHTS: CollectionProperties<HighlightOptionsProperties> = [
     newHighlightSetting('default', 'cyan'),
     HL_PARKS,
