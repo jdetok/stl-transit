@@ -2,11 +2,12 @@ import { flushSync } from 'react-dom';
 import Graphic from '@arcgis/core/Graphic';
 import { createRoot } from 'react-dom/client';
 import Point from '@arcgis/core/geometry/Point';
+import MapView from '@arcgis/core/views/MapView';
 import Polygon from '@arcgis/core/geometry/Polygon';
 import { RefObject, type ReactElement } from 'react';
 import FieldInfo from '@arcgis/core/popup/FieldInfo';
 import Polyline from '@arcgis/core/geometry/Polyline';
-import MapView from '@arcgis/core/views/MapView';
+import Renderer from "@arcgis/core/renderers/Renderer";
 import { actionBarProps } from './cmp/calcite/ActionBar';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
@@ -17,9 +18,14 @@ import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
 import FeatureEffect from '@arcgis/core/layers/support/FeatureEffect';
 import FeatureFilter from '@arcgis/core/layers/support/FeatureFilter';
 import FeatureLayerView from '@arcgis/core/views/layers/FeatureLayerView';
+import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
+import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
 import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBreakInfo';
 import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties, mapLayer } from '@/types';
+import SizeVariable from '@arcgis/core/renderers/visualVariables/SizeVariable';
+import SizeStop from '@arcgis/core/renderers/visualVariables/support/SizeStop';
+import Color from '@arcgis/core/Color';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
@@ -307,3 +313,63 @@ export const addLayer = (view: MapView) => ([k, v]: [string, mapLayer]) => {
         console.warn('missing layer:', k);
     }
 }
+
+// export const extractBuiltSizes = (key: string, layer: FeatureLayer) => {
+//         switch (key) {
+//             case 'bus': {
+//                 const sizeVar = (layer.renderer as UniqueValueRenderer).visualVariables![0] as SizeVariable;
+//                 this.busStopSizes = sizeVar.stops!.map(s => (s as SizeStop).size as number);
+//                 break;
+//             }
+//             case 'metro': {
+//                 const sizeVar = (layer.renderer as UniqueValueRenderer).visualVariables![0] as SizeVariable;
+//                 this.metroStopSizes = sizeVar.stops!.map(s => (s as SizeStop).size as number);
+//                 break;
+//             }
+//             case 'lines': {
+//                 this.lineSizes = (layer.renderer as ClassBreaksRenderer)
+//                     .classBreakInfos.map((cb) => (cb.symbol as SimpleLineSymbol).width);
+//                 break;
+//             }
+//             case 'tracts': {
+//                 this.tractOriginalColors = (layer.renderer as ClassBreaksRenderer).classBreakInfos
+//                     .map(cb => (cb.symbol as SimpleFillSymbol).color.clone());
+//                 break;
+//             }
+//         }
+//     }
+
+export type renderers = UniqueValueRenderer | ClassBreaksRenderer;
+export function updateRenderedSizes(renderer: Renderer, baseSizes: number[], mult: number): renderers {
+    switch (renderer.type) {
+        case 'unique-value': {
+            const sizeVar = (renderer as UniqueValueRenderer).visualVariables![0] as SizeVariable;
+            sizeVar.stops!.forEach((stop, i) => {
+                if (baseSizes[i]) (stop as SizeStop).size = baseSizes[i] * mult;
+            });
+            break;
+        } 
+        case 'class-breaks': {
+            (renderer as ClassBreaksRenderer).classBreakInfos.forEach((cb, i) => {
+                if (baseSizes[i]) (cb.symbol as SimpleLineSymbol).width = baseSizes[i] * mult;
+            });
+            break;
+        }
+    };
+    return renderer as renderers;
+}
+
+export const makeSizeCallback = (layer: FeatureLayer, ogSizes: number[]) => (v: number) => {
+    layer.renderer = updateRenderedSizes(layer.renderer as renderers, ogSizes, v);
+};
+
+export const makeOpacityCallback = (layer: FeatureLayer, ogColors: Color[]) => (v: number) => {
+    const renderer = layer.renderer as ClassBreaksRenderer;
+    renderer.classBreakInfos.forEach((cb, i) => {
+        if (ogColors[i]) {
+            const { r, g, b } = ogColors[i];
+            cb.symbol.color = new Color([r, g, b, v]);
+        }
+    });
+    layer.renderer = renderer.clone();
+};

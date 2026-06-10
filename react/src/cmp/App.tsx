@@ -6,12 +6,14 @@ import { actionBars, panels } from '@/data';
 import MapView from '@arcgis/core/views/MapView';
 import { actionBarProps } from './calcite/ActionBar';
 import { useCallback, useRef, useState } from 'react';
+import { panelProps } from './calcite/Container';
 
 export default function App() {
     const [view, setView] = useState<MapView | null>(null);
     const [builtActionBars, setBuiltActionBars] = useState<actionBarProps[]>(actionBars);
+    const [builtPanels, setBuiltPanels] = useState<panelProps[]>(panels);
     const activeHighlight = useRef<{ remove: () => void } | null>(null);
-    const onViewReady = useCallback(viewReady({ setView, setBuiltActionBars, activeHighlight }), []);
+    const onViewReady = useCallback(viewReady({ setView, setBuiltActionBars, setBuiltPanels, activeHighlight }), []);
 
     return (
         <main className='app'>
@@ -22,7 +24,7 @@ export default function App() {
                 extent={EXTENT}
                 onViewReady={onViewReady}
                 actionBars={builtActionBars}
-                panels={panels}
+                panels={builtPanels}
             />
         </main>
     )

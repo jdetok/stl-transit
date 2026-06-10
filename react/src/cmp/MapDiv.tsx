@@ -60,7 +60,7 @@ export default function MapDiv({ basemap, extent, onViewReady, actionBars, panel
                 <ActionBar key={i} {...bar} onActionClick={handlePrimaryActionClick}/>
             ))}
             {panels?.map((panel, i) => (
-                <Panel {...panel} key={`${panel.id}-${i}`}
+                <Panel {...panel} key={`${panel.id}-${i}-${panel.ready}`}
                     isOpen={openPanelKey === panel.id}
                     onClose={() => setOpenPanelKey(null)}
                 />

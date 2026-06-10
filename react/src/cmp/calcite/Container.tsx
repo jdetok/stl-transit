@@ -34,6 +34,7 @@ export type containerProps = {
     isOpen?: boolean;
     onClose?: () => void;
     children?: ReactNode;
+    ready?: boolean;
 };
 
 export type blockProps = Omit<containerProps & { childType: blockChildTypes }, 'containerType' | 'key'> & { id?: string };
@@ -42,12 +43,12 @@ export type panelProps = Omit<containerProps & {
     blockComponents?: ReactNode[],
 }, 'containerType' | 'key'> & { id?: string };
 
-export const Panel = ({ id, childType, heading, isOpen, closable, cssClass, slot, onClose, blockComponents }: panelProps) => {
+export const Panel = ({ id, childType, heading, isOpen, closable, cssClass, slot, onClose, blockComponents, ready }: panelProps) => {
     const child = childType === 'blocks'
         ? blockComponents?.map((b, i) => <Fragment key={i}>{b}</Fragment>)
         : containerChildrenTypes[childType]
     return (
-        <calcite-panel key={id} className={cssClass} slot={slot}
+        <calcite-panel key={`${id}-${ready}`} className={cssClass} slot={slot}
             heading={heading} closable={closable} closed={!isOpen}
             oncalcitePanelClose={onClose}
         >{child}</calcite-panel>

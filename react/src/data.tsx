@@ -66,10 +66,10 @@ export const panels: panelProps[] = [
     { id: PANEL_CSS_CLASSES['basemaps']!, childType: 'basemaps', heading: 'Basemaps', closable: true },
     { id: PANEL_CSS_CLASSES['print']!, childType: 'print', heading: 'Export', closable: true },
     { id: PANEL_CSS_CLASSES['modifiers']!, childType: 'blocks', heading: 'Appearance Modifiers', closable: true, blockComponents: [
-        <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={1} value={1} step={0.1} />,
-        <SliderBlock id='slider-1' heading='Bus Stop Size' min={0} max={1} value={1} step={0.1} />,
-        <SliderBlock id='slider-2' heading='Bus Stop Size' min={0} max={1} value={1} step={0.1} />,
-        <SliderBlock id='slider-3' heading='Line Size' min={0} max={1} value={1} step={0.1} />,
+        <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01} />,
+        <SliderBlock id='slider-1' heading='Bus Stop Size' min={0} max={3} value={1} step={0.1} />,
+        <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0} max={3} value={1} step={0.1} />,
+        <SliderBlock id='slider-3' heading='Line Size' min={0} max={15} value={1} step={0.25} />,
     ]},
 ];
 
