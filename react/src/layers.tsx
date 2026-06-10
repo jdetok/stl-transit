@@ -23,8 +23,8 @@ const BUS_STOP_NO_COLOR = [180, 110, 200, 0.5];
 const BUS_STOP_NA_COLOR = [0, 165, 255, 0.5];
 const ML_STOP_SIZE = 10;
 const ML_LINE_SIZE = 3;
-const ML_RED_COLOR = [255, 0, 0, 0.2];
-const ML_BLUE_COLOR = [0, 0, 255, 0.8];
+const ML_RED_COLOR = [127, 0, 0, 0.5];
+const ML_BLUE_COLOR = [0, 0, 255, 0.5];
 const RAIL_INNER_COLOR = [0, 0, 0, 0.6];
 const CYCLE_LAYER_GRAVEL_COLOR = [180, 80, 170, 0.6];
 const CYCLE_LAYER_ASPHALT_COLOR = [208, 148, 75, 0.6];
@@ -172,8 +172,6 @@ export const makeBusLinesLayer = (
         )
     }
 });
-
-
 
 export const makeMetroStopsLayer = (
     onRouteClick: (route: string) => void,

@@ -2,6 +2,7 @@ import '@esri/calcite-components/dist/components/calcite-slider';
 import { Block, blockProps } from "@/cmp/calcite/Container";
 import { ReactNode, useEffect, useRef } from "react";
 import { Slider } from '@esri/calcite-components/dist/components/calcite-slider';
+import { Scale } from '@esri/calcite-components/dist/components/interfaces';
 
 export type sliderProps = {
     min?: number;
@@ -11,11 +12,12 @@ export type sliderProps = {
     disaled?: boolean;
     onInput?: (value: number) => Promise<void>,
     children?: ReactNode;
+    scale?: Scale;
 };
 
 export type sliderBlockProps = Omit<blockProps, 'childType' | 'key'> & sliderProps & { id: string };
 
-export default function SliderBlock({ id, heading, onInput, min, max, value, step }: sliderBlockProps) {
+export default function SliderBlock({ id, heading, onInput, min, max, value, step, scale }: sliderBlockProps) {
     const sliderRef = useRef<Slider>(null);
 
     useEffect(() => {
@@ -43,7 +45,7 @@ export default function SliderBlock({ id, heading, onInput, min, max, value, ste
                 name={id}
                 value={value}
                 step={step}
-                style={{ width: '200px' }}
+                scale={scale ?? 's'}
             />
         </Block>
     );

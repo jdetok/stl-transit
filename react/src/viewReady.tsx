@@ -27,13 +27,15 @@ type sliderCallbackFns = {
     tractOpacity: (_v: number) => void,
     busSize: (_v: number) => void,
     metroSize: (_v: number) => void,
-    lineSize: (_v: number) => void,
+    busLineSize: (_v: number) => void,
+    metroLineSize: (_v: number) => void,
 };
 const sliderCallbacks: sliderCallbackFns = {
     tractOpacity: (_v) => { },
     busSize: (_v) => { },
     metroSize: (_v) => { },
-    lineSize: (_v) => { },
+    busLineSize: (_v) => { },
+    metroLineSize: (_v) => { },
 };
 type layerSliderConfig = {
     key: keyof sliderCallbackFns;
@@ -44,7 +46,8 @@ const layerSliderConfigs: layerSliderConfig[] = [
     { key: 'tractOpacity', layerKey: 'tracts', type: 'opacity' },
     { key: 'busSize', layerKey: 'bus', type: 'size' },
     { key: 'metroSize', layerKey: 'metro', type: 'size' },
-    { key: 'lineSize', layerKey: 'lines', type: 'size' },
+    { key: 'busLineSize', layerKey: 'buslines', type: 'size' },
+    { key: 'metroLineSize', layerKey: 'metrolines', type: 'size' },
 ];
 
 // placeholder callbacks for route buttons
@@ -77,7 +80,11 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
         layers.sort(([, v1], [_, v2]) => v1.i - v2.i).forEach(addLayer(view));
 
         // define individual layers 
-        const linesLayer = mapLayers.get('lines')?.layer as FeatureLayer;
+        // const linesLayer = mapLayers.get('lines')?.layer as FeatureLayer;
+        const metroLinesLayer = mapLayers.get('metrolines')?.layer as FeatureLayer;
+        const busLinesLayer = mapLayers.get('buslines')?.layer as FeatureLayer;
+        const linesLayersArr = [metroLinesLayer, busLinesLayer].filter(Boolean) as FeatureLayer[];
+
         const metroLayer = mapLayers.get('metro')?.layer as FeatureLayer;
         const busLayer = mapLayers.get('bus')?.layer as FeatureLayer;
         const placesLayer = mapLayers.get('places')?.layer as FeatureLayer;
@@ -102,8 +109,8 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
         };
         
         // real callbacks fror route buttons
-        routeCallbacks.onRouteClick = (route) => applyRoutesFilter(view, linesLayer, stopLayers, route);
-        routeCallbacks.onRoutesClick = (routes) => applyRoutesFilter(view, linesLayer, stopLayers, routes);
+        routeCallbacks.onRouteClick = (route) => applyRoutesFilter(view, linesLayersArr, stopLayers, route);
+        routeCallbacks.onRoutesClick = (routes) => applyRoutesFilter(view, linesLayersArr, stopLayers, routes);
 
         // attach real callbacks for sliders
         for (const { key, layerKey, type } of layerSliderConfigs) {
@@ -117,12 +124,17 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
             } else {
                 const renderer = layer.renderer;
                 if (!renderer) continue;
-                const ogSizes = renderer.type === 'unique-value'
-                    ? ((renderer as UniqueValueRenderer).visualVariables![0] as SizeVariable)
-                        .stops!.map(s => (s as SizeStop).size as number)
-                    : (renderer as ClassBreaksRenderer)
-                        .classBreakInfos.map(cb => (cb.symbol as SimpleLineSymbol).width);
-                sliderCallbacks[key] = makeSizeCallback(layer, ogSizes);
+                const ogSizes = (() => {
+                    if (renderer.type === 'unique-value') {
+                        const uvr = renderer as UniqueValueRenderer;
+                        if (uvr.visualVariables?.length) {
+                            return (uvr.visualVariables[0] as SizeVariable).stops!.map(s => (s as SizeStop).size as number);
+                        }
+                        return uvr.uniqueValueInfos?.map(uvi => (uvi.symbol as SimpleLineSymbol).width);
+                    }
+                    return (renderer as ClassBreaksRenderer).classBreakInfos.map(cb => (cb.symbol as SimpleLineSymbol).width);
+                })();
+                sliderCallbacks[key] = makeSizeCallback(layer, ogSizes!);
             }
         }
  
@@ -135,7 +147,7 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                 actions: bar.actions?.map((action) => {
                     if (action.id === 'clear') return {
                         ...action,
-                        onClick: () => clearRoutesFilter(view, linesLayer, stopLayers),
+                        onClick: () => clearRoutesFilter(view, linesLayersArr, stopLayers),
                     };
                     return action;
                 }),
@@ -153,13 +165,15 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                     ...panel,
                     ready: true,
                     blockComponents: [
-                        <SelectBlock id='slider-0' heading='Tract Opacity'
+                        <SelectBlock id='select-0' heading='Tract Opacity'
                             optsProps={{ opts: tractChoroOpts }} onChange={onTractFieldChange} />,
                         <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01}
                             onInput={async (v) => { console.log('slider onInput called', v); sliderCallbacks.tractOpacity(v) }} />,
-                        <SliderBlock id='slider-3' heading='Line Size' min={0.25} max={15} value={1} step={0.25}
-                            onInput={async (v) => sliderCallbacks.lineSize(v)} />,
-                        <SliderBlock id='slider-1' heading='Bus Stop Size' min={0.1} max={3} value={1} step={0.1}
+                        <SliderBlock id='slider-3' heading='MetroBus Line Size' min={0.25} max={15} value={1} step={0.25}
+                            onInput={async (v) => sliderCallbacks.busLineSize(v)} />,
+                        <SliderBlock id='slider-4' heading='MetroLink Line Size' min={0.25} max={15} value={1} step={0.25}
+                            onInput={async (v) => sliderCallbacks.metroLineSize(v)} />,
+                        <SliderBlock id='slider-1' heading='MetroBus Stop Size' min={0.1} max={3} value={1} step={0.1}
                             onInput={async (v) => sliderCallbacks.busSize(v)} />,
                         <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0.1} max={3} value={1} step={0.1}
                             onInput={async (v) => sliderCallbacks.metroSize(v)} />,
@@ -179,10 +193,10 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                             }}
                             onChange={(vals) => {
                                 if (vals === 'all' || !vals || (Array.isArray(vals) && vals.includes('all'))) {
-                                    clearRoutesFilter(view, linesLayer, stopLayers);
+                                    clearRoutesFilter(view, linesLayersArr, stopLayers);
                                     return;
                                 }
-                                applyRoutesFilter(view, linesLayer, stopLayers, vals);
+                                applyRoutesFilter(view, linesLayersArr, stopLayers, vals);
                             }}
                         />
                     ],

@@ -226,7 +226,7 @@ export const queryFeatureLayer = async (layer: FeatureLayer, query: string, retu
 
 export const applyFeatureFx = (view: FeatureLayerView, fx: FeatureEffect) => view.featureEffect = fx;
 
-export const applyRoutesFilter = async (mapView: MapView, linesLayer: FeatureLayer, stopLayers: FeatureLayer[], routeNames: string | string[]) => { 
+export const applyRoutesFilter = async (mapView: MapView, linesLayersArr: FeatureLayer[], stopLayers: FeatureLayer[], routeNames: string | string[]) => { 
     const routes = Array.isArray(routeNames) ? routeNames : [routeNames];
 
     // stops layers use route_names field, lines layer uses route_desc field. build separate queries for each
@@ -244,19 +244,19 @@ export const applyRoutesFilter = async (mapView: MapView, linesLayer: FeatureLay
         whereLine = `route_desc like '%${routeNames[0]}%'`;
     }
 
-    const layers = [linesLayer, ...stopLayers];
+    const layers = [...linesLayersArr, ...stopLayers];
 
     await Promise.all(layers.map(async (layer: FeatureLayer, i: number) => {
         const layerView = await mapView.whenLayerView(layer) as FeatureLayerView;
         layerView.featureEffect = new FeatureEffect({
-            filter: new FeatureFilter({ where: i === 0 ? whereLine : whereStop }),
+            filter: new FeatureFilter({ where: i < linesLayersArr.length ? whereLine : whereStop }),
             includedEffect: "bloom(1, 1px, 0.3) drop-shadow(2px 2px 4px black) brightness(2)",
             excludedEffect: "opacity(75%)",
         });
     })); 
 
     // query just the lines and move the map there
-    const res = await queryFeatureLayer(linesLayer, whereLine);
+    const res = await queryFeatureLayer(linesLayersArr[0] as FeatureLayer, whereLine);
     if (res.features.length) {
         await mapView.goTo(res.features, { duration: 600 });
     }
@@ -324,20 +324,27 @@ export type renderers = UniqueValueRenderer | ClassBreaksRenderer;
 export function updateRenderedSizes(renderer: Renderer, baseSizes: number[], mult: number): renderers {
     switch (renderer.type) {
         case 'unique-value': {
-            const sizeVar = (renderer as UniqueValueRenderer).visualVariables![0] as SizeVariable;
-            sizeVar.stops!.forEach((stop, i) => {
-                if (baseSizes[i]) (stop as SizeStop).size = baseSizes[i] * mult;
-            });
+            const uvr = renderer as UniqueValueRenderer;
+            if (uvr.visualVariables?.length) {
+                const sizeVar = uvr.visualVariables[0] as SizeVariable;
+                sizeVar.stops!.forEach((stop, i) => {
+                    if (baseSizes[i]) (stop as SizeStop).size = baseSizes[i] * mult;
+                });
+            } else {
+                uvr.uniqueValueInfos?.forEach((uvi, i) => {
+                    if (baseSizes[i]) (uvi.symbol as SimpleLineSymbol).width = baseSizes[i] * mult;
+                });
+            }
             break;
-        } 
+        }
         case 'class-breaks': {
             (renderer as ClassBreaksRenderer).classBreakInfos.forEach((cb, i) => {
                 if (baseSizes[i]) (cb.symbol as SimpleLineSymbol).width = baseSizes[i] * mult;
             });
             break;
         }
-    };
-    return renderer as renderers;
+    }
+    return (renderer as renderers).clone() as renderers; 
 }
 
 export const makeSizeCallback = (layer: FeatureLayer, ogSizes: number[]) => (v: number) => {
@@ -356,8 +363,8 @@ export const makeOpacityCallback = (layer: FeatureLayer, ogColors: Color[], opac
     layer.renderer = renderer.clone();
 };
 
-export const clearRoutesFilter = async (mapView: MapView, linesLayer: FeatureLayer, stopLayers: FeatureLayer[]) => {
-    const layers = [linesLayer, ...stopLayers];
+export const clearRoutesFilter = async (mapView: MapView, linesLayersArr: FeatureLayer[], stopLayers: FeatureLayer[]) => {
+    const layers = [...linesLayersArr, ...stopLayers];
     await Promise.all(layers.map(async (layer) => {
         const layerView = await mapView.whenLayerView(layer) as FeatureLayerView;
         layerView.featureEffect = null as any;
