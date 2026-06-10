@@ -96,7 +96,6 @@ export const mapLayers: Map<string, mapLayer> = new Map([
     ['places', { fn: makePlacesLayer, meta: {} as FeatureLayerMeta, i: 4 }],
     ['metrolines', { fn: makeMetroLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
     ['buslines', { fn: makeBusLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
-    // ['lines', { fn: makeLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
     ['metro', { fn: makeMetroStopsLayer, meta: {} as FeatureLayerMeta, i: 7 }],
     ['bus', { fn: makeBusStopsLayer, meta: {} as FeatureLayerMeta, i: 8 }],
 ]);

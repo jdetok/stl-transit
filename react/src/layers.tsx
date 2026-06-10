@@ -55,35 +55,6 @@ const LINES_CLASSBREAKS: cplethEls[] = [
     [61, 720, [255, 70, 10]],
 ];
 
-export const makeLinesLayer = (
-    onRouteClick: (route: string) => void,
-    onRoutesClick: (route: string | string[]) => void
-): FeatureLayerMeta => ({
-    title: 'Metro Transit Lines',
-    dataUrl: '/layers/lines',
-    geometryType: 'polyline',
-    fields: LINES_FIELDS,
-    renderer: new ClassBreaksRenderer({
-        field: 'freq_wk',
-        classBreakInfos: makeChoroplethLevels({ levels: LINES_CLASSBREAKS, opac: 0.65, line: true}),
-        defaultSymbol: new SimpleLineSymbol({ color: 'gray', width: 3 })
-    }),
-    toGraphics: toPolyline,
-    popupTemplate: {
-        title: '{route_desc}',
-        content: (feature: any) => makePopupContent(
-            <LayerPopup 
-                attrs={feature.graphic?.attributes}
-                fieldInfos={LINES_FIELDINFOS}
-                routeField='route_desc'
-                routeLabel='Routes Served'
-                onRouteClick={onRouteClick}
-                onRoutesClick={onRoutesClick}
-            />
-        )
-    }
-});
-
 export const makeLinesLayerBase = (
     onRouteClick: (route: string) => void,
     onRoutesClick: (route: string | string[]) => void
@@ -142,7 +113,7 @@ export const makeMetroLinesLayer = (
         content: (feature: any) => makePopupContent(
             <LayerPopup 
                 attrs={feature.graphic?.attributes ?? feature.attributes}
-                fieldInfos={STOP_FIELDINFOS}
+                fieldInfos={LINES_FIELDINFOS}
                 routeField='route_names'
                 routeLabel='MetroLink Routes Served'
                 onRouteClick={onRouteClick}

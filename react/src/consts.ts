@@ -84,7 +84,7 @@ export const LINES_FIELDS: FieldProperties[] = [
 ];
 
 export const LINES_FIELDINFOS = fieldInfos(
-    LINES_FIELDS, ['ObjectID', 'route_desc', 'route_type']
+    LINES_FIELDS, ['ObjectID', 'route', 'route_type']
 )
 
 export const STOP_FIELDS: FieldProperties[] = [
