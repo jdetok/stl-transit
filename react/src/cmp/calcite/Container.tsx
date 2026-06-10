@@ -8,11 +8,12 @@ type containerTypes = 'panel' | 'block';
 type containerChildTypes = 'legend' | 'layerlist' | 'basemaps' | 'print' | 'div';
 type containerChildMap = Record<containerChildTypes, ReactNode>;
 export type panelChildTypes = containerChildTypes | 'blocks'; 
-export type blockChildTypes = 'slider' | 'dropdown' | 'div';
+export type blockChildTypes = 'slider' | 'dropdown' | 'select' | 'div';
 type blockChildMap = Record<blockChildTypes, ReactNode>;
 const blockChildrenTypes: blockChildMap = {
     slider: <calcite-slider />,
     dropdown: <calcite-dropdown />,
+    select: <calcite-select label=''/>,
     div: <div />,
 };
 const containerChildrenTypes: containerChildMap = {

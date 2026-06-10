@@ -2,7 +2,7 @@ import { RefObject } from 'react';
 import MapView from '@arcgis/core/views/MapView';
 import SliderBlock from './cmp/calcite/SliderBlock';
 import { panelProps } from './cmp/calcite/Container';
-import { actionBars, mapLayers, panels } from '@/data';
+import { actionBars, mapLayers, panels, TRACT_CLASSBREAKS } from '@/data';
 import { HIGHLIGHTS, PANEL_CSS_CLASSES } from '@/consts';
 import { actionBarProps } from './cmp/calcite/ActionBar';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
@@ -13,8 +13,11 @@ import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer';
 import SizeVariable from '@arcgis/core/renderers/visualVariables/SizeVariable';
 import SizeStop from '@arcgis/core/renderers/visualVariables/support/SizeStop';
 import { addLayer, applyRoutesFilter, buildFeatureLayer, highlightPlaces,
-    makeOpacityCallback, makeSizeCallback
+    makeChoroplethLevels,
+    makeOpacityCallback, makeSizeCallback,
+    tractsField
 } from '@/utils';
+import SelectBlock from './cmp/calcite/SelectBlock';
 
 type sliderType = 'size' | 'opacity';
 
@@ -78,6 +81,24 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
         const busLayer = mapLayers.get('bus')?.layer as FeatureLayer;
         const placesLayer = mapLayers.get('places')?.layer as FeatureLayer;
         const stopLayers = [metroLayer, busLayer].filter(Boolean) as FeatureLayer[]; 
+        const tractsLayer = mapLayers.get('tracts')?.layer as FeatureLayer;
+
+        const tractChoroOpts = [...TRACT_CLASSBREAKS.keys()].map(({ label, fieldName }) => ({
+            label: label!,
+            value: fieldName!,
+        }));
+
+        // tract opacity/data field used for classbreaks
+        const tractOpacState = 0.05;
+        const onTractFieldChange = (val: string) => {
+            const renderer = tractsLayer.renderer as ClassBreaksRenderer;
+            renderer.field = val;
+            renderer.classBreakInfos = makeChoroplethLevels({
+                levels: TRACT_CLASSBREAKS.get(tractsField(val)),
+                opac: tractOpacState,
+            }!);
+            tractsLayer.renderer = renderer.clone();
+        };
         
         // real callbacks fror route buttons
         routeCallbacks.onRouteClick = (route) => applyRoutesFilter(view, linesLayer, stopLayers, route);
@@ -91,7 +112,7 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
             if (type === 'opacity') {
                 const ogColors = (layer.renderer as ClassBreaksRenderer)
                     .classBreakInfos.map(cb => (cb.symbol as SimpleFillSymbol).color.clone());
-                sliderCallbacks[key] = makeOpacityCallback(layer, ogColors);
+                sliderCallbacks[key] = makeOpacityCallback(layer, ogColors, tractOpacState);
             } else {
                 const renderer = layer.renderer;
                 if (!renderer) continue;
@@ -116,14 +137,16 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                 ...panel,
                 ready: true,
                 blockComponents: [
+                    <SelectBlock id='slider-0' heading='Tract Opacity'
+                        optsProps={{ opts: tractChoroOpts }} onChange={onTractFieldChange} />,
                     <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01}
                         onInput={async (v) => { console.log('slider onInput called', v); sliderCallbacks.tractOpacity(v) }} />,
+                    <SliderBlock id='slider-3' heading='Line Size' min={0.25} max={15} value={1} step={0.25}
+                        onInput={async (v) => sliderCallbacks.lineSize(v)} />,
                     <SliderBlock id='slider-1' heading='Bus Stop Size' min={0.1} max={3} value={1} step={0.1}
                         onInput={async (v) => sliderCallbacks.busSize(v)} />,
                     <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0.1} max={3} value={1} step={0.1}
                         onInput={async (v) => sliderCallbacks.metroSize(v)} />,
-                    <SliderBlock id='slider-3' heading='Line Size' min={0.25} max={15} value={1} step={0.25}
-                        onInput={async (v) => sliderCallbacks.lineSize(v)} />,
                 ],
             };
         });

@@ -1,6 +1,6 @@
 import '@esri/calcite-components/dist/components/calcite-slider';
 import { Block, blockProps } from "@/cmp/calcite/Container";
-import { ChangeEvent, ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { Slider } from '@esri/calcite-components/dist/components/calcite-slider';
 
 export type sliderProps = {

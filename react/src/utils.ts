@@ -314,31 +314,6 @@ export const addLayer = (view: MapView) => ([k, v]: [string, mapLayer]) => {
     }
 }
 
-// export const extractBuiltSizes = (key: string, layer: FeatureLayer) => {
-//         switch (key) {
-//             case 'bus': {
-//                 const sizeVar = (layer.renderer as UniqueValueRenderer).visualVariables![0] as SizeVariable;
-//                 this.busStopSizes = sizeVar.stops!.map(s => (s as SizeStop).size as number);
-//                 break;
-//             }
-//             case 'metro': {
-//                 const sizeVar = (layer.renderer as UniqueValueRenderer).visualVariables![0] as SizeVariable;
-//                 this.metroStopSizes = sizeVar.stops!.map(s => (s as SizeStop).size as number);
-//                 break;
-//             }
-//             case 'lines': {
-//                 this.lineSizes = (layer.renderer as ClassBreaksRenderer)
-//                     .classBreakInfos.map((cb) => (cb.symbol as SimpleLineSymbol).width);
-//                 break;
-//             }
-//             case 'tracts': {
-//                 this.tractOriginalColors = (layer.renderer as ClassBreaksRenderer).classBreakInfos
-//                     .map(cb => (cb.symbol as SimpleFillSymbol).color.clone());
-//                 break;
-//             }
-//         }
-//     }
-
 export type renderers = UniqueValueRenderer | ClassBreaksRenderer;
 export function updateRenderedSizes(renderer: Renderer, baseSizes: number[], mult: number): renderers {
     switch (renderer.type) {
@@ -363,7 +338,8 @@ export const makeSizeCallback = (layer: FeatureLayer, ogSizes: number[]) => (v: 
     layer.renderer = updateRenderedSizes(layer.renderer as renderers, ogSizes, v);
 };
 
-export const makeOpacityCallback = (layer: FeatureLayer, ogColors: Color[]) => (v: number) => {
+export const makeOpacityCallback = (layer: FeatureLayer, ogColors: Color[], opac: number) => (v: number) => {
+    if (opac) opac = v;
     const renderer = layer.renderer as ClassBreaksRenderer;
     renderer.classBreakInfos.forEach((cb, i) => {
         if (ogColors[i]) {

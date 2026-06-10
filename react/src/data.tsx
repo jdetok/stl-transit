@@ -6,6 +6,7 @@ import { cplethEls, FeatureLayerMeta, mapLayer } from "./types";
 import { makeAmtrakLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer, makeLinesLayer, makeMetroStopsLayer, makePlacesLayer, makeTractsLayer } from './layers';
 import { panelProps } from "./cmp/calcite/Container";
 import SliderBlock from "@/cmp/calcite/SliderBlock";
+import SelectBlock from "./cmp/calcite/SelectBlock";
 
 export const TRACT_CLASSBREAKS: Map<FieldInfo, cplethEls[]> = new Map([
     [tractsField('popl_dens'), makeChoroRanges(5, [0, 2500, 5000, 7500, 10000, 100000])],
@@ -65,7 +66,9 @@ export const panels: panelProps[] = [
     { id: PANEL_CSS_CLASSES['layerlist']!, childType: 'layerlist', heading: 'Layers', closable: true },
     { id: PANEL_CSS_CLASSES['basemaps']!, childType: 'basemaps', heading: 'Basemaps', closable: true },
     { id: PANEL_CSS_CLASSES['print']!, childType: 'print', heading: 'Export', closable: true },
-    { id: PANEL_CSS_CLASSES['modifiers']!, childType: 'blocks', heading: 'Appearance Modifiers', closable: true, blockComponents: [
+    {
+        id: PANEL_CSS_CLASSES['modifiers']!, childType: 'blocks', heading: 'Appearance Modifiers', closable: true, blockComponents: [
+        <SelectBlock id='select-0' heading='Tract Opacity Field' />,
         <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01} />,
         <SliderBlock id='slider-1' heading='Bus Stop Size' min={0} max={3} value={1} step={0.1} />,
         <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0} max={3} value={1} step={0.1} />,
