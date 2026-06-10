@@ -12,13 +12,13 @@ import ClassBreaksRenderer from '@arcgis/core/renderers/ClassBreaksRenderer';
 import UniqueValueRenderer from '@arcgis/core/renderers/UniqueValueRenderer';
 import SizeVariable from '@arcgis/core/renderers/visualVariables/SizeVariable';
 import SizeStop from '@arcgis/core/renderers/visualVariables/support/SizeStop';
-import { addLayer, applyRoutesFilter, buildFeatureLayer, highlightPlaces,
+import { addLayer, applyRoutesFilter, buildFeatureLayer, clearRoutesFilter, highlightPlaces,
     makeChoroplethLevels,
     makeOpacityCallback, makeSizeCallback,
     tractsField
 } from '@/utils';
 import SelectBlock from './cmp/calcite/SelectBlock';
-import DropdownBlock from './cmp/calcite/DropdownBlock';
+import ListBlock from './cmp/calcite/ListBlock';
 
 type sliderType = 'size' | 'opacity';
 
@@ -81,7 +81,7 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
         const metroLayer = mapLayers.get('metro')?.layer as FeatureLayer;
         const busLayer = mapLayers.get('bus')?.layer as FeatureLayer;
         const placesLayer = mapLayers.get('places')?.layer as FeatureLayer;
-        const stopLayers = [metroLayer, busLayer].filter(Boolean) as FeatureLayer[]; 
+        const stopLayers = [metroLayer, busLayer].filter(Boolean) as FeatureLayer[];
         const tractsLayer = mapLayers.get('tracts')?.layer as FeatureLayer;
 
         const tractChoroOpts = [...TRACT_CLASSBREAKS.keys()].map(({ label, fieldName }) => ({
@@ -123,12 +123,26 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                     : (renderer as ClassBreaksRenderer)
                         .classBreakInfos.map(cb => (cb.symbol as SimpleLineSymbol).width);
                 sliderCallbacks[key] = makeSizeCallback(layer, ogSizes);
-            }   
+            }
         }
  
         // add real highlightPlaces callback to secondary action bar
         const layerView = await view?.whenLayerView(placesLayer!);
-        const newActBars = actionBars.map((bar) => highlightPlaces({ bar, placesLayer, layerView, activeHighlight }) ?? bar);
+        const newActBars = actionBars.map((bar) => {
+            if (bar.cssClass === 'actbar2') return highlightPlaces({ bar, placesLayer, layerView, activeHighlight }) ?? bar;
+            if (bar.cssClass === 'actbar1') return {
+                ...bar,
+                actions: bar.actions?.map((action) => {
+                    if (action.id === 'clear') return {
+                        ...action,
+                        onClick: () => clearRoutesFilter(view, linesLayer, stopLayers),
+                    };
+                    return action;
+                }),
+            };
+            return bar;
+        });
+        
         setBuiltActionBars(newActBars);
 
         // add real slider callbacks to SliderBlocks in panels
@@ -156,7 +170,7 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                     ...panel,
                     ready: true,
                     blockComponents: [
-                        <DropdownBlock
+                        <ListBlock
                             id='dropdown-0' heading='Routes'
                             optsProps={{
                                 allOpt: { label: 'All MetroBus Routes', value: 'all' },
@@ -164,7 +178,10 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                                 mapFeatures: (features) => features.map((f: any) => f.properties.route_desc.replace("'", '')).sort(),
                             }}
                             onChange={(vals) => {
-                                if (vals === 'all' || !vals) return;
+                                if (vals === 'all' || !vals || (Array.isArray(vals) && vals.includes('all'))) {
+                                    clearRoutesFilter(view, linesLayer, stopLayers);
+                                    return;
+                                }
                                 applyRoutesFilter(view, linesLayer, stopLayers, vals);
                             }}
                         />

@@ -7,7 +7,7 @@ import { makeAmtrakLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer
 import { panelProps } from "./cmp/calcite/Container";
 import SliderBlock from "@/cmp/calcite/SliderBlock";
 import SelectBlock from "./cmp/calcite/SelectBlock";
-import DropdownBlock from "./cmp/calcite/DropdownBlock";
+import DropdownBlock from "./cmp/calcite/ListBlock";
 
 export const TRACT_CLASSBREAKS: Map<FieldInfo, cplethEls[]> = new Map([
     [tractsField('popl_dens'), makeChoroRanges(5, [0, 2500, 5000, 7500, 10000, 100000])],
@@ -30,7 +30,8 @@ export const actionBars: actionBarProps[] = [{
         { text: 'Layers', label: 'Layers', scale: 'm', icon: 'layers', panelKey: PANEL_CSS_CLASSES['layerlist']},
         { text: 'Basemaps', label: 'Basemaps', scale: 'm', icon: 'basemap', panelKey: PANEL_CSS_CLASSES['basemaps']},
         { text: 'Modifiers', label: 'Appearance Modifiers', scale: 'm', icon: 'sliders', panelKey: PANEL_CSS_CLASSES['modifiers']},
-        { text: 'Bus Routes', label: 'AppearanBus Routes', scale: 'm', icon: 'bus', panelKey: PANEL_CSS_CLASSES['routes']},
+        { text: 'Bus Routes', label: 'AppearanBus Routes', scale: 'm', icon: 'bus', panelKey: PANEL_CSS_CLASSES['routes'] },
+        { id: 'clear', text: 'Clear Highlighted Routes', label: 'Clear Highlighted Routes', scale: 'm', icon: 'reset' },
         { text: 'Export', label: 'Export', scale: 'm', icon: 'print', panelKey: PANEL_CSS_CLASSES['print']},
         { text: 'Fullscreen', label: 'Fullscreen', scale: 'm', icon: 'extent', onClick: mapFullscreen},
     ],
@@ -58,6 +59,9 @@ export const actionBars: actionBarProps[] = [{
         }, {
             id: "social_facility", icon: "home", text: "Highlight Community Centers",
             where: `type = 'social_facility'`, highlightName: HL_MED.name!,
+        }, {
+            id: "clear", icon: "x", text: "Clear Highlighted",
+            where: `type = ''`, highlightName: HL_MED.name!,
         },
     ],
 }];

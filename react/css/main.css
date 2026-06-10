@@ -14,14 +14,17 @@
     --legend-bottom: 40px;
     --set-calcite-color: rgba(191, 191, 191, 0.758);
     --set-calcite-border-color: rgba(5, 5, 5, 0.758);
+    --set-calcite-hover-color: rgba(191, 191, 191, 0.4);
 }
 
 :root {
     --calcite-color-background: var(--set-calcite-color);
     --calcite-color-foreground-1: var(--set-calcite-color);
+    --calcite-color-foreground-1: var(--set-calcite-color);
+    --calcite-color-foreground-1: var(--set-calcite-color);
     --calcite-color-border-1: var(--set-calcite-border-color);
-    --calcite-color-border-2: var(--set-calcite-border-color);
-    --calcite-color-border-3: var(--set-calcite-border-color);
+    --calcite-color-transparent-inverse-hover: var(--set-calcite-hover-color);
+    --calcite-color-transparent-hover: var(--set-calcite-hover-color);
     --calcite-corner-radius-sharp: 0.4rem;
     --calcite-border-width-lg: 6px;
     --calcite-border-width-md: 3px;

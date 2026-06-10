@@ -349,3 +349,11 @@ export const makeOpacityCallback = (layer: FeatureLayer, ogColors: Color[], opac
     });
     layer.renderer = renderer.clone();
 };
+
+export const clearRoutesFilter = async (mapView: MapView, linesLayer: FeatureLayer, stopLayers: FeatureLayer[]) => {
+    const layers = [linesLayer, ...stopLayers];
+    await Promise.all(layers.map(async (layer) => {
+        const layerView = await mapView.whenLayerView(layer) as FeatureLayerView;
+        layerView.featureEffect = null as any;
+    }));
+};

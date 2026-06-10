@@ -1,16 +1,16 @@
 import { JSX, useEffect, useRef, useState } from "react";
 import { selectBlockProps, selectOption } from "./SelectBlock";
-import '@esri/calcite-components/dist/components/calcite-dropdown';
-import '@esri/calcite-components/dist/components/calcite-dropdown-group';
-import '@esri/calcite-components/dist/components/calcite-dropdown-item';
-import { Dropdown } from '@esri/calcite-components/dist/components/calcite-dropdown';
-import '@esri/calcite-components/dist/components/calcite-button';
+import '@esri/calcite-components/dist/components/calcite-list';
+import '@esri/calcite-components/dist/components/calcite-list-item';
+import { List } from '@esri/calcite-components/dist/components/calcite-list';
+
 import { Block } from "./Container";
 
-export default function DropdownBlock({ id, heading, onChange, optsProps, value }: selectBlockProps) {
-    const dropdownRef = useRef<Dropdown>(null);
+export default function ListBlock({ id, heading, onChange, optsProps }: selectBlockProps) {
+    const dropdownRef = useRef<List>(null);
     const [fetchedOpts, setFetchedOpts] = useState<selectOption[]>([]);
     
+    // fetch options if necessary
     useEffect(() => {
         if (!optsProps?.dataUrl) return;
         fetch(optsProps.dataUrl)
@@ -26,38 +26,33 @@ export default function DropdownBlock({ id, heading, onChange, optsProps, value 
             .catch(err => console.error('DropdownBlock fetch error:', err));
     }, [optsProps?.dataUrl]);
 
+    // list change handler
     useEffect(() => {
         const el = dropdownRef.current;
         if (!el || !onChange) return;
         const handler = () => {
-            const selected = (el as any).selectedItems?.map((item: any) => item.textContent?.trim() ?? item.label ?? item.value);
+            const selected = (el as any).selectedItems?.map((item: any) => item.dataset?.value ?? item.getAttribute('data-value'));
             if (!selected?.length) return;
+            console.log('selected:', selected);
             onChange(selected.length === 1 ? selected[0] as string | string[] : selected);
         };
-        el.addEventListener('calciteDropdownSelect', handler);
-        return () => el.removeEventListener('calciteDropdownSelect', handler);
+        el.addEventListener('calciteListChange', handler);
+        return () => el.removeEventListener('calciteListChange', handler);
     }, [onChange]);
 
     const options: JSX.Element[] = [];
-    if (optsProps?.allOpt) {
-        const { label, value } = optsProps.allOpt;
-        options.push(
-            <calcite-dropdown-item key='all' value={value}>{label}</calcite-dropdown-item>
-        );
-    }
     const allOpts = [...(optsProps?.opts ?? []), ...fetchedOpts];
     allOpts.forEach(opt => {
         options.push(
-            <calcite-dropdown-item key={opt.value} value={opt.value}>{opt.label}</calcite-dropdown-item>
+            <calcite-list-item key={opt.value} data-value={opt.value} label={opt.label}></calcite-list-item>
         );
     });
 
     return (
         <Block id={id} childType='select' heading={heading}>
-            <calcite-dropdown ref={dropdownRef} name={id} selection-mode='multiple'>
-                <calcite-button slot='trigger'>{value ?? heading}</calcite-button>
-                <calcite-dropdown-group selection-mode='multiple'>{options}</calcite-dropdown-group>
-            </calcite-dropdown>
+            <calcite-list ref={dropdownRef} name={id} selection-mode='multiple' label={heading as string}>
+                {options}
+            </calcite-list>
         </Block>
     );
 }
