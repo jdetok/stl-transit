@@ -3,7 +3,7 @@ import { PANEL_CSS_CLASSES } from "./consts";
 import { makeChoroRanges, mapFullscreen, newHighlightSetting, tractsField } from "./utils";
 import FieldInfo from "@arcgis/core/popup/FieldInfo";
 import { cplethEls, FeatureLayerMeta, mapLayer } from "./types";
-import { makeAmtrakLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer, makeLinesLayer, makeMetroStopsLayer, makePlacesLayer, makeTractsLayer } from './layers';
+import { makeAmtrakLayer, makeBusLinesLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer, makeLinesLayer, makeMetroLinesLayer, makeMetroStopsLayer, makePlacesLayer, makeTractsLayer } from './layers';
 import { panelProps } from "./cmp/calcite/Container";
 import SliderBlock from "@/cmp/calcite/SliderBlock";
 import SelectBlock from "./cmp/calcite/SelectBlock";
@@ -90,7 +90,9 @@ export const mapLayers: Map<string, mapLayer> = new Map([
     ['amtrak', { fn: makeAmtrakLayer, meta: {} as FeatureLayerMeta, i: 2 }],
     ['cycling', { fn: makeCyclingLayer, meta: {} as FeatureLayerMeta, i: 3 }],
     ['places', { fn: makePlacesLayer, meta: {} as FeatureLayerMeta, i: 4 }],
-    ['lines', { fn: makeLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
-    ['metro', { fn: makeMetroStopsLayer, meta: {} as FeatureLayerMeta, i: 6 }],
-    ['bus', { fn: makeBusStopsLayer, meta: {} as FeatureLayerMeta, i: 7 }],
+    ['metrolines', { fn: makeMetroLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
+    ['buslines', { fn: makeBusLinesLayer, meta: {} as FeatureLayerMeta, i: 6 }],
+    // ['lines', { fn: makeLinesLayer, meta: {} as FeatureLayerMeta, i: 5 }],
+    ['metro', { fn: makeMetroStopsLayer, meta: {} as FeatureLayerMeta, i: 7 }],
+    ['bus', { fn: makeBusStopsLayer, meta: {} as FeatureLayerMeta, i: 8 }],
 ]);

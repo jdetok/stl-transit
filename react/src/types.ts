@@ -10,6 +10,8 @@ import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 export type ColorProperties = ConstructorParameters<typeof Color>[0];
 export type CollectionProperties<t> = ConstructorParameters<typeof Collection<t>>[0];
 
+export type featFilter = (feature: any) => boolean;
+
 export type FeatureLayerMeta = {
     title: string;
     source?: Graphic[];
@@ -19,7 +21,8 @@ export type FeatureLayerMeta = {
     fields?: FieldProperties[];
     outFields?: string[];
     geometryType?: 'point' | 'polygon' | 'polyline';
-    toGraphics?: (data: any) => Graphic[];
+    toGraphics?: (data: any, filter?: featFilter) => Graphic[];
+    filter?: featFilter;
     legendEnabled?: boolean;
 };
 

@@ -22,14 +22,14 @@ import UniqueValueRenderer from "@arcgis/core/renderers/UniqueValueRenderer";
 import ClassBreaksRenderer from "@arcgis/core/renderers/ClassBreaksRenderer";
 import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
 import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBreakInfo';
-import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties, mapLayer } from '@/types';
+import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties, mapLayer, featFilter } from '@/types';
 import SizeVariable from '@arcgis/core/renderers/visualVariables/SizeVariable';
 import SizeStop from '@arcgis/core/renderers/visualVariables/support/SizeStop';
 import Color from '@arcgis/core/Color';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
-        return meta.toGraphics(data);
+        return meta.toGraphics(data, meta.filter);
     } else {
         if (!data?.features?.length) {
             throw new Error(`layer '${meta.title}' expected data.features[]`);
@@ -46,6 +46,7 @@ export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
 
 export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureLayer> => {
     const m = { ...meta };
+    console.log('makeFeatureLayer title:', m.title, ":", m.renderer?.type);
     let data: any;
     let res: Response;
     try {
@@ -69,7 +70,7 @@ export const makeFeatureLayer = async (meta: FeatureLayerMeta): Promise<FeatureL
     } catch (e) {
         throw new Error(`failed to build graphics for ${m.dataUrl}: ${e}`);
     }
-
+// console.log('renderer just before FeatureLayer construction:', m.renderer?.type);
     return new FeatureLayer({
         title: m.title,
         source: m.source,
@@ -119,8 +120,9 @@ export const makeChoroplethLevels = (props: choroProps): ClassBreakInfoPropertie
     return lvls;
 };
 
-export const toPolygon = (data: any): Graphic[] => {
-    return data.features.map((f: any) => { 
+export const toPolygon = (data: any, filter?: featFilter): Graphic[] => {
+    const features = filter ? data.features.filter((f: any) => filter(f)) : data.features;
+    return features.map((f: any) => { 
         return new Graphic({
             geometry: new Polygon({
                 rings: (f.geometry.type === 'MultiPolygon') ? f.geometry.coordinates.flat(1) : f.geometry.coordinates,
@@ -132,8 +134,9 @@ export const toPolygon = (data: any): Graphic[] => {
 }
 
 // create and return an array of graphics from passed bus/metro stop locations
-export const toPoint = (data: any): Graphic[] => {
-    return data.features.map((f: any) => {
+export const toPoint = (data: any, filter?: featFilter): Graphic[] => {
+    const features = filter ? data.features.filter((f: any) => filter(f)) : data.features;
+    return features.map((f: any) => {
         return new Graphic({
             geometry: new Point({
                 longitude: f.geometry.coordinates[0],
@@ -148,8 +151,9 @@ export const toPoint = (data: any): Graphic[] => {
         })
     })
 };
-export const toPolyline = (data: any): Graphic[] => {
-    return data.features.map((f: any) => {
+export const toPolyline = (data: any, filter?: featFilter): Graphic[] => {
+    const features = filter ? data.features.filter((f: any) => filter(f)) : data.features;
+    const graphics = features.map((f: any) => {
         return new Graphic({
             geometry: new Polyline({
                 paths: f.geometry.coordinates,
@@ -161,7 +165,9 @@ export const toPolyline = (data: any): Graphic[] => {
                 route_count: f.properties.route_names ? f.properties.route_names.split(', ').length : 1,
             },
         })
-    })
+    });
+    console.log('polyline graphic attributes sample:', graphics.slice(0, 3).map(g => g.attributes));
+    return graphics;
 };
 
 // pass only the breaks (6 for 5 levels)

@@ -22,6 +22,9 @@ const BUS_STOP_Y_COLOR = [0, 255, 255, 0.5];
 const BUS_STOP_NO_COLOR = [180, 110, 200, 0.5];
 const BUS_STOP_NA_COLOR = [0, 165, 255, 0.5];
 const ML_STOP_SIZE = 10;
+const ML_LINE_SIZE = 3;
+const ML_RED_COLOR = [255, 0, 0, 0.2];
+const ML_BLUE_COLOR = [0, 0, 255, 0.8];
 const RAIL_INNER_COLOR = [0, 0, 0, 0.6];
 const CYCLE_LAYER_GRAVEL_COLOR = [180, 80, 170, 0.6];
 const CYCLE_LAYER_ASPHALT_COLOR = [208, 148, 75, 0.6];
@@ -80,6 +83,97 @@ export const makeLinesLayer = (
         )
     }
 });
+
+export const makeLinesLayerBase = (
+    onRouteClick: (route: string) => void,
+    onRoutesClick: (route: string | string[]) => void
+): FeatureLayerMeta => ({
+    title: 'Metro Transit Lines',
+    dataUrl: '/layers/lines',
+    geometryType: 'polyline',
+    fields: LINES_FIELDS,
+    renderer: new ClassBreaksRenderer({
+        field: 'freq_wk',
+        classBreakInfos: makeChoroplethLevels({ levels: LINES_CLASSBREAKS, opac: 0.65, line: true }),
+        defaultSymbol: new SimpleLineSymbol({ color: 'gray', width: 3 })
+    }),
+    toGraphics: toPolyline,
+    popupTemplate: {
+        title: '{route_desc}',
+        content: (feature: any) => makePopupContent(
+            <LayerPopup
+                attrs={feature.graphic?.attributes}
+                fieldInfos={LINES_FIELDINFOS}
+                routeField='route_desc'
+                routeLabel='Routes Served'
+                onRouteClick={onRouteClick}
+                onRoutesClick={onRoutesClick}
+            />
+        )
+    }
+});
+
+export const makeMetroLinesLayer = (
+    onRouteClick: (route: string) => void,
+    onRoutesClick: (route: string | string[]) => void,
+): FeatureLayerMeta => ({
+    ...makeLinesLayerBase(onRouteClick, onRoutesClick),
+    title: 'MetroLink Transit Lines',
+    filter: (f) => f.properties?.route_type === '2',
+    renderer: new UniqueValueRenderer({
+        field: 'route',
+        uniqueValueInfos: [
+            {
+                value: 'MLR',
+                label: 'Red Line',
+                symbol: new SimpleLineSymbol({ color: ML_RED_COLOR, width: ML_LINE_SIZE, style: 'solid' }),
+            },
+            {
+                value: 'MLB',
+                label: 'Blue Line',
+                symbol: new SimpleLineSymbol({ color: ML_BLUE_COLOR, width: ML_LINE_SIZE, style: 'solid' }),
+            },
+        ],
+        defaultSymbol: new SimpleLineSymbol({ color: 'gray', width: ML_LINE_SIZE }),
+    }),
+    popupTemplate: {
+        title: 'MetroLink Route: {route_desc}',
+        outFields: ['*'],
+        content: (feature: any) => makePopupContent(
+            <LayerPopup 
+                attrs={feature.graphic?.attributes ?? feature.attributes}
+                fieldInfos={STOP_FIELDINFOS}
+                routeField='route_names'
+                routeLabel='MetroLink Routes Served'
+                onRouteClick={onRouteClick}
+                onRoutesClick={onRoutesClick}
+            />
+        ),
+    },
+});
+export const makeBusLinesLayer = (
+    onRouteClick: (route: string) => void,
+    onRoutesClick: (route: string | string[]) => void,
+): FeatureLayerMeta => ({
+    ...makeLinesLayerBase(onRouteClick, onRoutesClick),
+    title: 'MetroBus Transit Lines',
+    filter: (f) => f.properties?.route_type === '3',
+    popupTemplate: {
+        title: 'MetroBus Route: {route_desc}',
+         content: (feature: any) => makePopupContent(
+            <LayerPopup
+                attrs={feature.graphic?.attributes}
+                fieldInfos={LINES_FIELDINFOS}
+                routeField='route_desc'
+                routeLabel='Routes Served'
+                onRouteClick={onRouteClick}
+                onRoutesClick={onRoutesClick}
+            />
+        )
+    }
+});
+
+
 
 export const makeMetroStopsLayer = (
     onRouteClick: (route: string) => void,

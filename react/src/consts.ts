@@ -74,6 +74,7 @@ export const PLACE_FIELDINFOS = fieldInfos(PLACE_FIELDS, ['ObjectID', 'type']);
 
 export const LINES_FIELDS: FieldProperties[] = [
     {name: 'ObjectID', alias: 'ObjectID', type: 'oid'},
+    {name: 'route', alias: 'route', type: 'string'},
     {name: 'route_desc', alias: 'route_desc', type: 'string'},
     {name: 'route_type', alias: 'route_type', type: 'string'},
     {name: 'stops_total', alias: 'Total Stops', type: 'integer'},
