@@ -29,6 +29,7 @@ export const PANEL_CSS_CLASSES: Record<string, string> = {
     modifiers: 'panel-modifiers',
     basemaps: 'panel-basemaps',
     print: 'panel-print',
+    routes: 'panel-routes',
 };
 
 export const TRACTS_LAYER_TTL = 'US Census Tracts';

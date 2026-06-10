@@ -18,6 +18,7 @@ import { addLayer, applyRoutesFilter, buildFeatureLayer, highlightPlaces,
     tractsField
 } from '@/utils';
 import SelectBlock from './cmp/calcite/SelectBlock';
+import DropdownBlock from './cmp/calcite/DropdownBlock';
 
 type sliderType = 'size' | 'opacity';
 
@@ -90,11 +91,11 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
 
         // tract opacity/data field used for classbreaks
         const tractOpacState = 0.05;
-        const onTractFieldChange = (val: string) => {
+        const onTractFieldChange = (val: string | string[]) => {
             const renderer = tractsLayer.renderer as ClassBreaksRenderer;
-            renderer.field = val;
+            renderer.field = val as string;
             renderer.classBreakInfos = makeChoroplethLevels({
-                levels: TRACT_CLASSBREAKS.get(tractsField(val)),
+                levels: TRACT_CLASSBREAKS.get(tractsField(val as string)),
                 opac: tractOpacState,
             }!);
             tractsLayer.renderer = renderer.clone();
@@ -132,23 +133,45 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
 
         // add real slider callbacks to SliderBlocks in panels
         const newPanels = panels.map(panel => {
-            if (panel.id !== PANEL_CSS_CLASSES['modifiers']) return panel;
-            return {
-                ...panel,
-                ready: true,
-                blockComponents: [
-                    <SelectBlock id='slider-0' heading='Tract Opacity'
-                        optsProps={{ opts: tractChoroOpts }} onChange={onTractFieldChange} />,
-                    <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01}
-                        onInput={async (v) => { console.log('slider onInput called', v); sliderCallbacks.tractOpacity(v) }} />,
-                    <SliderBlock id='slider-3' heading='Line Size' min={0.25} max={15} value={1} step={0.25}
-                        onInput={async (v) => sliderCallbacks.lineSize(v)} />,
-                    <SliderBlock id='slider-1' heading='Bus Stop Size' min={0.1} max={3} value={1} step={0.1}
-                        onInput={async (v) => sliderCallbacks.busSize(v)} />,
-                    <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0.1} max={3} value={1} step={0.1}
-                        onInput={async (v) => sliderCallbacks.metroSize(v)} />,
-                ],
-            };
+            if (panel.id !== PANEL_CSS_CLASSES['modifiers'] && panel.id !== PANEL_CSS_CLASSES['routes']) return panel;
+            if (panel.id === PANEL_CSS_CLASSES['modifiers']) {
+                return {
+                    ...panel,
+                    ready: true,
+                    blockComponents: [
+                        <SelectBlock id='slider-0' heading='Tract Opacity'
+                            optsProps={{ opts: tractChoroOpts }} onChange={onTractFieldChange} />,
+                        <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01}
+                            onInput={async (v) => { console.log('slider onInput called', v); sliderCallbacks.tractOpacity(v) }} />,
+                        <SliderBlock id='slider-3' heading='Line Size' min={0.25} max={15} value={1} step={0.25}
+                            onInput={async (v) => sliderCallbacks.lineSize(v)} />,
+                        <SliderBlock id='slider-1' heading='Bus Stop Size' min={0.1} max={3} value={1} step={0.1}
+                            onInput={async (v) => sliderCallbacks.busSize(v)} />,
+                        <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0.1} max={3} value={1} step={0.1}
+                            onInput={async (v) => sliderCallbacks.metroSize(v)} />,
+                    ],
+                };
+            } else {
+                return {
+                    ...panel,
+                    ready: true,
+                    blockComponents: [
+                        <DropdownBlock
+                            id='dropdown-0' heading='Routes'
+                            optsProps={{
+                                allOpt: { label: 'All MetroBus Routes', value: 'all' },
+                                dataUrl: '/layers/routes',
+                                mapFeatures: (features) => features.map((f: any) => f.properties.route_desc.replace("'", '')).sort(),
+                            }}
+                            onChange={(vals) => {
+                                if (vals === 'all' || !vals) return;
+                                applyRoutesFilter(view, linesLayer, stopLayers, vals);
+                            }}
+                        />
+                    ],
+                }
+            }
+            
         });
         setBuiltPanels(newPanels);
         setView(view);

@@ -7,6 +7,7 @@ import { makeAmtrakLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer
 import { panelProps } from "./cmp/calcite/Container";
 import SliderBlock from "@/cmp/calcite/SliderBlock";
 import SelectBlock from "./cmp/calcite/SelectBlock";
+import DropdownBlock from "./cmp/calcite/DropdownBlock";
 
 export const TRACT_CLASSBREAKS: Map<FieldInfo, cplethEls[]> = new Map([
     [tractsField('popl_dens'), makeChoroRanges(5, [0, 2500, 5000, 7500, 10000, 100000])],
@@ -29,6 +30,7 @@ export const actionBars: actionBarProps[] = [{
         { text: 'Layers', label: 'Layers', scale: 'm', icon: 'layers', panelKey: PANEL_CSS_CLASSES['layerlist']},
         { text: 'Basemaps', label: 'Basemaps', scale: 'm', icon: 'basemap', panelKey: PANEL_CSS_CLASSES['basemaps']},
         { text: 'Modifiers', label: 'Appearance Modifiers', scale: 'm', icon: 'sliders', panelKey: PANEL_CSS_CLASSES['modifiers']},
+        { text: 'Bus Routes', label: 'AppearanBus Routes', scale: 'm', icon: 'bus', panelKey: PANEL_CSS_CLASSES['routes']},
         { text: 'Export', label: 'Export', scale: 'm', icon: 'print', panelKey: PANEL_CSS_CLASSES['print']},
         { text: 'Fullscreen', label: 'Fullscreen', scale: 'm', icon: 'extent', onClick: mapFullscreen},
     ],
@@ -66,13 +68,15 @@ export const panels: panelProps[] = [
     { id: PANEL_CSS_CLASSES['layerlist']!, childType: 'layerlist', heading: 'Layers', closable: true },
     { id: PANEL_CSS_CLASSES['basemaps']!, childType: 'basemaps', heading: 'Basemaps', closable: true },
     { id: PANEL_CSS_CLASSES['print']!, childType: 'print', heading: 'Export', closable: true },
-    {
-        id: PANEL_CSS_CLASSES['modifiers']!, childType: 'blocks', heading: 'Appearance Modifiers', closable: true, blockComponents: [
+    { id: PANEL_CSS_CLASSES['modifiers']!, childType: 'blocks', heading: 'Appearance Modifiers', closable: true, blockComponents: [
         <SelectBlock id='select-0' heading='Tract Opacity Field' />,
         <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01} />,
         <SliderBlock id='slider-1' heading='Bus Stop Size' min={0} max={3} value={1} step={0.1} />,
         <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0} max={3} value={1} step={0.1} />,
         <SliderBlock id='slider-3' heading='Line Size' min={0} max={15} value={1} step={0.25} />,
+    ]},
+    { id: PANEL_CSS_CLASSES['routes']!, childType: 'blocks', heading: 'Bus Routes', closable: true, blockComponents: [
+        <DropdownBlock id='dropdown-0' heading='Bus Routes' />,
     ]},
 ];
 

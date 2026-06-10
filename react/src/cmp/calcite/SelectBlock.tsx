@@ -1,17 +1,17 @@
 import { useEffect, useRef , JSX } from "react";
 import { Block, blockProps } from "./Container";
 import { Select } from '@esri/calcite-components/dist/components/calcite-select';
-import { Option } from '@esri/calcite-components/dist/components/calcite-option';
 
-type selectOption = { value: string; label: string; };
+export type selectOption = { value: string; label: string; };
 
-type selectProps = {
+export type selectProps = {
     id: string;
-    onChange?: (val: string) => void;
+    onChange?: (val: string | string[]) => void;
     optsProps?: {
         allOpt?: selectOption,
         opts?: selectOption[],
         dataUrl?: string,
+        mapFeatures?: (features: any[]) => string[];
     };
     value?: string; 
 }
@@ -41,10 +41,10 @@ export default function SelectBlock({ id, heading, onChange, optsProps, value }:
     if (optsProps) {
         const all = optsProps.allOpt;
         if (all) {
-            options.push(<calcite-option label={all.label} value={all.value} />);    
+            options.push(<calcite-option key='all' label={all.label} value={all.value} />);    
         }
         optsProps.opts?.forEach((opt) => {
-            options.push(<calcite-option label={opt.label} value={opt.value} />);
+            options.push(<calcite-option key={opt.value} label={opt.label} value={opt.value} />);
         });
     }
 
