@@ -3,7 +3,12 @@ import MapView from '@arcgis/core/views/MapView';
 import SliderBlock from './cmp/calcite/SliderBlock';
 import { panelProps } from './cmp/calcite/Container';
 import { actionBars, mapLayers, panels, TRACT_CLASSBREAKS } from '@/data';
-import { HIGHLIGHTS, PANEL_CSS_CLASSES } from '@/consts';
+import {
+    HIGHLIGHTS, PANEL_CSS_CLASSES, MAX_OPAC_TRACT,
+    SVAL_OPAC_TRACT, STEP_XS, MAX_MULT_STOPS, 
+    SVAL_MULT, STEP_SM, STEP_MD,
+    MAX_MULT_LINES_MBUS, MAX_MJLT_LINES_MLINK
+} from '@/consts';
 import { actionBarProps } from './cmp/calcite/ActionBar';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
@@ -54,9 +59,11 @@ const layerSliderConfigs: layerSliderConfig[] = [
 const routeCallbacks = {
     onRouteClick: (route: string | string[]) => console.log('not ready', route),
     onRoutesClick: (routes: string | string[]) => console.log('not ready', routes),
+    onRoutesClear: () => { },
 };
 const stableOnRouteClick = (route: string | string[]) => routeCallbacks.onRouteClick(route);
 const stableOnRoutesClick = (routes: string | string[]) => routeCallbacks.onRoutesClick(routes);
+const stableOnRoutesClear = () => routeCallbacks.onRoutesClear();
 
 // ON VIEW READY FUNC/ARGS
 export type viewReadyArgs = {
@@ -73,7 +80,7 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
 
         // BUILD ALL FEATURE LAYERS
         await Promise.all(layers.map(([k, v]) => buildFeatureLayer(
-            [k, v], stableOnRouteClick, stableOnRoutesClick
+            [k, v], stableOnRouteClick, stableOnRoutesClick, stableOnRoutesClear
         )));
 
         // SORT EACH LAYER BY i AND ADD TO MAP VIEW
@@ -111,6 +118,7 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
         // real callbacks fror route buttons
         routeCallbacks.onRouteClick = (route) => applyRoutesFilter(view, linesLayersArr, stopLayers, route);
         routeCallbacks.onRoutesClick = (routes) => applyRoutesFilter(view, linesLayersArr, stopLayers, routes);
+        routeCallbacks.onRoutesClear = () => clearRoutesFilter(view, linesLayersArr, stopLayers);
 
         // attach real callbacks for sliders
         for (const { key, layerKey, type } of layerSliderConfigs) {
@@ -165,17 +173,22 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                     ...panel,
                     ready: true,
                     blockComponents: [
-                        <SelectBlock id='select-0' heading='Tract Opacity'
-                            optsProps={{ opts: tractChoroOpts }} onChange={onTractFieldChange} />,
-                        <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01}
-                            onInput={async (v) => { console.log('slider onInput called', v); sliderCallbacks.tractOpacity(v) }} />,
-                        <SliderBlock id='slider-3' heading='MetroBus Line Size' min={0.25} max={15} value={1} step={0.25}
-                            onInput={async (v) => sliderCallbacks.busLineSize(v)} />,
-                        <SliderBlock id='slider-4' heading='MetroLink Line Size' min={0.25} max={15} value={1} step={0.25}
+                        <SelectBlock id='select-0' heading='Tract Opacity Field'
+                            optsProps={{ opts: tractChoroOpts }} onChange={onTractFieldChange} />,                        
+                        <SliderBlock id='slider-0' heading='Tract Opacity'
+                            min={0} max={MAX_OPAC_TRACT} value={SVAL_OPAC_TRACT} step={STEP_XS}
+                            onInput={async (v) => { sliderCallbacks.tractOpacity(v) }} />,
+                        <SliderBlock id='slider-3' heading='MetroBus Line Size'
+                            min={0} max={MAX_MULT_LINES_MBUS} value={SVAL_MULT} step={STEP_MD}
+                            onInput={async (v) => sliderCallbacks.busLineSize(v)}/>,
+                        <SliderBlock id='slider-4' heading='MetroLink Line Size'
+                            min={0} max={MAX_MJLT_LINES_MLINK} value={SVAL_MULT} step={STEP_SM}
                             onInput={async (v) => sliderCallbacks.metroLineSize(v)} />,
-                        <SliderBlock id='slider-1' heading='MetroBus Stop Size' min={0.1} max={3} value={1} step={0.1}
+                        <SliderBlock id='slider-1' heading='MetroBus Stop Size'
+                            min={0} max={MAX_MULT_STOPS} value={SVAL_MULT} step={STEP_SM}
                             onInput={async (v) => sliderCallbacks.busSize(v)} />,
-                        <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0.1} max={3} value={1} step={0.1}
+                        <SliderBlock id='slider-2' heading='MetroLink Stop Size'
+                            min={0} max={MAX_MULT_STOPS} value={SVAL_MULT} step={STEP_SM}
                             onInput={async (v) => sliderCallbacks.metroSize(v)} />,
                     ],
                 };

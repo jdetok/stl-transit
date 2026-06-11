@@ -1,5 +1,5 @@
 import { actionBarProps } from "./cmp/calcite/ActionBar";
-import { PANEL_CSS_CLASSES, HL_CHURCH, HL_GROCERY, HL_MED, HL_PARKS, HL_SCHOOLS } from "./consts";
+import { PANEL_CSS_CLASSES, HL_CHURCH, HL_GROCERY, HL_MED, HL_PARKS, HL_SCHOOLS,  } from "./consts";
 import { makeChoroRanges, mapFullscreen, tractsField } from "./utils";
 import FieldInfo from "@arcgis/core/popup/FieldInfo";
 import { cplethEls, FeatureLayerMeta, mapLayer } from "./types";
@@ -30,11 +30,11 @@ export const panels: panelProps[] = [
         heading: 'Appearance Modifiers', closable: true, useGrid2v: true,
         blockComponents: [
             <SelectBlock id='select-0' heading='Tract Opacity Field' />,
-            <SliderBlock id='slider-0' heading='Tract Opacity' min={0} max={0.5} value={0.05} step={0.01} />,
-            <SliderBlock id='slider-1' heading='MetroBus Stop Size' min={0} max={3} value={1} step={0.1} />,
-            <SliderBlock id='slider-2' heading='MetroLink Stop Size' min={0} max={3} value={1} step={0.1} />,
-            <SliderBlock id='slider-3' heading='MetroBus Line Size' min={0} max={15} value={1} step={0.25} />,
-            <SliderBlock id='slider-4' heading='MetroLink Line Size' min={0} max={15} value={1} step={0.25} />,
+            <SliderBlock id='slider-0' heading='Tract Opacity'  />,
+            <SliderBlock id='slider-1' heading='MetroBus Stop Size' />,
+            <SliderBlock id='slider-2' heading='MetroLink Stop Size' />,
+            <SliderBlock id='slider-3' heading='MetroBus Line Size' />,
+            <SliderBlock id='slider-4' heading='MetroLink Line Size' />,
         ]
     },
     { id: PANEL_CSS_CLASSES['routes']!, childType: 'blocks', heading: 'Bus Routes', closable: true, blockComponents: [

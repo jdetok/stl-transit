@@ -24,11 +24,13 @@ create table if not exists api.routes (
 	stops_access_entertainment integer
 );
 
+alter table api.routes add column if not exists connected_bus_routes text;
+
 begin; 
 truncate table api.routes restart identity;
 
 with mtr as (
-    select 805 as meters
+    select 805 as meters, 50 as bus_near_rail
 ), rts as (
     select
         max(a.route_id) as route_id,
@@ -62,6 +64,29 @@ with mtr as (
             m.meters
         )
     group by c.stop_id
+), metrobus_connections as (
+    select
+        ml_st.route_id as metro_route_id,
+        string_agg(distinct mb.route_names, ', ' 
+            order by mb.route_names
+        ) as connected_bus_routes
+    from (
+        -- metrolink stops with their route
+        select distinct t.route_id, s.stop_id, s.stop_loc
+        from public.stops s
+        join public.stop_times st on st.stop_id = s.stop_id
+        join public.trips t on t.trip_id = st.trip_id
+        join public.routes r on r.route_id = t.route_id
+        where r.route_type = '2'
+    ) ml_st
+    join api.stops mb on mb.route_type = '3'
+    join public.stops mb_raw on mb_raw.stop_id = mb.stop_id
+    and ST_DWithin(
+        ST_Transform(ml_st.stop_loc::geometry, 3857),
+        ST_Transform(mb_raw.stop_loc::geometry, 3857),
+        (select bus_near_rail from mtr)
+    )
+    group by ml_st.route_id
 ), num_stops as (
     select
         a.route_id,
@@ -113,7 +138,7 @@ with mtr as (
 )
 insert into api.routes (route_id, route_type, route, route_name, route_desc, freq_wk, freq_sa, freq_su, stops_total, stops_access_wheelchair, 
 	stops_access_amenities, stops_access_grocery, stops_access_schools, stops_access_colleges, stops_access_parks, 
-	stops_access_social_facilities, stops_access_medical, stops_access_churches, stops_access_entertainment
+	stops_access_social_facilities, stops_access_medical, stops_access_churches, stops_access_entertainment, connected_bus_routes
 )
 select
     a.route_id, route_type, route, route_name, route_desc,
@@ -121,20 +146,12 @@ select
     stops_total, stops_access_wheelchair,
     stops_access_amenities, stops_access_grocery,
     stops_access_schools, stops_access_colleges, stops_access_parks,
-    stops_access_social_facilities, stops_access_medical, stops_access_churches, stops_access_entertainment
+    stops_access_social_facilities, stops_access_medical, stops_access_churches, stops_access_entertainment,
+    mbc.connected_bus_routes
 from rts a
 join num_stops b on b.route_id = a.route_id
 join freqs_by_route wk on wk.route_id = a.route_id and wk.day_type = 'WK'
 left join freqs_by_route sa on sa.route_id = a.route_id and sa.day_type = 'SA'
 left join freqs_by_route su on su.route_id = a.route_id and su.day_type = 'SU'
-order by stops_total desc;
-commit;
-
-select * from api.routes;
-select 
-    route, route_type, route_name, route_desc,
-    stops_total, stops_access_wheelchair,
-    stops_access_amenities, stops_access_grocery,
-    stops_access_schools, stops_access_colleges, stops_access_parks,
-    stops_access_social_facilities, stops_access_entertainment
-from api.routes;
+left join metrobus_connections mbc on mbc.metro_route_id = a.route_id
+order by stops_total desc; 

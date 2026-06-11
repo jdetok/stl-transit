@@ -5,11 +5,10 @@
     --cmp-bdr: 4px solid black;
     --cmp-pdg: 0.8rem;
     --map-vh: 95vh;
-    --panel-height: 50%;
     --map-inner-right: 1px;
     --map-inner-bottom: 20px;
     --panel-above-actbar: calc(var(--map-inner-bottom) + 50px);
-    --panel-beside-actbar: calc(var(--map-inner-right) + 42px);
+    --panel-beside-actbar: calc(var(--map-inner-right) + 50px);
     --legend-right: 27px;
     --legend-bottom: 40px;
     --set-calcite-color: rgba(191, 191, 191, 0.758);
@@ -34,8 +33,11 @@ body {
     background-color: var(--bg-color);
 }
 
-.hdr > h1 {
+.hdr {
     text-align: center;
+    font-size: 32px;
+    padding: 0;
+    margin: 0.2rem 0;
 }
 
 .map-div {
@@ -63,6 +65,8 @@ calcite-panel {
     position: absolute;
     right: var(--panel-beside-actbar);
     bottom: var(--panel-above-actbar);
-    height: var(--panel-height);
+    /* height: var(--panel-height); */
+    max-height: 48%;
+    height: fit-content;
     width: fit-content;
 }

@@ -42,9 +42,9 @@ export default function ListBlock({ id, heading, onChange, optsProps }: selectBl
 
     const options: JSX.Element[] = [];
     const allOpts = [...(optsProps?.opts ?? []), ...fetchedOpts];
-    allOpts.forEach(opt => {
+    allOpts.forEach((opt, i) => {
         options.push(
-            <calcite-list-item key={opt.value} data-value={opt.value} label={opt.label}></calcite-list-item>
+            <calcite-list-item key={`${opt.value}-${i}`} data-value={opt.value} label={opt.label}></calcite-list-item>
         );
     });
 

@@ -25,7 +25,9 @@ import { ClassBreakInfoProperties } from '@arcgis/core/renderers/support/ClassBr
 import { FeatureLayerMeta, choroProps, cplethEls, choropleth, ColorProperties, mapLayer, featFilter } from '@/types';
 import SizeVariable from '@arcgis/core/renderers/visualVariables/SizeVariable';
 import SizeStop from '@arcgis/core/renderers/visualVariables/support/SizeStop';
-import Color from '@arcgis/core/Color';
+import Color, { ColorLike } from '@arcgis/core/Color';
+import { LineStyle } from '@arcgis/core/symbols/types';
+import SimpleMarkerSymbol from '@arcgis/core/symbols/SimpleMarkerSymbol';
 
 export const buildGraphics = (meta: FeatureLayerMeta, data: any): Graphic[] => {
     if (meta.toGraphics) {
@@ -233,7 +235,7 @@ export const applyRoutesFilter = async (mapView: MapView, linesLayersArr: Featur
     let whereStop: string;
     let whereLine: string;
     if (routeNames.length > 1) {
-        whereStop = (routes as string[]).map(r => `route_names like '%${r}%'`).join(" or ");
+        whereStop = (routes as string[]).map(r => `route_names like '%${r.replace("'", "")}%'`).join(" or ");
         if (routes.some(r => r.includes("MetroLink"))) {
             whereLine = (routes as string[]).map(r => `route_desc like '%${r.substring(4)}%'`).join(" or ");
         } else {
@@ -294,13 +296,14 @@ export const highlightPlaces = ({ bar, placesLayer, layerView, activeHighlight }
     }
 }
 
-export const buildFeatureLayer = async (
+export const buildFeatureLayer = async(
     [k, v],
     onRouteClick: (route: string | string[]) => void,
-    onRoutesClick: (routes: string | string[]) => void
+    onRoutesClick: (routes: string | string[]) => void,
+    onRoutesClear: () => void,
 ) => {
     try {
-        if (v.fn) v.meta = v.fn(onRouteClick, onRoutesClick);
+        if (v.fn) v.meta = v.fn(onRouteClick, onRoutesClick, onRoutesClear);
     } catch (err) {
         console.error('error building FeatureLayerMeta:', err);
     }
@@ -370,3 +373,21 @@ export const clearRoutesFilter = async (mapView: MapView, linesLayersArr: Featur
         layerView.featureEffect = null as any;
     }));
 };
+
+export const makeLineSymbol = (color: ColorLike, width: number, style?: LineStyle): SimpleLineSymbol => {
+    return new SimpleLineSymbol({
+        color: color,
+        width: width,
+        style: style ?? 'solid',
+    });
+};
+
+type markerStyle = "circle" | "diamond" | "square" | "triangle" | "cross" | "x" | "path" | undefined;
+export const makeMarkerSymbol = (color: ColorLike, size: number, outline?: SimpleLineSymbol, style?: markerStyle): SimpleMarkerSymbol => { 
+    return new SimpleMarkerSymbol({
+        style: style ?? 'circle',
+        color: color,
+        size: size,
+        outline: outline,
+    })
+}

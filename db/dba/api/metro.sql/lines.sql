@@ -22,16 +22,8 @@ create table if not exists api.lines (
 	stops_access_entertainment integer,
     geom text
 );
+alter table api.lines add column if not exists connected_bus_routes text;
 
-select a.shape_id, c.route_desc,
-	ST_MakeLine(a.shape_pt_loc::geometry order by shape_pt_sequence) as geom
-from shapes a
-left join (select distinct route_id, shape_id from trips) b on b.shape_id = a.shape_id
-left join api.routes c on c.route_id = b.route_id
-where c.route_desc like '58-%'
-group by a.shape_id, c.route_desc
-;
-truncate api.lines restart identity;
 with lines as (
     select
     	c.route_id,
@@ -49,7 +41,7 @@ insert into api.lines (
     stops_access_amenities, stops_access_grocery,
     stops_access_schools, stops_access_colleges, stops_access_parks,
     stops_access_social_facilities, stops_access_churches, 
-    stops_access_medical, stops_access_entertainment, geom
+    stops_access_medical, stops_access_entertainment, connected_bus_routes, geom
 )
 select
     b.route_id, b.route_type, b.route, b.route_name, 
@@ -58,7 +50,7 @@ select
     stops_access_amenities, stops_access_grocery,
     stops_access_schools, stops_access_colleges, stops_access_parks,
     stops_access_social_facilities, stops_access_churches, 
-    stops_access_medical, stops_access_entertainment,
+    stops_access_medical, stops_access_entertainment, max(b.connected_bus_routes) as connected_bus_routes,
     ST_AsGeoJSON(st_collect(geom)) as geom
 from lines a
 join api.routes b on b.route_id = a.route_id 
@@ -71,5 +63,3 @@ group by
     stops_access_social_facilities, stops_access_churches, 
     stops_access_medical, stops_access_entertainment
 ;
-
-select *, ST_GeomFromGEOJSON(geom) from api.lines;

@@ -3,6 +3,7 @@ import '@arcgis/map-components/components/arcgis-layer-list';
 import '@arcgis/map-components/components/arcgis-basemap-gallery';
 import '@arcgis/map-components/components/arcgis-print';
 import { Fragment, ReactNode } from 'react';
+import { styleBorderRadPadded } from '@/css';
 
 type containerTypes = 'panel' | 'block';
 type containerChildTypes = 'legend' | 'layerlist' | 'basemaps' | 'print' | 'div';
@@ -71,6 +72,9 @@ export const Panel = ({
                     width: '100%',
                     boxSizing: 'border-box',
                     height: '100%',
+                    border: '1px solid black',
+                    borderRadius: '0.75rem',
+                    padding: '0.3rem'
                 }}
                 >{child}
         </div>) : child}</calcite-panel>
