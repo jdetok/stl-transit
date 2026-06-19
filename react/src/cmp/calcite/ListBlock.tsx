@@ -9,7 +9,7 @@ import { Block } from "./Container";
 export default function ListBlock({ id, heading, onChange, optsProps }: selectBlockProps) {
     const dropdownRef = useRef<List>(null);
     const [fetchedOpts, setFetchedOpts] = useState<selectOption[]>([]);
-    
+    const filterFn = optsProps?.filter ?? (() => true);
     // fetch options if necessary
     useEffect(() => {
         if (!optsProps?.dataUrl) return;
@@ -18,11 +18,11 @@ export default function ListBlock({ id, heading, onChange, optsProps }: selectBl
                 console.log('response:', r.status, r.ok);
                 return r.json();
             })
-            .then(data => {
-                const labels: string[] = optsProps.mapFeatures?.(data.features)
-                    ?? data.features.map((f: any) => f.properties.route_desc);
-                setFetchedOpts(labels.map(label => ({ label, value: label })));
-            })
+            .then(data => setFetchedOpts(
+                data.features.filter(filterFn)
+                    .map((f: any) => f.properties.route_desc)
+                    .map((label: string) => ({ label, value: label }))
+            ))
             .catch(err => console.error('DropdownBlock fetch error:', err));
     }, [optsProps?.dataUrl]);
 
@@ -41,7 +41,9 @@ export default function ListBlock({ id, heading, onChange, optsProps }: selectBl
     }, [onChange]);
 
     const options: JSX.Element[] = [];
+    
     const allOpts = [...(optsProps?.opts ?? []), ...fetchedOpts];
+
     allOpts.forEach((opt, i) => {
         options.push(
             <calcite-list-item key={`${opt.value}-${i}`} data-value={opt.value} label={opt.label}></calcite-list-item>

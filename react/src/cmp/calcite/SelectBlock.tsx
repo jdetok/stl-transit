@@ -1,6 +1,7 @@
 import { useEffect, useRef , JSX } from "react";
 import { Block, blockProps } from "./Container";
 import { Select } from '@esri/calcite-components/dist/components/calcite-select';
+import { featFilter } from "@/types";
 
 export type selectOption = { value: string; label: string; };
 
@@ -12,6 +13,7 @@ export type selectProps = {
         opts?: selectOption[],
         dataUrl?: string,
         mapFeatures?: (features: any[]) => string[];
+        filter?: featFilter;
     };
     value?: string; 
 }

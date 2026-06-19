@@ -198,10 +198,11 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                     ready: true,
                     blockComponents: [
                         <ListBlock
-                            id='dropdown-0' heading='Routes'
+                            id='dropdown-1' heading='Missouri Routes'
                             optsProps={{
                                 allOpt: { label: 'All MetroBus Routes', value: 'all' },
-                                dataUrl: '/layers/routes',
+                                dataUrl: '/layers/lines',
+                                filter: (f: any) => f.properties.state === 'MO',
                                 mapFeatures: (features) => features.map((f: any) => f.properties.route_desc.replace("'", '')).sort(),
                             }}
                             onChange={(vals) => {
@@ -211,7 +212,23 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                                 }
                                 applyRoutesFilter(view, linesLayersArr, stopLayers, vals);
                             }}
-                        />
+                        />,
+                        <ListBlock
+                            id='dropdown-0' heading='Illinois Routes'
+                            optsProps={{
+                                allOpt: { label: 'All MetroBus Routes', value: 'all' },
+                                dataUrl: '/layers/lines',
+                                filter: (f: any) => { return f.properties.state === 'IL' },
+                                mapFeatures: (features) => features.map((f: any) => f.properties.route_desc.replace("'", '')).sort(),
+                            }}
+                            onChange={(vals) => {
+                                if (vals === 'all' || !vals || (Array.isArray(vals) && vals.includes('all'))) {
+                                    clearRoutesFilter(view, linesLayersArr, stopLayers);
+                                    return;
+                                }
+                                applyRoutesFilter(view, linesLayersArr, stopLayers, vals);
+                            }}
+                        />,
                     ],
                 }
             }

@@ -63,3 +63,38 @@ group by
     stops_access_social_facilities, stops_access_churches, 
     stops_access_medical, stops_access_entertainment
 ;
+alter table api.lines add column if not exists centroid text;
+
+
+with states as (
+	select 
+		stusps as state, geom
+	from tgr.state
+	where stusps in ('MO', 'IL')
+), lines as (
+	select
+		c.route_id,
+		c.route_desc,
+		st_makeline(a.shape_pt_loc::geometry order by a.shape_pt_sequence) as geom
+	from shapes a
+	join (select distinct route_id, shape_id from trips) b on b.shape_id = a.shape_id
+	join api.routes c on c.route_id = b.route_id
+	group by a.shape_id, c.route_id, c.route_desc
+	), lines_centroid as (
+	select 
+		route_id, route_desc, geom, st_centroid(geom) as centroid
+	from lines
+	), dataset as (
+	select a.route_id, a.route_desc, a.geom, a.centroid, b.state	
+	from lines_centroid a
+	join states b on st_within(
+		st_transform(a.centroid, 4326), 
+		st_transform(b.geom, 4326)
+	)
+)
+update api.lines l
+set 
+	centroid = ST_AsGeoJSON(d.centroid),
+	state = d.state
+from dataset d
+where l.route_id = d.route_id; 
