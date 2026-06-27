@@ -7,7 +7,25 @@ export default function InfoSect({ blocks }: infoSectProps) {
             blocks.map((b, i) => (
                 <div key={`${b.id}-${i}`} id={b.id} style={dispNone}>
                     <h2>{b.ttl}</h2>
-                    <p>{b.txt}</p>
+                    <p>{b.infoTxt}</p>
+                    <div>{
+                        b.children
+                            ? <>{ b.children }</>
+                            : b.child
+                                ? <>{b.child}</>
+                                : b.sects
+                                    ? b.sects.map((s, i) => (
+                                        <div key={i}>
+                                            <h3>{s.ttl}</h3>
+                                            <p>{s.txt}</p>
+                                        </div>
+                                    ))         
+                                    : b.multiTxt
+                                        ? b.multiTxt.map((t, i) => (
+                                            <p key={i}>{t}</p>
+                                        ))
+                                        : <p>{b.txt}</p>
+                    }</div>
                 </div>
             ))
         }</div>

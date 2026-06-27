@@ -5,6 +5,7 @@ import Collection from '@arcgis/core/core/Collection';
 import { PopupTemplateProperties } from '@arcgis/core/PopupTemplate';
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
+import { ReactNode } from 'react';
 
 // as of @arcgis/core 5.0 __esri namespace is deprecated. have to create own types
 export type ColorProperties = ConstructorParameters<typeof Color>[0];
@@ -68,6 +69,11 @@ export type infoBlockProps = {
     id: string,
     ttl: string,
     txt?: string,
+    infoTxt?: string,
+    multiTxt?: string[],
+    child?: ReactNode,
+    children?: ReactNode[],
+    sects?: {ttl: string, txt?: string}[],
 };
 
 export type infoSectProps = {

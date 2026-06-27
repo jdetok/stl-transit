@@ -1,8 +1,8 @@
 import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
 import { viewReady } from '@/viewReady';
-import { BASEMAP, EXTENT, ftrItems, hdrTtl, infoSectBlocks } from '@/consts';
-import { actionBars, panels } from '@/data';
+import { BASEMAP, EXTENT, hdrTtl } from '@/consts';
+import { actionBars, panels, ftrItems, infoSectBlocks } from '@/data';
 import MapView from '@arcgis/core/views/MapView';
 import { actionBarProps } from './calcite/ActionBar';
 import { useCallback, useRef, useState } from 'react';

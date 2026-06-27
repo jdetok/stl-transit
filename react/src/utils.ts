@@ -400,12 +400,12 @@ export const scrollToInfoBlock = (sectId: string, blockId: string, offset = 40) 
         const block = section.querySelector(`#${blockId}`) as HTMLDivElement;
         if (!block) throw new Error(`can't find block with id ${blockId}`);;
 
-        section.querySelectorAll('div').forEach(b => {
+        section.querySelectorAll(':scope > div').forEach(b => {
             if (b.id === blockId) {
-                const disp = b.style.display === 'block' ? 'none' : 'block';
-                b.style.display = disp;
+                const disp = (b as HTMLDivElement).style.display === 'block' ? 'none' : 'block';
+                (b as HTMLDivElement).style.display = disp;
             } else {
-                b.style.display = 'none';
+                (b as HTMLDivElement).style.display = 'none';
             }
         });
 

@@ -93,3 +93,16 @@ calcite-panel {
     height: fit-content;
     width: fit-content;
 }
+
+#info-sect > div > div {
+    display: flex;
+    gap: 1rem;
+}
+
+#info-sect > div, 
+/* #info-sect > div > div,  */
+#info-sect > div > div > * {
+    padding: 0.2rem;
+    border: var(--cmp-bdr);
+    border-radius: var(--bdr-rad);
+}

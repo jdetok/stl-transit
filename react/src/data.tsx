@@ -1,8 +1,11 @@
 import { actionBarProps } from "./cmp/calcite/ActionBar";
-import { PANEL_CSS_CLASSES, HL_CHURCH, HL_GROCERY, HL_MED, HL_PARKS, HL_SCHOOLS,  } from "./consts";
-import { makeChoroRanges, mapFullscreen, tractsField } from "./utils";
+import {
+    PANEL_CSS_CLASSES, HL_CHURCH, HL_GROCERY, HL_MED, HL_PARKS, HL_SCHOOLS, 
+    infoSect, abtBlk, dataBlk, techBlk, loremIpsum
+ } from "./consts";
+import { makeChoroRanges, mapFullscreen, tractsField, scrollToInfoBlock } from "./utils";
 import FieldInfo from "@arcgis/core/popup/FieldInfo";
-import { cplethEls, FeatureLayerMeta, mapLayer } from "./types";
+import { cplethEls, FeatureLayerMeta, mapLayer, infoBlockProps, itemProps } from "./types";
 import {
     makeAmtrakLayer, makeBusLinesLayer, makeBusStopsLayer, makeCountiesLayer, makeCyclingLayer,
     makeMetroLinesLayer, makeMetroStopsLayer, makePlacesLayer, makeTractsLayer
@@ -11,6 +14,26 @@ import { panelProps } from "./cmp/calcite/Container";
 import SliderBlock from "@/cmp/calcite/SliderBlock";
 import SelectBlock from "./cmp/calcite/SelectBlock";
 import DropdownBlock from "./cmp/calcite/ListBlock";
+
+// text/anchors rendered at bottom of page
+export const ftrItems: itemProps[] = [
+    { txt: 'Created by ', linkTxt: 'Justin DeKock', onClick: () => scrollToInfoBlock(infoSect, abtBlk), },
+    { txt: 'Data Sources ', onClick: () => scrollToInfoBlock(infoSect, dataBlk), },
+    { txt: 'Technologies/Development', onClick: () => scrollToInfoBlock(infoSect, techBlk), },
+    { txt: 'Source Code', blank: true, link: 'https://github.com/jdetok/stl-transit.git' },
+];
+
+export const infoSectBlocks: infoBlockProps[] = [
+    { id: abtBlk, ttl: 'About the Developer', infoTxt: "This site was designed & developed by Justin DeKock, Saint Louis University graduate student pursuing an M.S. in Information Systems", txt: loremIpsum},
+    { id: dataBlk, ttl: 'Data Sources', infoTxt: "The site's data was obtained from the sources below.", sects: [
+        { ttl: 'GTFS: General Transit Feed Specification', txt: loremIpsum },
+        { ttl: 'ACS: American Community Survey (2024)', txt: loremIpsum },
+        { ttl: 'TIGER: Topologically Integrated Geographic Encoding and Referencing system', txt: loremIpsum },
+        { ttl: 'OSM: Open Street Map', txt: loremIpsum },  
+    ]},
+    { id: techBlk, ttl: 'Technologies Used', txt: loremIpsum},
+];
+
 
 export const TRACT_CLASSBREAKS: Map<FieldInfo, cplethEls[]> = new Map([
     [tractsField('popl_dens'), makeChoroRanges(5, [0, 2500, 5000, 7500, 10000, 100000])],
