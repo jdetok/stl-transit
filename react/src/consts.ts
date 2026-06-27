@@ -2,14 +2,16 @@ import Extent from '@arcgis/core/geometry/Extent';
 import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
 import { newHighlightSetting, fieldInfos } from '@/utils';
-import { choropleth, CollectionProperties, cplethEls } from '@/types';
+import { choropleth, CollectionProperties, cplethEls, itemProps } from '@/types';
 
 export const hdrTtl = 'St. Louis Transit Map';
 
 // text/anchors rendered at bottom of page
-export const ftrItems = [
-    { txt: 'test1' },
-    { txt: 'test2', link: 'test' },
+export const ftrItems: itemProps[] = [
+    { txt: 'Created by ', linkTxt: 'Justin DeKock', onClick: () => console.log(), },
+    { txt: 'Data Sources ', onClick: () => console.log(), },
+    { txt: 'Technologies/Development', onClick: () => console.log(), },
+    { txt: 'Source Code', blank: true, link: 'https://github.com/jdetok/stl-transit.git' },
 ];
 
 export const CHOROPLETH: choropleth = {

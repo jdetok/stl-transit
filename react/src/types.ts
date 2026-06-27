@@ -50,3 +50,16 @@ export type mapLayer = {
 
 export type IconName = 'legend' | 'sliders' | 'layers' | 'basemap' | 'print' | 'bus' | 'reset' |
     'home' | 'organization' | 'education' | 'shopping-cart' | 'mooc' | 'medical' | 'park';
+
+// only txt: span
+// txt and link: anchor with full txt
+// txt link and linkTxt: span with embedded anchor. txt is not anchored, linkTxt is
+// txt and onClick: button with full txt
+// txt linkTxt and onClick: span with embedded button
+export type itemProps = {
+    txt: string,
+    linkTxt?: string,
+    link?: string,
+    blank?: boolean,
+    onClick?: () => void
+};

@@ -1,4 +1,5 @@
-type itemProps = { txt: string, link?: string };
+import { itemProps } from "@/types";
+
 type ftrProps = { items: itemProps[] };
 
 export default function Ftr({ items }: ftrProps) {
@@ -6,7 +7,15 @@ export default function Ftr({ items }: ftrProps) {
         <div className='ftr'>{
             items.map(item => (
                 <div>{
-                    item.link ? <a href={item.link}>{item.txt}</a> : <span>{item.txt}</span>
+                    item.link
+                        ? item.linkTxt
+                            ? <span>{item.txt}<a href={item.link}></a>{item.linkTxt}</span>
+                            : <a href={item.link} target={item.blank ? '_blank' : ''}>{item.txt}</a>
+                        : item.onClick
+                            ? item.linkTxt
+                                ? <span>{item.txt}<button onClick={item.onClick}>{item.linkTxt}</button></span>
+                                : <button onClick={item.onClick}>{item.txt}</button>
+                            : <span>{item.txt}{item.linkTxt}</span>
                 }</div>
             ))
         }</div>
