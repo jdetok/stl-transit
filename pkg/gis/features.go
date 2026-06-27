@@ -15,6 +15,9 @@ import (
 
 const PERSISTF = "data/persist.json"
 
+// the raw json geometry column in a query must have this name to properly be picked up in QueryDB
+const GEOM_COL = "geom"
+
 type FeatureWriter interface {
 	WriteJSONResp(http.ResponseWriter, *http.Request)
 }
@@ -72,7 +75,7 @@ func GetFeatureLayers(ctx context.Context, layerNames LayerMeta, db *pgxpool.Poo
 	for l, data := range fl {
 		g.Go(func() error {
 			lg.Infof("getting data for %s from db", l)
-			if err := data.Features.QueryDB(ctx, db, *data.q, "geom", data.isGeom, []any{}); err != nil {
+			if err := data.Features.QueryDB(ctx, db, *data.q, GEOM_COL, data.isGeom, []any{}); err != nil {
 				return fmt.Errorf("failed to fetch %s from db: %w", l, err)
 			}
 			return nil
