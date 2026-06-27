@@ -1,13 +1,14 @@
 import Hdr from '@/cmp/Hdr';
 import MapDiv from '@/cmp/MapDiv';
 import { viewReady } from '@/viewReady';
-import { BASEMAP, EXTENT, ftrItems, hdrTtl } from '@/consts';
+import { BASEMAP, EXTENT, ftrItems, hdrTtl, infoSectBlocks } from '@/consts';
 import { actionBars, panels } from '@/data';
 import MapView from '@arcgis/core/views/MapView';
 import { actionBarProps } from './calcite/ActionBar';
 import { useCallback, useRef, useState } from 'react';
 import { panelProps } from './calcite/Container';
 import Ftr from './Ftr';
+import InfoSect from './InfoSect';
 
 export default function App() {
     const [view, setView] = useState<MapView | null>(null);
@@ -27,7 +28,8 @@ export default function App() {
                 actionBars={builtActionBars}
                 panels={builtPanels}
             />
-            <Ftr items={ftrItems}/>
+            <Ftr items={ftrItems} />
+            <InfoSect blocks={infoSectBlocks} />
         </main>
     )
 }

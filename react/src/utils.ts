@@ -11,7 +11,7 @@ import Renderer from "@arcgis/core/renderers/Renderer";
 import { actionBarProps } from './cmp/calcite/ActionBar';
 import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import FeatureSet from '@arcgis/core/rest/support/FeatureSet';
-import { TRACTS_FIELDINFOS, WKID, CHOROPLETH } from '@/consts';
+import { TRACTS_FIELDINFOS, WKID, CHOROPLETH, dispBlock } from '@/consts';
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
 import SimpleFillSymbol from '@arcgis/core/symbols/SimpleFillSymbol';
 import SimpleLineSymbol from '@arcgis/core/symbols/SimpleLineSymbol';
@@ -391,3 +391,29 @@ export const makeMarkerSymbol = (color: ColorLike, size: number, outline?: Simpl
         outline: outline,
     })
 }
+
+export const scrollToInfoBlock = (sectId: string, blockId: string, offset = 40) => {
+    try {
+        const section = document.querySelector(`#${sectId}`) as HTMLDivElement;
+        if (!section) throw new Error(`can't find section with id ${sectId}`);
+
+        const block = section.querySelector(`#${blockId}`) as HTMLDivElement;
+        if (!block) throw new Error(`can't find block with id ${blockId}`);;
+
+        section.querySelectorAll('div').forEach(b => {
+            if (b.id === blockId) {
+                const disp = b.style.display === 'block' ? 'none' : 'block';
+                b.style.display = disp;
+            } else {
+                b.style.display = 'none';
+            }
+        });
+
+        section.style.display = 'block';
+
+        window.scrollTo({ top: block.getBoundingClientRect().top + window.scrollY + offset, behavior: 'smooth' });
+        block.hidden = false;
+    } catch (e) {
+        console.error(e);
+    }
+};

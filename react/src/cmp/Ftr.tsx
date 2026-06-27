@@ -5,8 +5,8 @@ type ftrProps = { items: itemProps[] };
 export default function Ftr({ items }: ftrProps) {
     return (
         <div className='ftr'>{
-            items.map(item => (
-                <div>{
+            items.map((item, i) => (
+                <div key={i}>{
                     item.link
                         ? item.linkTxt
                             ? <span>{item.txt}<a href={item.link}></a>{item.linkTxt}</span>

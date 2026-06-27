@@ -63,3 +63,13 @@ export type itemProps = {
     blank?: boolean,
     onClick?: () => void
 };
+
+export type infoBlockProps = {
+    id: string,
+    ttl: string,
+    txt?: string,
+};
+
+export type infoSectProps = {
+    blocks: infoBlockProps[],
+};

@@ -1,17 +1,31 @@
 import Extent from '@arcgis/core/geometry/Extent';
 import { HighlightOptionsProperties } from '@arcgis/core/views/support/HighlightOptions';
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
-import { newHighlightSetting, fieldInfos } from '@/utils';
-import { choropleth, CollectionProperties, cplethEls, itemProps } from '@/types';
+import { newHighlightSetting, fieldInfos, scrollToInfoBlock } from '@/utils';
+import { choropleth, CollectionProperties, cplethEls, infoBlockProps, itemProps } from '@/types';
+import { CSSProperties } from 'react';
+
+export const loremIpsum = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
 export const hdrTtl = 'St. Louis Transit Map';
 
+export const infoSect = 'info-sect';
+const abtBlk = 'abt';
+const dataBlk = 'data';
+const techBlk = 'tech';
+
 // text/anchors rendered at bottom of page
 export const ftrItems: itemProps[] = [
-    { txt: 'Created by ', linkTxt: 'Justin DeKock', onClick: () => console.log(), },
-    { txt: 'Data Sources ', onClick: () => console.log(), },
-    { txt: 'Technologies/Development', onClick: () => console.log(), },
+    { txt: 'Created by ', linkTxt: 'Justin DeKock', onClick: () => scrollToInfoBlock(infoSect, abtBlk), },
+    { txt: 'Data Sources ', onClick: () => scrollToInfoBlock(infoSect, dataBlk), },
+    { txt: 'Technologies/Development', onClick: () => scrollToInfoBlock(infoSect, techBlk), },
     { txt: 'Source Code', blank: true, link: 'https://github.com/jdetok/stl-transit.git' },
+];
+
+export const infoSectBlocks: infoBlockProps[] = [
+    { id: abtBlk, ttl: 'About the Developer', txt: loremIpsum},
+    { id: dataBlk, ttl: 'Data Sources', txt: loremIpsum},
+    { id: techBlk, ttl: 'Technologies Used', txt: loremIpsum},
 ];
 
 export const CHOROPLETH: choropleth = {
@@ -42,6 +56,9 @@ export const PANEL_CSS_CLASSES: Record<string, string> = {
     print: 'panel-print',
     routes: 'panel-routes',
 };
+
+export const dispNone: CSSProperties = { display: 'none' };
+export const dispBlock: CSSProperties = { display: 'block' };
 
 export const TRACTS_LAYER_TTL = 'US Census Tracts';
 export const TRACTS_LAYER_URL = '/layers/tracts';
