@@ -2,6 +2,7 @@
     font-family: sans-serif;
     --bg-color: rgba(17, 68, 115, 0.3);
     --bdr-rad: .5rem;
+    --hdr-fsize: 30px;
     --cmp-bdr: 4px solid black;
     --cmp-pdg: 0.8rem;
     --map-vh: 95vh;
@@ -31,13 +32,20 @@
 
 body {
     background-color: var(--bg-color);
+    height: 100vh;
 }
 
 .hdr {
     text-align: center;
-    font-size: 32px;
+    font-size: var(--hdr-fsize);
     padding: 0;
     margin: 0.2rem 0;
+}
+
+.ftr {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--cmp-pdg);
 }
 
 .map-div {
@@ -45,6 +53,7 @@ body {
     border-radius: var(--bdr-rad);
     margin: 0 auto;
     height: var(--map-vh);
+    max-height: calc(var(--map-vh) - var(--hdr-fsize));
     overflow: hidden;
     position: relative;
 }
@@ -65,7 +74,6 @@ calcite-panel {
     position: absolute;
     right: var(--panel-beside-actbar);
     bottom: var(--panel-above-actbar);
-    /* height: var(--panel-height); */
     max-height: 48%;
     height: fit-content;
     width: fit-content;

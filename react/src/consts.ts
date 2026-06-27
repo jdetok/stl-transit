@@ -3,6 +3,15 @@ import { HighlightOptionsProperties } from '@arcgis/core/views/support/Highlight
 import { FieldProperties } from '@arcgis/core/layers/support/Field';
 import { newHighlightSetting, fieldInfos } from '@/utils';
 import { choropleth, CollectionProperties, cplethEls } from '@/types';
+
+export const hdrTtl = 'St. Louis Transit Map';
+
+// text/anchors rendered at bottom of page
+export const ftrItems = [
+    { txt: 'test1' },
+    { txt: 'test2', link: 'test' },
+];
+
 export const CHOROPLETH: choropleth = {
     lvl1: [94, 150, 98],
     lvl2: [17, 200, 152],
