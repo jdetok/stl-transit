@@ -50,6 +50,8 @@ services:
             context: .
             dockerfile: ./nginx/Dockerfile
         restart: unless-stopped
+        profiles:
+            - prod
         depends_on:
             pgis:
                 condition: service_healthy
@@ -75,6 +77,8 @@ services:
             context: .
             dockerfile: react/Dockerfile
         restart: unless-stopped
+        profiles:
+            - prod
         env_file:
             - .env
         volumes: 
