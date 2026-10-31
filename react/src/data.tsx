@@ -1,7 +1,8 @@
 import { actionBarProps } from "./cmp/calcite/ActionBar";
+import { dataSources, loremIpsum, txtAbtDev, txtDataBlk } from "./strings";
 import {
     PANEL_CSS_CLASSES, HL_CHURCH, HL_GROCERY, HL_MED, HL_PARKS, HL_SCHOOLS, 
-    infoSect, abtBlk, dataBlk, techBlk, loremIpsum
+    infoSect, abtBlk, dataBlk, techBlk,
  } from "./consts";
 import { makeChoroRanges, mapFullscreen, tractsField, scrollToInfoBlock } from "./utils";
 import FieldInfo from "@arcgis/core/popup/FieldInfo";
@@ -24,12 +25,12 @@ export const ftrItems: itemProps[] = [
 ];
 
 export const infoSectBlocks: infoBlockProps[] = [
-    { id: abtBlk, ttl: 'About the Developer', infoTxt: "This site was designed & developed by Justin DeKock, Saint Louis University graduate student pursuing an M.S. in Information Systems", txt: loremIpsum},
-    { id: dataBlk, ttl: 'Data Sources', infoTxt: "The site's data was obtained from the sources below.", sects: [
-        { ttl: 'GTFS: General Transit Feed Specification', txt: loremIpsum },
-        { ttl: 'ACS: American Community Survey (2024)', txt: loremIpsum },
-        { ttl: 'TIGER: Topologically Integrated Geographic Encoding and Referencing system', txt: loremIpsum },
-        { ttl: 'OSM: Open Street Map', txt: loremIpsum },  
+    { id: abtBlk, ttl: 'About the Developer', infoTxt: txtAbtDev, txt: loremIpsum},
+    { id: dataBlk, ttl: 'Data Sources', infoTxt: txtDataBlk, sects: [
+        { ...dataSources['gtfs']! },
+        { ...dataSources['acs']! },
+        { ...dataSources['tiger']! },
+        { ...dataSources['osm']! },  
     ]},
     { id: techBlk, ttl: 'Technologies Used', txt: loremIpsum},
 ];
