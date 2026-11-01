@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+export PGHOST="${POSTGRES_HOST}"
+export PGPORT="${POSTGRES_PORT}"
+export PGUSER="${POSTGRES_USER}"
+export PGPASSWORD="${POSTGRES_PASSWORD}"
+export PGDATABASE="${POSTGRES_DB}"
+
+DIR=dump
+DB=$PGDATABASE
+DUMPF=${1:-$(ls -t /"${DIR}"/"${DB}"_* | head -n 1)}
+
+echo $DUMPF
+
+psql -U "$PGUSER" -d postgres -c "drop database if exists $DB with (force)"
+psql -U "$PGUSER" -d postgres -c "create database $DB"
+
+pg_restore -U "$PGUSER" -d "$DB" --no-owner --no-privileges -j 4 "$DUMPF"

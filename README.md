@@ -81,7 +81,12 @@ The project can be built/run locally with [Docker](https://www.docker.com/produc
     1. build and run the Go API and nginx proxy containers:<br>
         `docker compose up --build api proxy`
     1. app should be running at http://localhost:3333
+
 ## Create database dump inside running postgres container
 - `docker exec -it <pgis-container> bash`
 - `./scr/dmp`
 - a new dump file named gis_<current_date> will be created in /dump, which is mounted to ./db/dump
+
+## restore database from most recent dump file
+- `docker exec -it <pgis-container> bash`
+- `./scr/restore`
