@@ -85,7 +85,7 @@ export const actionBars: actionBarProps[] = [{
         { text: 'Layers', label: 'Layers', scale: 'm', icon: 'layers', panelKey: PANEL_CSS_CLASSES['layerlist']},
         { text: 'Basemaps', label: 'Basemaps', scale: 'm', icon: 'basemap', panelKey: PANEL_CSS_CLASSES['basemaps']},
         { text: 'Modifiers', label: 'Appearance Modifiers', scale: 'm', icon: 'sliders', panelKey: PANEL_CSS_CLASSES['modifiers']},
-        { text: 'Bus Routes', label: 'AppearanBus Routes', scale: 'm', icon: 'bus', panelKey: PANEL_CSS_CLASSES['routes'] },
+        { text: 'Bus Routes', label: 'Bus Routes', scale: 'm', icon: 'bus', panelKey: PANEL_CSS_CLASSES['routes'] },
         { id: 'clear', text: 'Clear Highlighted Routes', label: 'Clear Highlighted Routes', scale: 'm', icon: 'reset' },
         { text: 'Export', label: 'Export', scale: 'm', icon: 'print', panelKey: PANEL_CSS_CLASSES['print']},
         { text: 'Fullscreen', label: 'Fullscreen', scale: 'm', icon: 'extent', onClick: mapFullscreen},

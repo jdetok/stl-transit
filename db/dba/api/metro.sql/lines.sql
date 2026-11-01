@@ -1,3 +1,4 @@
+-- Active: 1793558687149@@localhost@4321@gis
 drop table if exists api.lines;
 create table if not exists api.lines (
     id bigserial primary key,
@@ -64,6 +65,7 @@ group by
     stops_access_medical, stops_access_entertainment
 ;
 alter table api.lines add column if not exists centroid text;
+alter table api.lines add column if not exists state varchar(3);
 
 
 with states as (
@@ -98,3 +100,5 @@ set
 	state = d.state
 from dataset d
 where l.route_id = d.route_id; 
+
+select * from api.lines;

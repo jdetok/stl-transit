@@ -196,7 +196,7 @@ export const viewReady = ({ setView, setBuiltActionBars, setBuiltPanels, activeH
                 return {
                     ...panel,
                     ready: true,
-                    blockComponents: [
+                    blockComponents: [ 
                         <ListBlock
                             id='dropdown-1' heading='Missouri Routes'
                             optsProps={{

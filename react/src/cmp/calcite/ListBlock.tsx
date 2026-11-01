@@ -16,13 +16,20 @@ export default function ListBlock({ id, heading, onChange, optsProps }: selectBl
         fetch(optsProps.dataUrl)
             .then(r => {
                 console.log('response:', r.status, r.ok);
-                return r.json();
+                return r.json()
             })
-            .then(data => setFetchedOpts(
-                data.features.filter(filterFn)
-                    .map((f: any) => f.properties.route_desc)
-                    .map((label: string) => ({ label, value: label }))
-            ))
+            .then(data => {
+                const all = data.features ?? [];
+                // console.log(all);
+                // console.log('total features:', all.length);
+                // console.log('sample state values:', [...new Set(all.map((f: any) => f.properties?.state))]);
+
+                const filtered = all.filter(filterFn);
+                console.log('after filter:', filtered.length);
+                setFetchedOpts(
+                    filtered.map((f: any) => f.properties.route_desc).map((label: string) => ({ value: label, label }))
+                )
+            })
             .catch(err => console.error('DropdownBlock fetch error:', err));
     }, [optsProps?.dataUrl]);
 
@@ -43,13 +50,14 @@ export default function ListBlock({ id, heading, onChange, optsProps }: selectBl
     const options: JSX.Element[] = [];
     
     const allOpts = [...(optsProps?.opts ?? []), ...fetchedOpts];
-
+    console.log('all opts:', allOpts.length)
     allOpts.forEach((opt, i) => {
         options.push(
             <calcite-list-item key={`${opt.value}-${i}`} data-value={opt.value} label={opt.label}></calcite-list-item>
         );
     });
 
+    console.log(options.length)
     return (
         <Block id={id} childType='select' heading={heading}>
             <calcite-list ref={dropdownRef} name={id} selection-mode='multiple' label={heading as string}>
